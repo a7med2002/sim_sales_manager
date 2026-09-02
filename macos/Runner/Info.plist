@@ -26,6 +26,12 @@
 	<string>$(PRODUCT_COPYRIGHT)</string>
 	<key>NSMainNibFile</key>
 	<string>MainMenu</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Used to attach a photo when submitting Support &amp; Feedback.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Used to record a short voice note when submitting Support &amp; Feedback.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Used to attach a photo from your library when submitting Support &amp; Feedback.</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 </dict>

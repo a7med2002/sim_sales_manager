@@ -70,7 +70,10 @@ lib/
   imports except through core/.
 - After completing any page or meaningful chunk of work, **update `PROGRESS.md`**
   with what was done and what's next. Do this without being asked.
-- Ask before adding a new major dependency that isn't already listed in this file.
+- Never run `flutter pub add` or edit pubspec.yaml to add ANY new package (chart
+  library, animation package, image picker, etc.) without stopping first and telling
+  the user exactly which package and why it's needed, and waiting for confirmation
+  before installing it — even for small/common packages.
 - Prefer small, focused commits/changes over large sweeping rewrites.
 
 ## Definition of Done (per page)

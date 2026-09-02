@@ -1,0 +1,661 @@
+{
+  "common": {
+    "cancel": "إلغاء",
+    "save": "حفظ",
+    "all": "الكل",
+    "allCompanies": "كل الشركات",
+    "show": "عرض",
+    "balanceUsedPercent": "{percent}% من الرصيد مستخدم",
+    "comingSoon": "قريبًا",
+    "am": "ص",
+    "pm": "م",
+    "months": {
+      "jan": "يناير",
+      "feb": "فبراير",
+      "mar": "مارس",
+      "apr": "أبريل",
+      "may": "مايو",
+      "jun": "يونيو",
+      "jul": "يوليو",
+      "aug": "أغسطس",
+      "sep": "سبتمبر",
+      "oct": "أكتوبر",
+      "nov": "نوفمبر",
+      "dec": "ديسمبر"
+    },
+    "monthsShort": {
+      "jan": "ينا",
+      "feb": "فبر",
+      "mar": "مار",
+      "apr": "أبر",
+      "may": "ماي",
+      "jun": "يون",
+      "jul": "يول",
+      "aug": "أغس",
+      "sep": "سبت",
+      "oct": "أكت",
+      "nov": "نوف",
+      "dec": "ديس"
+    },
+    "paymentStatus": {
+      "paid": "مدفوع",
+      "partial": "جزئي",
+      "unpaid": "غير مدفوع"
+    },
+    "lineHealthStatus": {
+      "active": "نشط",
+      "expiringSoon": "قريب الانتهاء",
+      "expired": "منتهي"
+    },
+    "shipmentType": {
+      "prepaid": "مدفوع مسبقًا",
+      "creditLimit": "سقف ائتمان"
+    }
+  },
+  "nav": {
+    "home": "الرئيسية",
+    "companies": "الشركات",
+    "customers": "العملاء",
+    "more": "المزيد",
+    "newSale": "بيع جديد"
+  },
+  "login": {
+    "brandName": "SIM Manager",
+    "brandTagline": "مبيعات الشرائح، الأرصدة والأرباح",
+    "title": "تسجيل الدخول",
+    "subtitle": "أدر مبيعات شرائحك، أرصدتك وأرباحك.",
+    "usernameLabel": "اسم المستخدم أو البريد الإلكتروني",
+    "usernamePlaceholder": "owner@simmanager.app",
+    "passwordLabel": "كلمة المرور",
+    "rememberMe": "تذكرني",
+    "forgotPassword": "نسيت كلمة المرور؟",
+    "signIn": "تسجيل الدخول",
+    "demoNotice": "تجريبي: أي اسم مستخدم مع كلمة مرور 6 أحرف فأكثر.",
+    "credentialsErrorTitle": "أدخل بيانات الدخول للمتابعة.",
+    "errors": {
+      "usernameRequired": "أدخل اسم مستخدم أو بريدًا إلكترونيًا.",
+      "passwordTooShort": "يجب أن تتكوّن كلمة المرور من 6 أحرف على الأقل."
+    }
+  },
+  "forgotPassword": {
+    "title": "نسيت كلمة المرور",
+    "description": "أدخل البريد الإلكتروني المرتبط بحسابك وسنرسل لك رابطًا لإعادة تعيين كلمة المرور.",
+    "emailLabel": "البريد الإلكتروني",
+    "emailPlaceholder": "owner@simmanager.app",
+    "sendResetLink": "إرسال رابط إعادة التعيين",
+    "checkEmailTitle": "تحقق من بريدك الإلكتروني",
+    "checkEmailDescription": "لقد أرسلنا رابط إعادة تعيين كلمة المرور إلى {email}.",
+    "backToSignIn": "العودة لتسجيل الدخول",
+    "errors": {
+      "invalidEmail": "أدخل بريدًا إلكترونيًا صحيحًا."
+    }
+  },
+  "home": {
+    "welcomeBack": "مرحبًا بعودتك، {name}",
+    "tagline": "مبيعات الشرائح، الأرصدة والأرباح",
+    "balanceSectionTitle": "رصيدك لدى الشركات الموردة",
+    "emptyCompaniesTitle": "لا توجد شركات موردة بعد",
+    "emptyCompaniesDescription": "أضف شركة وشحنة لبدء تتبع رصيدك.",
+    "salesProfit": "المبيعات والأرباح",
+    "profitTrend": "اتجاه الأرباح",
+    "stats": {
+      "operations": "العمليات",
+      "companies": "الشركات",
+      "totalSales": "إجمالي المبيعات",
+      "newLines": "خطوط جديدة",
+      "uncollected": "غير محصّل",
+      "totalProfit": "إجمالي الربح"
+    }
+  },
+  "more": {
+    "title": "المزيد",
+    "shipmentsOperations": "الشحنات والعمليات",
+    "numbers": "الأرقام",
+    "numberUpdate": "تحديث الأرقام",
+    "profits": "الأرباح",
+    "reports": "التقارير",
+    "supportFeedback": "الدعم والملاحظات",
+    "trustedDevices": "الأجهزة الموثوقة",
+    "activityLog": "سجل النشاط",
+    "settings": "الإعدادات",
+    "logout": "تسجيل الخروج"
+  },
+  "logout": {
+    "title": "تسجيل الخروج؟",
+    "message": "ستحتاج لتسجيل الدخول مجددًا للوصول إلى حسابك.",
+    "confirm": "تسجيل الخروج"
+  },
+  "settings": {
+    "title": "الإعدادات",
+    "profileSectionTitle": "الملف الشخصي",
+    "name": "الاسم",
+    "email": "البريد الإلكتروني",
+    "saveChanges": "حفظ التغييرات",
+    "appPreferencesSectionTitle": "تفضيلات التطبيق",
+    "darkMode": "الوضع الداكن",
+    "language": "اللغة",
+    "currencySymbol": "رمز العملة",
+    "save": "حفظ",
+    "accountSectionTitle": "الحساب",
+    "changePassword": "تغيير كلمة المرور",
+    "logout": "تسجيل الخروج",
+    "profileUpdated": "تم تحديث الملف الشخصي.",
+    "currencyUpdated": "تم تحديث رمز العملة."
+  },
+  "changePassword": {
+    "title": "تغيير كلمة المرور",
+    "currentPassword": "كلمة المرور الحالية",
+    "newPassword": "كلمة المرور الجديدة",
+    "confirmNewPassword": "تأكيد كلمة المرور الجديدة",
+    "save": "حفظ",
+    "passwordChanged": "تم تغيير كلمة المرور.",
+    "errors": {
+      "currentRequired": "أدخل كلمة المرور الحالية.",
+      "tooShort": "يجب أن تتكوّن كلمة المرور الجديدة من 6 أحرف على الأقل.",
+      "mismatch": "كلمة المرور الجديدة والتأكيد غير متطابقتين."
+    }
+  },
+  "periodFilter": {
+    "all": "الكل",
+    "today": "اليوم",
+    "thisWeek": "هذا الأسبوع",
+    "thisMonth": "هذا الشهر",
+    "threeMonths": "3 أشهر",
+    "sixMonths": "6 أشهر",
+    "thisYear": "هذه السنة",
+    "custom": "مخصص"
+  },
+  "companies": {
+    "title": "الشركات",
+    "totalCount": "{count} إجمالي",
+    "addCompany": "إضافة شركة",
+    "importReadyMade": "استيراد شركة جاهزة",
+    "tabs": {
+      "active": "نشطة",
+      "archived": "مؤرشفة",
+      "deleted": "محذوفة"
+    },
+    "empty": {
+      "activeTitle": "لا توجد شركات بعد",
+      "activeDescription": "أضف شركة موردة أو استورد علامة تجارية جاهزة للبدء.",
+      "archivedTitle": "لا توجد شركات مؤرشفة",
+      "archivedDescription": "الشركات التي تؤرشفها ستظهر هنا.",
+      "deletedTitle": "لا توجد شركات محذوفة",
+      "deletedDescription": "الشركات التي تحذفها ستظهر هنا ويمكن استعادتها."
+    },
+    "card": {
+      "packagesOperations": "{packages} باقة · {operations} عملية",
+      "profitGenerated": "الربح المحقق",
+      "balanceUsed": "الرصيد المستخدم",
+      "consumed": "المستهلك",
+      "availableToSell": "المتاح للبيع",
+      "owedToCompany": "المستحق للشركة"
+    },
+    "menu": {
+      "edit": "تعديل",
+      "pinToTop": "تثبيت في الأعلى",
+      "unpin": "إلغاء التثبيت",
+      "archive": "أرشفة",
+      "delete": "حذف",
+      "restoreToActive": "استعادة إلى نشطة",
+      "deletePermanently": "حذف نهائي"
+    },
+    "deleteDialog": {
+      "title": "حذف {name}؟",
+      "message": "يمكنك استعادتها لاحقًا من تبويب المحذوفة.",
+      "confirm": "حذف"
+    },
+    "deletePermanentDialog": {
+      "title": "حذف {name} نهائيًا؟",
+      "message": "لا يمكن التراجع عن هذا الإجراء.",
+      "confirm": "حذف نهائي"
+    },
+    "form": {
+      "editTitle": "تعديل الشركة",
+      "addTitle": "إضافة شركة",
+      "editSubtitle": "تحديث تفاصيل هذه الشركة.",
+      "addSubtitle": "اختر علامة تجارية جاهزة بباقات افتراضية، أو أضف باقاتك الخاصة.",
+      "nameLabel": "اسم الشركة",
+      "notesLabel": "ملاحظات (اختياري)",
+      "packagesSection": "الباقات (اختياري)",
+      "addPackage": "إضافة باقة",
+      "packageNamePlaceholder": "اسم الباقة، مثال: شهري 3 جيجابايت",
+      "wholesaleCostPlaceholder": "سعر الجملة",
+      "retailPricePlaceholder": "سعر البيع للعميل",
+      "save": "حفظ"
+    },
+    "import": {
+      "title": "شركات جاهزة",
+      "subtitle": "اختر علامة تجارية جاهزة بباقات افتراضية.",
+      "packagesCount": "{count} باقة",
+      "active": "نشطة",
+      "archivedTapToReimport": "مؤرشفة · اضغط لإعادة الاستيراد"
+    }
+  },
+  "customers": {
+    "title": "العملاء",
+    "activeCount": "{count} نشط",
+    "newCustomer": "عميل جديد",
+    "searchHint": "ابحث بالاسم أو الرقم",
+    "statusLabel": "الحالة",
+    "allStatuses": "كل الحالات",
+    "tagsLabel": "الوسوم",
+    "allTags": "كل الوسوم",
+    "tabs": {
+      "active": "نشط",
+      "debtors": "مديونون",
+      "deleted": "محذوف"
+    },
+    "empty": {
+      "activeTitle": "لا يوجد عملاء بعد",
+      "activeDescription": "أضف عميلًا لبدء تتبع خطوطه ودفعاته.",
+      "debtorsTitle": "لا يوجد مديونون",
+      "debtorsDescription": "العملاء الذين لا يزال عليهم مبلغ مستحق على أحد خطوطهم سيظهرون هنا.",
+      "deletedTitle": "لا يوجد عملاء محذوفون",
+      "deletedDescription": "العملاء الذين تحذفهم سيظهرون هنا ويمكن استعادتهم."
+    },
+    "card": {
+      "lines": "{count} خطوط",
+      "totalSpent": "   إجمالي الإنفاق {amount}",
+      "owed": "   المستحق {amount}",
+      "lastPurchase": "آخر شراء: {date}"
+    },
+    "status": {
+      "normal": "عادي",
+      "troubled": "إشكالي",
+      "blocked": "محظور"
+    },
+    "deleteDialog": {
+      "title": "حذف {name}؟",
+      "message": "يمكنك استعادة هذا العميل لاحقًا من تبويب المحذوفين.",
+      "confirm": "حذف"
+    },
+    "deletePermanentDialog": {
+      "title": "حذف {name} نهائيًا؟",
+      "message": "لا يمكن التراجع عن هذا الإجراء.",
+      "confirm": "حذف نهائي"
+    },
+    "form": {
+      "editTitle": "تعديل العميل",
+      "addTitle": "عميل جديد",
+      "contactHint": "رقم التواصل: 05x / +970 / 970",
+      "nameLabel": "الاسم *",
+      "contactLabel": "رقم التواصل",
+      "tagsLabel": "الوسوم",
+      "tagsHelper": "مفصولة بفاصلة",
+      "statusLabel": "الحالة",
+      "pinToTop": "تثبيت في الأعلى",
+      "notesLabel": "ملاحظات (اختياري)",
+      "save": "حفظ"
+    },
+    "detail": {
+      "linesStat": "الخطوط",
+      "totalSpentStat": "إجمالي الإنفاق",
+      "owedStat": "المستحق",
+      "addLine": "إضافة خط",
+      "linesSection": "الخطوط / الشرائح",
+      "emptyLinesTitle": "لا توجد خطوط بعد",
+      "emptyLinesDescription": "اضغط \"إضافة خط\" لبيع أول شريحة لهذا العميل.",
+      "deleteLineDialog": {
+        "title": "حذف هذا الخط؟",
+        "message": "لا يمكن التراجع عن هذا الإجراء.",
+        "confirm": "حذف"
+      }
+    },
+    "line": {
+      "edit": "تعديل",
+      "delete": "حذف",
+      "purchaseDate": "تاريخ الشراء",
+      "expiryDate": "تاريخ الانتهاء",
+      "retailSalePrice": "سعر البيع للعميل",
+      "profit": "الربح",
+      "remaining": "المتبقي",
+      "addPayment": "إضافة دفعة"
+    },
+    "paymentStatus": {
+      "paid": "مدفوع",
+      "partial": "جزئي",
+      "unpaid": "غير مدفوع"
+    },
+    "lineStatus": {
+      "active": "نشط",
+      "expiringSoon": "قريب الانتهاء",
+      "expired": "منتهي"
+    },
+    "lineForm": {
+      "editTitle": "تعديل الخط",
+      "addTitle": "إضافة خط",
+      "companyLabel": "الشركة",
+      "packageLabel": "الباقة",
+      "packageHint": "مثال: أسبوعي 1 جيجابايت",
+      "simLabel": "رقم الشريحة / الهاتف",
+      "wholesaleCostLabel": "سعر الجملة",
+      "retailSalePriceLabel": "سعر البيع للعميل",
+      "profitLine": "الربح: {amount}",
+      "amountPaidNow": "المبلغ المدفوع الآن",
+      "remainingLine": "المتبقي: {amount}  ·  {status}",
+      "save": "حفظ"
+    },
+    "addPaymentSheet": {
+      "title": "إضافة دفعة",
+      "currentlyOwed": "المستحق حاليًا",
+      "amountToPayNow": "المبلغ المراد دفعه الآن",
+      "exceedsOwed": "لا يمكن أن يتجاوز المبلغ المستحق.",
+      "submit": "إضافة دفعة"
+    }
+  },
+  "newSale": {
+    "stepLabels": {
+      "customer": "العميل",
+      "packageAndPrice": "الباقة والسعر",
+      "payment": "الدفع",
+      "confirm": "التأكيد"
+    },
+    "next": "التالي",
+    "confirmAndSave": "تأكيد وحفظ",
+    "saleSaved": "تم حفظ عملية البيع",
+    "customerStep": {
+      "searchHint": "ابحث بالاسم أو الرقم",
+      "newCustomer": "عميل جديد",
+      "cancelNewCustomer": "إلغاء العميل الجديد",
+      "nameLabel": "الاسم",
+      "contactLabel": "رقم التواصل",
+      "emptyTitle": "لا يوجد عملاء مطابقون",
+      "emptyDescription": "جرّب بحثًا مختلفًا، أو أضف عميلًا جديدًا أعلاه."
+    },
+    "packagePriceStep": {
+      "companyLabel": "الشركة الموردة",
+      "packageLabel": "الباقة",
+      "wholesaleCostLabel": "سعر الجملة",
+      "retailSalePriceLabel": "سعر البيع للعميل",
+      "profitLabel": "الربح",
+      "simLabel": "رقم الشريحة / الهاتف",
+      "purchaseDateLabel": "تاريخ الشراء",
+      "expiryDateLabel": "تاريخ الانتهاء"
+    },
+    "paymentStep": {
+      "amountPaidNowLabel": "المبلغ المدفوع الآن",
+      "paidShortcut": "مدفوع",
+      "unpaidShortcut": "غير مدفوع",
+      "retailSalePriceLabel": "سعر البيع للعميل",
+      "remainingLabel": "المتبقي",
+      "paymentMethodLabel": "طريقة الدفع",
+      "referenceNumberLabel": "رقم مرجعي (اختياري)",
+      "notesLabel": "ملاحظات (اختياري)"
+    },
+    "confirmStep": {
+      "companyLabel": "الشركة",
+      "packageLabel": "الباقة",
+      "simLabel": "رقم الشريحة / الهاتف",
+      "expiryDateLabel": "تاريخ الانتهاء",
+      "wholesaleCostLabel": "سعر الجملة",
+      "retailSalePriceLabel": "سعر البيع للعميل",
+      "profitLabel": "الربح",
+      "amountPaidNowLabel": "المبلغ المدفوع الآن",
+      "remainingLabel": "المتبقي",
+      "statusLabel": "الحالة"
+    }
+  },
+  "numbers": {
+    "title": "إدارة الأرقام",
+    "subtitle": "سجل بكل رقم تمت إضافته، مع حالته وتاريخ انتهائه.",
+    "export": {
+      "pdf": "PDF",
+      "csv": "CSV",
+      "excel": "Excel"
+    },
+    "searchHint": "ابحث برقم الهاتف",
+    "matchCount": "{count} رقم",
+    "empty": {
+      "title": "لا توجد أرقام بعد",
+      "description": "ستظهر الأرقام هنا فور بيع شريحة SIM/eSIM لعميل."
+    },
+    "table": {
+      "number": "الرقم",
+      "company": "الشركة",
+      "package": "الباقة",
+      "status": "الحالة",
+      "dateAdded": "تاريخ الإضافة",
+      "expiryDate": "تاريخ الانتهاء"
+    }
+  },
+  "activityLog": {
+    "title": "سجل النشاط",
+    "subtitle": "سجل تدقيق كامل لكل إجراء تم اتخاذه في التطبيق.",
+    "eventCount": "{count} حدث",
+    "searchHint": "ابحث ضمن السجل",
+    "matchCount": "{count} مطابقة",
+    "empty": {
+      "title": "لا يوجد نشاط بعد",
+      "description": "كل إجراء تقوم به في التطبيق سيظهر هنا."
+    },
+    "table": {
+      "timestamp": "الوقت",
+      "actionType": "نوع الإجراء",
+      "details": "التفاصيل"
+    },
+    "actionType": {
+      "login": "تسجيل دخول",
+      "create": "إنشاء",
+      "edit": "تعديل",
+      "delete": "حذف",
+      "fullCollection": "تحصيل كامل"
+    }
+  },
+  "trustedDevices": {
+    "title": "الأجهزة الموثوقة",
+    "description": "تتخطى هذه الأجهزة رمز التحقق حتى تنتهي جلستها. إلغاء الثقة بجهاز سيتطلب رمز تحقق جديدًا في تسجيل الدخول القادم.",
+    "empty": {
+      "title": "لا توجد أجهزة موثوقة",
+      "description": "الأجهزة التي تسجل الدخول منها ستظهر هنا."
+    },
+    "thisDevice": "هذا الجهاز",
+    "revokeDialog": {
+      "title": "إلغاء الثقة بـ {name}؟",
+      "message": "سيحتاج هذا الجهاز رمز تحقق جديدًا في تسجيل الدخول القادم.",
+      "confirm": "إلغاء الثقة"
+    },
+    "info": {
+      "ipAddress": "عنوان IP",
+      "firstLogin": "أول تسجيل دخول",
+      "lastLogin": "آخر تسجيل دخول",
+      "lastVerification": "آخر تحقق"
+    }
+  },
+  "supportFeedback": {
+    "title": "الدعم والملاحظات",
+    "subtitle": "وجدت مشكلة أو عندك فكرة؟ يسعدنا سماعها.",
+    "types": {
+      "adminSurvey": "استبيانات الإدارة",
+      "suggestion": "اقتراح/فكرة",
+      "problem": "مشكلة"
+    },
+    "placeholders": {
+      "adminSurvey": "شارك إجاباتك أو ملاحظاتك حول هذا الاستبيان...",
+      "suggestion": "اشرح فكرتك — ما الذي قد يجعل التطبيق أفضل بالنسبة لك؟",
+      "problem": "اشرح المشكلة — ماذا حدث، وماذا كنت تتوقع بدلًا من ذلك؟"
+    },
+    "attachPhoto": "إرفاق صورة",
+    "takePhoto": "التقاط صورة",
+    "chooseFromGallery": "اختيار من المعرض",
+    "recordVoiceNote": "تسجيل ملاحظة صوتية",
+    "stopRecording": "إيقاف ({time})",
+    "photoAttached": "تم إرفاق الصورة",
+    "voiceNoteAttached": "ملاحظة صوتية ({time})",
+    "submit": "إرسال",
+    "requestsLeftToday": "{count} من {limit} طلبات متبقية اليوم",
+    "previousRequestsSection": "طلباتي السابقة",
+    "empty": {
+      "title": "لا توجد طلبات بعد",
+      "description": "أرسل طلبك الأول أعلاه."
+    },
+    "submitted": "شكرًا — تم إرسال ملاحظاتك.",
+    "errors": {
+      "cameraAccess": "تعذّر الوصول إلى الكاميرا/المعرض على هذا الجهاز.",
+      "micPermission": "إذن الميكروفون مطلوب لتسجيل ملاحظة صوتية.",
+      "startRecording": "تعذّر بدء التسجيل على هذا الجهاز.",
+      "saveRecording": "تعذّر حفظ التسجيل."
+    }
+  },
+  "profits": {
+    "title": "الأرباح",
+    "yearProfit": "ربح السنة",
+    "monthProfit": "ربح الشهر",
+    "weekProfit": "ربح الأسبوع",
+    "todayProfit": "ربح اليوم",
+    "opsTapToFilter": "{ops} عملية · اضغط للتصفية",
+    "selectedPeriodSection": "الفترة المحددة",
+    "operations": "العمليات",
+    "netProfit": "صافي الربح",
+    "totalSales": "إجمالي المبيعات",
+    "profitOverTimeSection": "الربح عبر الزمن",
+    "bestCompaniesSection": "أفضل الشركات ربحًا",
+    "noCompaniesYet": "لا توجد شركات بعد."
+  },
+  "reports": {
+    "title": "التقارير",
+    "printSavePdf": "طباعة/حفظ PDF",
+    "exportExcel": "تصدير Excel",
+    "totalProfit": "إجمالي الربح",
+    "totalSales": "إجمالي المبيعات",
+    "linesSold": "الخطوط المباعة",
+    "operations": "العمليات",
+    "toCollect": "المستحق للتحصيل",
+    "partiallyPaid": "مدفوع جزئيًا",
+    "unpaid": "غير مدفوع",
+    "operationsSection": "العمليات",
+    "empty": {
+      "title": "لا توجد عمليات بعد",
+      "description": "ستظهر العمليات هنا فور بيع شريحة SIM/eSIM لعميل."
+    },
+    "table": {
+      "date": "التاريخ",
+      "simNumber": "رقم الشريحة",
+      "customer": "العميل",
+      "company": "الشركة",
+      "package": "الباقة",
+      "salePrice": "سعر البيع",
+      "profit": "الربح",
+      "payment": "الدفع",
+      "rep": "المندوب"
+    }
+  },
+  "shipmentsOperations": {
+    "title": "الشحنات والعمليات",
+    "tabs": {
+      "shipments": "الشحنات",
+      "operations": "العمليات"
+    },
+    "shipmentsTab": {
+      "infoBanner": "لكل شركة رصيد واحد. الشحنات تضيف إليه، والمبيعات تستهلك منه بسعر الجملة. يتوقف البيع عند نفاد الرصيد أو بلوغ سقف الائتمان.",
+      "newShipment": "شحنة جديدة",
+      "balanceSectionTitle": "رصيدك لدى الشركات الموردة",
+      "empty": {
+        "title": "لا توجد شركات بعد",
+        "description": "أضف شركة أولًا من تبويب الشركات."
+      },
+      "totalShipments": "إجمالي الشحنات",
+      "paid": "المدفوع",
+      "remaining": "المتبقي",
+      "emptyShipments": {
+        "title": "لا توجد شحنات بعد",
+        "description": "اضغط \"شحنة جديدة\" لشحن رصيد شركة."
+      },
+      "table": {
+        "company": "الشركة",
+        "type": "النوع",
+        "date": "التاريخ",
+        "totalAmount": "المبلغ الإجمالي"
+      },
+      "detail": {
+        "title": "تفاصيل الشحنة",
+        "company": "الشركة",
+        "type": "النوع",
+        "date": "التاريخ",
+        "totalAmount": "المبلغ الإجمالي",
+        "amountPaid": "المبلغ المدفوع",
+        "remaining": "المتبقي",
+        "paymentMethod": "طريقة الدفع",
+        "referenceNumber": "الرقم المرجعي",
+        "notes": "ملاحظات"
+      }
+    },
+    "operationsTab": {
+      "partiallyPaid": "مدفوع جزئيًا",
+      "unpaid": "غير مدفوع",
+      "needsFollowUp": "بحاجة لمتابعة",
+      "followUpCaption": "{overdue} متأخر · {today} اليوم · {soon} قريبًا",
+      "toCollect": "المستحق للتحصيل",
+      "searchHint": "ابحث برقم الشريحة أو رقم العملية",
+      "addOperation": "إضافة عملية",
+      "exportExcel": "تصدير Excel",
+      "import": "استيراد",
+      "empty": {
+        "title": "لا توجد عمليات بعد",
+        "description": "ستظهر العمليات هنا فور بيع شريحة SIM/eSIM."
+      },
+      "table": {
+        "simNumber": "رقم الشريحة",
+        "company": "الشركة",
+        "customer": "العميل",
+        "contact": "التواصل",
+        "duration": "المدة"
+      }
+    },
+    "form": {
+      "title": "شحنة جديدة",
+      "companyLabel": "الشركة",
+      "selectCompanyHint": "اختر شركة",
+      "typeLabel": "النوع",
+      "prepaidDescription": "مبلغ مدفوع للشركة مسبقًا.",
+      "creditLimitDescription": "سقف ائتماني — يتوقف البيع عند تجاوزه.",
+      "totalAmountLabel": "المبلغ الإجمالي",
+      "amountPaidLabel": "المبلغ المدفوع",
+      "remainingLabel": "المتبقي",
+      "paymentMethodLabel": "طريقة الدفع",
+      "paymentMethodHint": "نقدًا / تحويل / محفظة",
+      "shipmentDateLabel": "تاريخ الشحنة",
+      "referenceNumberLabel": "الرقم المرجعي (اختياري)",
+      "notesLabel": "ملاحظات (اختياري)",
+      "save": "حفظ"
+    },
+    "operationDetail": {
+      "title": "تفاصيل العملية",
+      "simLabel": "رقم الشريحة / الهاتف",
+      "customer": "العميل",
+      "contact": "التواصل",
+      "company": "الشركة",
+      "package": "الباقة",
+      "purchaseDate": "تاريخ الشراء",
+      "expiryDate": "تاريخ الانتهاء",
+      "wholesaleCost": "سعر الجملة",
+      "retailSalePrice": "سعر البيع للعميل",
+      "profit": "الربح",
+      "amountPaid": "المبلغ المدفوع",
+      "remaining": "المتبقي",
+      "paymentStatus": "حالة الدفع"
+    }
+  },
+  "numberUpdate": {
+    "title": "تحديث الأرقام",
+    "subtitle": "حدّث حالة أي رقم مباشرة من منصات الشركات الموردة.",
+    "enterNumberLabel": "أدخل رقم الهاتف",
+    "numberHint": "05xxxxxxxx",
+    "updateButton": "تحديث الرقم",
+    "recentUpdatesTitle": "آخر تحديثات هذا الرقم",
+    "empty": {
+      "title": "لا يوجد سجل بعد",
+      "description": "أدخل رقمًا أعلاه لعرض سجل تحديثاته."
+    },
+    "importantNotes": "ملاحظات مهمة",
+    "notes": {
+      "activationDelay": "عند تفعيل شريحة جديدة أو خط غير محدود، تتحدّث حالته في النظام خلال 3 ساعات تقريبًا.",
+      "notFoundContactSupport": "أي رقم يظهر بأنه \"غير موجود في النظام\" — تواصل مع الدعم الفني لإضافته يدويًا."
+    },
+    "status": {
+      "success": "تم التحديث",
+      "notFound": "غير موجود",
+      "failed": "فشل"
+    }
+  }
+}

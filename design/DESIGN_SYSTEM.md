@@ -21,7 +21,7 @@ Primary action (buttons, active nav item): #0A0A0A (black), text/icon #FFFFFF
 No other colors. Do not introduce blue, purple, or gradients anywhere.
 
 ## Typography
-- Font: system default (or a single clean sans-serif like Inter if adding a font package)
+- Font Family: IBMPlexSansArabic (weights: 400/500/600/700)
 - Page title: 24sp, bold
 - Section header: 18sp, semi-bold
 - Card title / list item title: 15sp, semi-bold

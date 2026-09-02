@@ -1,0 +1,661 @@
+{
+  "common": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "all": "All",
+    "allCompanies": "All Companies",
+    "show": "Show",
+    "balanceUsedPercent": "{percent}% balance used",
+    "comingSoon": "Coming soon",
+    "am": "AM",
+    "pm": "PM",
+    "months": {
+      "jan": "Jan",
+      "feb": "Feb",
+      "mar": "Mar",
+      "apr": "Apr",
+      "may": "May",
+      "jun": "Jun",
+      "jul": "Jul",
+      "aug": "Aug",
+      "sep": "Sep",
+      "oct": "Oct",
+      "nov": "Nov",
+      "dec": "Dec"
+    },
+    "monthsShort": {
+      "jan": "Jan",
+      "feb": "Feb",
+      "mar": "Mar",
+      "apr": "Apr",
+      "may": "May",
+      "jun": "Jun",
+      "jul": "Jul",
+      "aug": "Aug",
+      "sep": "Sep",
+      "oct": "Oct",
+      "nov": "Nov",
+      "dec": "Dec"
+    },
+    "paymentStatus": {
+      "paid": "Paid",
+      "partial": "Partial",
+      "unpaid": "Unpaid"
+    },
+    "lineHealthStatus": {
+      "active": "Active",
+      "expiringSoon": "Expiring Soon",
+      "expired": "Expired"
+    },
+    "shipmentType": {
+      "prepaid": "Prepaid",
+      "creditLimit": "Credit Limit"
+    }
+  },
+  "nav": {
+    "home": "Home",
+    "companies": "Companies",
+    "customers": "Customers",
+    "more": "More",
+    "newSale": "New Sale"
+  },
+  "login": {
+    "brandName": "SIM Manager",
+    "brandTagline": "eSIM & SIM sales, balances and profit",
+    "title": "Sign in",
+    "subtitle": "Manage your SIM sales, balances and profit.",
+    "usernameLabel": "Username or email",
+    "usernamePlaceholder": "owner@simmanager.app",
+    "passwordLabel": "Password",
+    "rememberMe": "Remember me",
+    "forgotPassword": "Forgot password?",
+    "signIn": "Sign in",
+    "demoNotice": "Demo: any username with password 6+ characters.",
+    "credentialsErrorTitle": "Enter your credentials to continue.",
+    "errors": {
+      "usernameRequired": "Enter a username or email.",
+      "passwordTooShort": "Password must be at least 6 characters."
+    }
+  },
+  "forgotPassword": {
+    "title": "Forgot password",
+    "description": "Enter the email on your account and we'll send you a link to reset your password.",
+    "emailLabel": "Email",
+    "emailPlaceholder": "owner@simmanager.app",
+    "sendResetLink": "Send reset link",
+    "checkEmailTitle": "Check your email",
+    "checkEmailDescription": "We've sent a password reset link to {email}.",
+    "backToSignIn": "Back to Sign in",
+    "errors": {
+      "invalidEmail": "Enter a valid email address."
+    }
+  },
+  "home": {
+    "welcomeBack": "Welcome back, {name}",
+    "tagline": "eSIM & SIM sales, balances and profit",
+    "balanceSectionTitle": "YOUR BALANCE WITH SUPPLIER COMPANIES",
+    "emptyCompaniesTitle": "No supplier companies yet",
+    "emptyCompaniesDescription": "Add a company and a shipment to start tracking your balance.",
+    "salesProfit": "SALES & PROFIT",
+    "profitTrend": "PROFIT TREND",
+    "stats": {
+      "operations": "Operations",
+      "companies": "Companies",
+      "totalSales": "Total Sales",
+      "newLines": "New Lines",
+      "uncollected": "Uncollected",
+      "totalProfit": "Total Profit"
+    }
+  },
+  "more": {
+    "title": "More",
+    "shipmentsOperations": "Shipments & Operations",
+    "numbers": "Numbers",
+    "numberUpdate": "Number Update",
+    "profits": "Profits",
+    "reports": "Reports",
+    "supportFeedback": "Support & Feedback",
+    "trustedDevices": "Trusted Devices",
+    "activityLog": "Activity Log",
+    "settings": "Settings",
+    "logout": "Logout"
+  },
+  "logout": {
+    "title": "Log out?",
+    "message": "You'll need to sign in again to access your account.",
+    "confirm": "Log out"
+  },
+  "settings": {
+    "title": "Settings",
+    "profileSectionTitle": "PROFILE",
+    "name": "Name",
+    "email": "Email",
+    "saveChanges": "Save Changes",
+    "appPreferencesSectionTitle": "APP PREFERENCES",
+    "darkMode": "Dark Mode",
+    "language": "Language",
+    "currencySymbol": "Currency Symbol",
+    "save": "Save",
+    "accountSectionTitle": "ACCOUNT",
+    "changePassword": "Change Password",
+    "logout": "Logout",
+    "profileUpdated": "Profile updated.",
+    "currencyUpdated": "Currency symbol updated."
+  },
+  "changePassword": {
+    "title": "Change Password",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "confirmNewPassword": "Confirm new password",
+    "save": "Save",
+    "passwordChanged": "Password changed.",
+    "errors": {
+      "currentRequired": "Enter your current password.",
+      "tooShort": "New password must be at least 6 characters.",
+      "mismatch": "New password and confirmation don't match."
+    }
+  },
+  "periodFilter": {
+    "all": "All",
+    "today": "Today",
+    "thisWeek": "This Week",
+    "thisMonth": "This Month",
+    "threeMonths": "3 Months",
+    "sixMonths": "6 Months",
+    "thisYear": "This Year",
+    "custom": "Custom"
+  },
+  "companies": {
+    "title": "Companies",
+    "totalCount": "{count} total",
+    "addCompany": "Add Company",
+    "importReadyMade": "Import Ready-Made",
+    "tabs": {
+      "active": "Active",
+      "archived": "Archived",
+      "deleted": "Deleted"
+    },
+    "empty": {
+      "activeTitle": "No companies yet",
+      "activeDescription": "Add a supplier company or import a ready-made brand to get started.",
+      "archivedTitle": "No archived companies",
+      "archivedDescription": "Companies you archive will show up here.",
+      "deletedTitle": "No deleted companies",
+      "deletedDescription": "Companies you delete will show up here and can be restored."
+    },
+    "card": {
+      "packagesOperations": "{packages} packages · {operations} operations",
+      "profitGenerated": "PROFIT GENERATED",
+      "balanceUsed": "Balance used",
+      "consumed": "Consumed",
+      "availableToSell": "Available to sell",
+      "owedToCompany": "Owed to company"
+    },
+    "menu": {
+      "edit": "Edit",
+      "pinToTop": "Pin to top",
+      "unpin": "Unpin",
+      "archive": "Archive",
+      "delete": "Delete",
+      "restoreToActive": "Restore to Active",
+      "deletePermanently": "Delete Permanently"
+    },
+    "deleteDialog": {
+      "title": "Delete {name}?",
+      "message": "You can restore it later from the Deleted tab.",
+      "confirm": "Delete"
+    },
+    "deletePermanentDialog": {
+      "title": "Delete {name} permanently?",
+      "message": "This cannot be undone.",
+      "confirm": "Delete permanently"
+    },
+    "form": {
+      "editTitle": "Edit Company",
+      "addTitle": "Add Company",
+      "editSubtitle": "Update this company's details.",
+      "addSubtitle": "Pick a preset brand with default packages, or add your own.",
+      "nameLabel": "Company name",
+      "notesLabel": "Notes (Optional)",
+      "packagesSection": "PACKAGES (OPTIONAL)",
+      "addPackage": "Add package",
+      "packageNamePlaceholder": "Package name, e.g. Monthly 3GB",
+      "wholesaleCostPlaceholder": "Wholesale cost",
+      "retailPricePlaceholder": "Retail sale price",
+      "save": "Save"
+    },
+    "import": {
+      "title": "Ready-made companies",
+      "subtitle": "Pick a preset brand with default packages.",
+      "packagesCount": "{count} packages",
+      "active": "Active",
+      "archivedTapToReimport": "Archived · tap to re-import"
+    }
+  },
+  "customers": {
+    "title": "Customers",
+    "activeCount": "{count} active",
+    "newCustomer": "New Customer",
+    "searchHint": "Search name or number",
+    "statusLabel": "Status",
+    "allStatuses": "All statuses",
+    "tagsLabel": "Tags",
+    "allTags": "All tags",
+    "tabs": {
+      "active": "Active",
+      "debtors": "Debtors",
+      "deleted": "Deleted"
+    },
+    "empty": {
+      "activeTitle": "No customers yet",
+      "activeDescription": "Add a customer to start tracking their lines and payments.",
+      "debtorsTitle": "No debtors",
+      "debtorsDescription": "Customers who still owe money on a line will show up here.",
+      "deletedTitle": "No deleted customers",
+      "deletedDescription": "Customers you delete will show up here and can be restored."
+    },
+    "card": {
+      "lines": "{count} lines",
+      "totalSpent": "   Total spent {amount}",
+      "owed": "   Owed {amount}",
+      "lastPurchase": "Last purchase: {date}"
+    },
+    "status": {
+      "normal": "Normal",
+      "troubled": "Troubled",
+      "blocked": "Blocked"
+    },
+    "deleteDialog": {
+      "title": "Delete {name}?",
+      "message": "You can restore this customer later from the Deleted tab.",
+      "confirm": "Delete"
+    },
+    "deletePermanentDialog": {
+      "title": "Delete {name} permanently?",
+      "message": "This cannot be undone.",
+      "confirm": "Delete permanently"
+    },
+    "form": {
+      "editTitle": "Edit Customer",
+      "addTitle": "New Customer",
+      "contactHint": "Contact number: 05x / +970 / 970",
+      "nameLabel": "Name *",
+      "contactLabel": "Contact number",
+      "tagsLabel": "Tags",
+      "tagsHelper": "Comma separated",
+      "statusLabel": "Status",
+      "pinToTop": "Pin to top",
+      "notesLabel": "Notes (Optional)",
+      "save": "Save"
+    },
+    "detail": {
+      "linesStat": "Lines",
+      "totalSpentStat": "Total spent",
+      "owedStat": "Owed",
+      "addLine": "Add Line",
+      "linesSection": "LINES / SIMS",
+      "emptyLinesTitle": "No lines yet",
+      "emptyLinesDescription": "Tap \"Add Line\" to sell this customer their first SIM/eSIM.",
+      "deleteLineDialog": {
+        "title": "Delete this line?",
+        "message": "This cannot be undone.",
+        "confirm": "Delete"
+      }
+    },
+    "line": {
+      "edit": "Edit",
+      "delete": "Delete",
+      "purchaseDate": "Purchase date",
+      "expiryDate": "Expiry date",
+      "retailSalePrice": "Retail sale price",
+      "profit": "Profit",
+      "remaining": "Remaining",
+      "addPayment": "Add Payment"
+    },
+    "paymentStatus": {
+      "paid": "Paid",
+      "partial": "Partial",
+      "unpaid": "Unpaid"
+    },
+    "lineStatus": {
+      "active": "Active",
+      "expiringSoon": "Expiring soon",
+      "expired": "Expired"
+    },
+    "lineForm": {
+      "editTitle": "Edit Line",
+      "addTitle": "Add Line",
+      "companyLabel": "Company",
+      "packageLabel": "Package / bundle",
+      "packageHint": "e.g. Weekly 1GB",
+      "simLabel": "SIM / phone number",
+      "wholesaleCostLabel": "Wholesale cost",
+      "retailSalePriceLabel": "Retail sale price",
+      "profitLine": "Profit: {amount}",
+      "amountPaidNow": "Amount paid now",
+      "remainingLine": "Remaining: {amount}  ·  {status}",
+      "save": "Save"
+    },
+    "addPaymentSheet": {
+      "title": "Add Payment",
+      "currentlyOwed": "Currently owed",
+      "amountToPayNow": "Amount to pay now",
+      "exceedsOwed": "Can't be more than what's owed.",
+      "submit": "Add Payment"
+    }
+  },
+  "newSale": {
+    "stepLabels": {
+      "customer": "Customer",
+      "packageAndPrice": "Package & price",
+      "payment": "Payment",
+      "confirm": "Confirm"
+    },
+    "next": "Next",
+    "confirmAndSave": "Confirm & Save",
+    "saleSaved": "Sale saved",
+    "customerStep": {
+      "searchHint": "Search by name or number",
+      "newCustomer": "New Customer",
+      "cancelNewCustomer": "Cancel new customer",
+      "nameLabel": "Name",
+      "contactLabel": "Contact number",
+      "emptyTitle": "No customers found",
+      "emptyDescription": "Try a different search, or add a new customer above."
+    },
+    "packagePriceStep": {
+      "companyLabel": "Supplier company",
+      "packageLabel": "Package / bundle",
+      "wholesaleCostLabel": "Wholesale cost",
+      "retailSalePriceLabel": "Retail sale price",
+      "profitLabel": "Profit",
+      "simLabel": "SIM / phone number",
+      "purchaseDateLabel": "Purchase date",
+      "expiryDateLabel": "Expiry date"
+    },
+    "paymentStep": {
+      "amountPaidNowLabel": "Amount paid now",
+      "paidShortcut": "Paid",
+      "unpaidShortcut": "Unpaid",
+      "retailSalePriceLabel": "Retail sale price",
+      "remainingLabel": "Remaining",
+      "paymentMethodLabel": "Payment method",
+      "referenceNumberLabel": "Reference number (Optional)",
+      "notesLabel": "Notes (Optional)"
+    },
+    "confirmStep": {
+      "companyLabel": "Company",
+      "packageLabel": "Package",
+      "simLabel": "SIM / phone number",
+      "expiryDateLabel": "Expiry date",
+      "wholesaleCostLabel": "Wholesale cost",
+      "retailSalePriceLabel": "Retail sale price",
+      "profitLabel": "Profit",
+      "amountPaidNowLabel": "Amount paid now",
+      "remainingLabel": "Remaining",
+      "statusLabel": "Status"
+    }
+  },
+  "numbers": {
+    "title": "Number Management",
+    "subtitle": "A log of every number added, each with its own status and expiry.",
+    "export": {
+      "pdf": "PDF",
+      "csv": "CSV",
+      "excel": "Excel"
+    },
+    "searchHint": "Search by phone number",
+    "matchCount": "{count} numbers",
+    "empty": {
+      "title": "No numbers yet",
+      "description": "Numbers show up here as soon as you sell a SIM/eSIM line to a customer."
+    },
+    "table": {
+      "number": "Number",
+      "company": "Company",
+      "package": "Package",
+      "status": "Status",
+      "dateAdded": "Date Added",
+      "expiryDate": "Expiry Date"
+    }
+  },
+  "activityLog": {
+    "title": "Activity Log",
+    "subtitle": "Full audit trail of every action taken in the app.",
+    "eventCount": "{count} events",
+    "searchHint": "Search within the log",
+    "matchCount": "{count} matching",
+    "empty": {
+      "title": "No activity yet",
+      "description": "Every action you take in the app will show up here."
+    },
+    "table": {
+      "timestamp": "Timestamp",
+      "actionType": "Action Type",
+      "details": "Details"
+    },
+    "actionType": {
+      "login": "Login",
+      "create": "Create",
+      "edit": "Edit",
+      "delete": "Delete",
+      "fullCollection": "Full Collection"
+    }
+  },
+  "trustedDevices": {
+    "title": "Trusted Devices",
+    "description": "These devices skip the verification code until their session expires. Revoking one will require a code again next login.",
+    "empty": {
+      "title": "No trusted devices",
+      "description": "Devices you log in from will show up here."
+    },
+    "thisDevice": "This Device",
+    "revokeDialog": {
+      "title": "Revoke {name}?",
+      "message": "This device will need a verification code again next login.",
+      "confirm": "Revoke"
+    },
+    "info": {
+      "ipAddress": "IP address",
+      "firstLogin": "First login",
+      "lastLogin": "Last login",
+      "lastVerification": "Last verification"
+    }
+  },
+  "supportFeedback": {
+    "title": "Support & Feedback",
+    "subtitle": "Found a bug or have an idea? We'd love to hear it.",
+    "types": {
+      "adminSurvey": "Admin Surveys",
+      "suggestion": "Suggestion/Idea",
+      "problem": "Problem"
+    },
+    "placeholders": {
+      "adminSurvey": "Share your answers or feedback for this survey...",
+      "suggestion": "Describe your idea — what would make the app better for you?",
+      "problem": "Describe the problem — what happened, and what did you expect instead?"
+    },
+    "attachPhoto": "Attach Photo",
+    "takePhoto": "Take Photo",
+    "chooseFromGallery": "Choose from Gallery",
+    "recordVoiceNote": "Record Voice Note",
+    "stopRecording": "Stop ({time})",
+    "photoAttached": "Photo attached",
+    "voiceNoteAttached": "Voice note ({time})",
+    "submit": "Submit",
+    "requestsLeftToday": "{count} of {limit} requests left today",
+    "previousRequestsSection": "MY PREVIOUS REQUESTS",
+    "empty": {
+      "title": "No requests yet",
+      "description": "Submit your first one above."
+    },
+    "submitted": "Thanks — your feedback was submitted.",
+    "errors": {
+      "cameraAccess": "Couldn't access the camera/gallery on this device.",
+      "micPermission": "Microphone permission is required to record a voice note.",
+      "startRecording": "Couldn't start recording on this device.",
+      "saveRecording": "Couldn't save the recording."
+    }
+  },
+  "profits": {
+    "title": "Profits",
+    "yearProfit": "Year Profit",
+    "monthProfit": "Month Profit",
+    "weekProfit": "Week Profit",
+    "todayProfit": "Today Profit",
+    "opsTapToFilter": "{ops} ops · tap to filter",
+    "selectedPeriodSection": "SELECTED PERIOD",
+    "operations": "Operations",
+    "netProfit": "Net Profit",
+    "totalSales": "Total Sales",
+    "profitOverTimeSection": "PROFIT OVER TIME",
+    "bestCompaniesSection": "BEST COMPANIES BY PROFIT",
+    "noCompaniesYet": "No companies yet."
+  },
+  "reports": {
+    "title": "Reports",
+    "printSavePdf": "Print/Save PDF",
+    "exportExcel": "Export Excel",
+    "totalProfit": "Total Profit",
+    "totalSales": "Total Sales",
+    "linesSold": "Lines Sold",
+    "operations": "Operations",
+    "toCollect": "To Collect",
+    "partiallyPaid": "Partially Paid",
+    "unpaid": "Unpaid",
+    "operationsSection": "OPERATIONS",
+    "empty": {
+      "title": "No operations yet",
+      "description": "Operations show up here as soon as you sell a SIM/eSIM line to a customer."
+    },
+    "table": {
+      "date": "Date",
+      "simNumber": "SIM Number",
+      "customer": "Customer",
+      "company": "Company",
+      "package": "Package",
+      "salePrice": "Sale Price",
+      "profit": "Profit",
+      "payment": "Payment",
+      "rep": "Rep"
+    }
+  },
+  "shipmentsOperations": {
+    "title": "Shipments & Operations",
+    "tabs": {
+      "shipments": "Shipments",
+      "operations": "Operations"
+    },
+    "shipmentsTab": {
+      "infoBanner": "Each company has one balance pool. Top-ups add to it, sales consume from it at wholesale price. Selling stops when the balance runs out or the credit limit is reached.",
+      "newShipment": "New Shipment",
+      "balanceSectionTitle": "YOUR BALANCE WITH SUPPLIER COMPANIES",
+      "empty": {
+        "title": "No companies yet",
+        "description": "Add a company first from the Companies tab."
+      },
+      "totalShipments": "Total Shipments",
+      "paid": "Paid",
+      "remaining": "Remaining",
+      "emptyShipments": {
+        "title": "No shipments yet",
+        "description": "Tap \"New Shipment\" to top up a company's balance."
+      },
+      "table": {
+        "company": "Company",
+        "type": "Type",
+        "date": "Date",
+        "totalAmount": "Total Amount"
+      },
+      "detail": {
+        "title": "Shipment Detail",
+        "company": "Company",
+        "type": "Type",
+        "date": "Date",
+        "totalAmount": "Total amount",
+        "amountPaid": "Amount paid",
+        "remaining": "Remaining",
+        "paymentMethod": "Payment method",
+        "referenceNumber": "Reference number",
+        "notes": "Notes"
+      }
+    },
+    "operationsTab": {
+      "partiallyPaid": "Partially Paid",
+      "unpaid": "Unpaid",
+      "needsFollowUp": "Needs Follow-up",
+      "followUpCaption": "{overdue} overdue · {today} today · {soon} soon",
+      "toCollect": "To Collect",
+      "searchHint": "Search by SIM number or operation ID",
+      "addOperation": "Add Operation",
+      "exportExcel": "Export Excel",
+      "import": "Import",
+      "empty": {
+        "title": "No operations yet",
+        "description": "Operations show up here as soon as you sell a SIM/eSIM line."
+      },
+      "table": {
+        "simNumber": "SIM Number",
+        "company": "Company",
+        "customer": "Customer",
+        "contact": "Contact",
+        "duration": "Duration"
+      }
+    },
+    "form": {
+      "title": "New Shipment",
+      "companyLabel": "Company",
+      "selectCompanyHint": "Select a company",
+      "typeLabel": "Type",
+      "prepaidDescription": "Money paid to the company in advance.",
+      "creditLimitDescription": "A credit ceiling — selling stops if exceeded.",
+      "totalAmountLabel": "Total amount",
+      "amountPaidLabel": "Amount paid",
+      "remainingLabel": "Remaining",
+      "paymentMethodLabel": "Payment method",
+      "paymentMethodHint": "Cash / Transfer / Wallet",
+      "shipmentDateLabel": "Shipment date",
+      "referenceNumberLabel": "Reference number (Optional)",
+      "notesLabel": "Notes (Optional)",
+      "save": "Save"
+    },
+    "operationDetail": {
+      "title": "Operation Detail",
+      "simLabel": "SIM / phone number",
+      "customer": "Customer",
+      "contact": "Contact",
+      "company": "Company",
+      "package": "Package",
+      "purchaseDate": "Purchase date",
+      "expiryDate": "Expiry date",
+      "wholesaleCost": "Wholesale cost",
+      "retailSalePrice": "Retail sale price",
+      "profit": "Profit",
+      "amountPaid": "Amount paid",
+      "remaining": "Remaining",
+      "paymentStatus": "Payment status"
+    }
+  },
+  "numberUpdate": {
+    "title": "Number Update",
+    "subtitle": "Update any number's status directly from your supplier companies' platforms.",
+    "enterNumberLabel": "Enter phone number",
+    "numberHint": "05xxxxxxxx",
+    "updateButton": "Update Number",
+    "recentUpdatesTitle": "Recent updates for this number",
+    "empty": {
+      "title": "No history yet",
+      "description": "Enter a number above to view its update log."
+    },
+    "importantNotes": "Important Notes",
+    "notes": {
+      "activationDelay": "When activating a new SIM or an unlimited line, its status in the system updates within approximately 3 hours.",
+      "notFoundContactSupport": "Any number that shows as \"not found in the system\" — contact Technical Support to have it added manually."
+    },
+    "status": {
+      "success": "Updated",
+      "notFound": "Not Found",
+      "failed": "Failed"
+    }
+  }
+}
