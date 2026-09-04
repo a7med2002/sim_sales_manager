@@ -1,20 +1,8 @@
-import 'package:easy_localization/easy_localization.dart';
 import 'package:equatable/equatable.dart';
 
-enum SupportRequestType { adminSurvey, suggestion, problem }
+import '../../../../core/support/support_request_type.dart';
 
-extension SupportRequestTypeLabel on SupportRequestType {
-  String get label {
-    switch (this) {
-      case SupportRequestType.adminSurvey:
-        return 'supportFeedback.types.adminSurvey'.tr();
-      case SupportRequestType.suggestion:
-        return 'supportFeedback.types.suggestion'.tr();
-      case SupportRequestType.problem:
-        return 'supportFeedback.types.problem'.tr();
-    }
-  }
-}
+export '../../../../core/support/support_request_type.dart' show SupportRequestType, SupportRequestTypeLabel;
 
 /// A submitted support/feedback request. Per APP_CONTEXT.md's "5. More →
 /// Support & Feedback" spec — photo/voice attachments are optional.

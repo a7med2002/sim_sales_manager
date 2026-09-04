@@ -1,4 +1,12 @@
 {
+  "sync": {
+    "status": {
+      "offline": "غير متصل — التغييرات رح تتزامن لما يرجع النت",
+      "syncing": "جارٍ المزامنة…",
+      "idle": "تمت المزامنة",
+      "error": "خطأ بالمزامنة — اضغط لإعادة المحاولة"
+    }
+  },
   "common": {
     "cancel": "إلغاء",
     "save": "حفظ",
@@ -72,9 +80,13 @@
     "signIn": "تسجيل الدخول",
     "demoNotice": "تجريبي: أي اسم مستخدم مع كلمة مرور 6 أحرف فأكثر.",
     "credentialsErrorTitle": "أدخل بيانات الدخول للمتابعة.",
+    "usernameHelper": "استخدم البريد الإلكتروني يلي أعطاك إياه الأدمن.",
+    "passwordHelper": "6 أحرف على الأقل.",
     "errors": {
       "usernameRequired": "أدخل اسم مستخدم أو بريدًا إلكترونيًا.",
-      "passwordTooShort": "يجب أن تتكوّن كلمة المرور من 6 أحرف على الأقل."
+      "passwordTooShort": "يجب أن تتكوّن كلمة المرور من 6 أحرف على الأقل.",
+      "invalidCredentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
+      "networkError": "تعذر الوصول للخادم. تحقق من اتصالك وحاول مجددًا."
     }
   },
   "forgotPassword": {
@@ -82,6 +94,7 @@
     "description": "أدخل البريد الإلكتروني المرتبط بحسابك وسنرسل لك رابطًا لإعادة تعيين كلمة المرور.",
     "emailLabel": "البريد الإلكتروني",
     "emailPlaceholder": "owner@simmanager.app",
+    "emailHelper": "رح نرسل رابط إعادة التعيين لهذا البريد.",
     "sendResetLink": "إرسال رابط إعادة التعيين",
     "checkEmailTitle": "تحقق من بريدك الإلكتروني",
     "checkEmailDescription": "لقد أرسلنا رابط إعادة تعيين كلمة المرور إلى {email}.",
@@ -119,6 +132,92 @@
     "activityLog": "سجل النشاط",
     "settings": "الإعدادات",
     "logout": "تسجيل الخروج"
+  },
+  "admin": {
+    "hub": {
+      "title": "الإدارة",
+      "subtitle": "إدارة الكتالوج المشترك وحسابات البائعين",
+      "companyCatalog": "كتالوج الشركات",
+      "companyCatalogDescription": "قوالب مشتركة لخيار \"استيراد جاهز\"",
+      "users": "المستخدمون",
+      "usersDescription": "إنشاء وتفعيل وإدارة حسابات البائعين",
+      "supportFeedback": "الدعم والملاحظات",
+      "supportFeedbackDescription": "شوف طلبات البائعين ورد عليهم"
+    },
+    "dashboard": {
+      "overviewSection": "نظرة عامة",
+      "totalSellers": "البائعون",
+      "activeCaption": "{count} نشط",
+      "inactiveSellers": "بائعون موقوفون",
+      "catalogCompanies": "شركات الكتالوج",
+      "archivedCaption": "{count} مؤرشفة",
+      "catalogPackages": "باقات الكتالوج",
+      "supportRequests": "طلبات الدعم",
+      "recentSignupsSection": "أحدث التسجيلات",
+      "noSignups": "لا يوجد تسجيلات بعد.",
+      "manageSection": "الإدارة"
+    },
+    "supportFeedback": {
+      "title": "الدعم والملاحظات",
+      "subtitle": "{count} طلب من البائعين",
+      "emptyTitle": "لا توجد طلبات بعد",
+      "emptyDescription": "الطلبات يلي بيرسلها البائعون رح تظهر هون.",
+      "messageLabel": "الرسالة",
+      "attachmentsLabel": "المرفقات",
+      "viewPhoto": "عرض الصورة",
+      "listenVoiceNote": "الاستماع للتسجيل الصوتي",
+      "attachmentError": "تعذر فتح هذا المرفق. حاول مجددًا.",
+      "loadingAttachment": "جارٍ التحميل…",
+      "replyByEmail": "الرد بالإيميل",
+      "replySubject": "رد: طلبك من الدعم والملاحظات"
+    },
+    "catalog": {
+      "title": "كتالوج الشركات",
+      "subtitle": "قوالب مشتركة لخيار \"استيراد جاهز\"",
+      "addCompany": "إضافة شركة",
+      "emptyTitle": "لا توجد شركات في الكتالوج بعد",
+      "emptyDescription": "أضف قالب شركة ليتمكن البائعون من استيرادها بضغطة واحدة.",
+      "archived": "مؤرشفة",
+      "packagesCount": "{count} باقة",
+      "edit": "تعديل",
+      "restore": "استعادة",
+      "archive": "أرشفة"
+    },
+    "catalogForm": {
+      "editTitle": "تعديل شركة",
+      "addTitle": "إضافة شركة",
+      "nameLabel": "اسم الشركة",
+      "numberUpdateUrlLabel": "رابط تحديث الأرقام",
+      "notesLabel": "ملاحظات",
+      "packagesSection": "الباقات",
+      "addPackage": "إضافة باقة",
+      "packageNamePlaceholder": "اسم الباقة",
+      "wholesaleCostPlaceholder": "سعر الجملة",
+      "retailPricePlaceholder": "سعر البيع",
+      "save": "حفظ"
+    },
+    "addUser": {
+      "title": "مستخدم جديد",
+      "description": "أنشئ حساب بائع، وشارك البريد الإلكتروني وكلمة المرور معه مباشرة.",
+      "nameLabel": "الاسم الظاهر",
+      "emailLabel": "البريد الإلكتروني",
+      "passwordLabel": "كلمة المرور",
+      "save": "إنشاء الحساب"
+    },
+    "users": {
+      "title": "المستخدمون",
+      "subtitle": "حسابات البائعين والإداريين",
+      "addUser": "إضافة مستخدم",
+      "emptyTitle": "لا يوجد مستخدمون بعد",
+      "emptyDescription": "أضف مستخدمًا لمنحه صلاحية الوصول إلى التطبيق.",
+      "roleSeller": "بائع",
+      "roleAdmin": "إداري",
+      "inactive": "غير مفعّل",
+      "activate": "تفعيل",
+      "deactivate": "إيقاف",
+      "promote": "ترقية إلى إداري",
+      "demote": "تنزيل إلى بائع"
+    }
   },
   "logout": {
     "title": "تسجيل الخروج؟",
@@ -183,6 +282,11 @@
       "deletedTitle": "لا توجد شركات محذوفة",
       "deletedDescription": "الشركات التي تحذفها ستظهر هنا ويمكن استعادتها."
     },
+    "detail": {
+      "linesSection": "الخطوط المشتراة من هذه الشركة ({count})",
+      "emptyLinesTitle": "لا توجد خطوط بعد",
+      "emptyLinesDescription": "الخطوط المباعة عبر هذه الشركة رح تظهر هون."
+    },
     "card": {
       "packagesOperations": "{packages} باقة · {operations} عملية",
       "profitGenerated": "الربح المحقق",
@@ -229,7 +333,9 @@
       "subtitle": "اختر علامة تجارية جاهزة بباقات افتراضية.",
       "packagesCount": "{count} باقة",
       "active": "نشطة",
-      "archivedTapToReimport": "مؤرشفة · اضغط لإعادة الاستيراد"
+      "archivedTapToReimport": "مؤرشفة · اضغط لإعادة الاستيراد",
+      "emptyCatalogTitle": "لا توجد شركات بالكتالوج بعد",
+      "emptyCatalogDescription": "اطلب من الأدمن إضافة شركة قبل ما تقدر تختار وحدة هون."
     }
   },
   "customers": {
@@ -326,8 +432,13 @@
       "editTitle": "تعديل الخط",
       "addTitle": "إضافة خط",
       "companyLabel": "الشركة",
+      "companyHint": "اختر شركة",
       "packageLabel": "الباقة",
-      "packageHint": "مثال: أسبوعي 1 جيجابايت",
+      "packageHint": "اختر باقة",
+      "noCompaniesTitle": "لا توجد شركات بعد",
+      "noCompaniesDescription": "أضف شركة أولاً (من تبويب الشركات) قبل ما تقدر تضيف خط.",
+      "availableBalance": "الرصيد المتاح: {amount}",
+      "insufficientBalance": "سعر الجملة أكبر من الرصيد المتاح لهذه الشركة — أضف شحنة أولاً.",
       "simLabel": "رقم الشريحة / الهاتف",
       "wholesaleCostLabel": "سعر الجملة",
       "retailSalePriceLabel": "سعر البيع للعميل",
@@ -371,7 +482,9 @@
       "profitLabel": "الربح",
       "simLabel": "رقم الشريحة / الهاتف",
       "purchaseDateLabel": "تاريخ الشراء",
-      "expiryDateLabel": "تاريخ الانتهاء"
+      "expiryDateLabel": "تاريخ الانتهاء",
+      "availableBalance": "الرصيد المتاح: {amount}",
+      "insufficientBalance": "سعر الجملة أكبر من الرصيد المتاح لهذه الشركة — أضف شحنة أولاً."
     },
     "paymentStep": {
       "amountPaidNowLabel": "المبلغ المدفوع الآن",
@@ -494,7 +607,8 @@
       "cameraAccess": "تعذّر الوصول إلى الكاميرا/المعرض على هذا الجهاز.",
       "micPermission": "إذن الميكروفون مطلوب لتسجيل ملاحظة صوتية.",
       "startRecording": "تعذّر بدء التسجيل على هذا الجهاز.",
-      "saveRecording": "تعذّر حفظ التسجيل."
+      "saveRecording": "تعذّر حفظ التسجيل.",
+      "playPreview": "تعذّر تشغيل التسجيل."
     }
   },
   "profits": {

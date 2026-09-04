@@ -9,7 +9,10 @@ import '../../domain/entities/company.dart';
 import '../../domain/entities/company_package.dart';
 
 /// Add/Edit Company bottom sheet. Pass [company] to prefill for editing —
-/// omit it to add a new company. Package rows are freely add/removable.
+/// omit it to add a new company. Every field — name, notes, packages —
+/// is freely editable: a seller owns their companies completely, whether
+/// typed from scratch or started from "Import Ready-Made" (see
+/// `CompaniesCubit`'s doc comment).
 class CompanyFormSheet extends StatefulWidget {
   final Company? company;
   final void Function(String name, String notes, List<CompanyPackage> packages) onSave;

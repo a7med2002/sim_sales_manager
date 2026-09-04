@@ -17,12 +17,20 @@ abstract class CustomerCatalog {
   String quickAddCustomer({required String name, required String contactNumber});
 
   /// Adds a sold Line under an existing customer. Payment status is
-  /// derived internally from `amountPaid` vs `retailPrice`.
+  /// derived internally from `amountPaid` vs `retailPrice`. [companyId]
+  /// (and [packageId], when the sale used a real catalog/company
+  /// package rather than a free-typed price) are what let this Line
+  /// persist for real once Lines are backed by Drift — `companyName`/
+  /// `companyInitials`/`packageName` stay purely for display so
+  /// existing widgets (LineCard, Numbers table, ...) don't need to look
+  /// the company back up just to render a row.
   void addSaleLine({
     required String customerId,
     required String simNumber,
+    required String companyId,
     required String companyName,
     required String companyInitials,
+    String? packageId,
     required String packageName,
     required DateTime purchaseDate,
     required DateTime expiryDate,

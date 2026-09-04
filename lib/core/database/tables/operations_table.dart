@@ -1,6 +1,6 @@
 import 'package:drift/drift.dart';
 
-import 'catalog_tables.dart';
+import 'companies_table.dart';
 import 'customers_table.dart';
 import 'lines_table.dart';
 import 'tenant_columns.dart';
@@ -12,7 +12,7 @@ class OperationsTable extends Table with TenantColumns {
   TextColumn get id => text()();
   TextColumn get customerId => text().references(CustomersTable, #id)();
   TextColumn get lineId => text().references(LinesTable, #id).nullable()();
-  TextColumn get companyCatalogId => text().references(CompanyCatalogTable, #id)();
+  TextColumn get companyId => text().references(CompaniesTable, #id)();
   DateTimeColumn get occurredAt => dateTime()();
   RealColumn get salePrice => real().withDefault(const Constant(0))();
   RealColumn get cost => real().withDefault(const Constant(0))();

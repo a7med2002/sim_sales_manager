@@ -82,15 +82,28 @@ class _PackagePriceStepState extends State<PackagePriceStep> {
         const SizedBox(height: AppSpacing.xs),
         DropdownButtonFormField<String>(
           initialValue: state.selectedCompanyId,
+          isExpanded: true,
           hint: Text('newSale.packagePriceStep.companyLabel'.tr(), style: AppTextStyles.cardTitle(colors.textSecondary)),
           style: AppTextStyles.cardTitle(colors.textPrimary),
           dropdownColor: colors.surface,
           decoration: _decoration(colors),
-          items: state.companies.map((c) => DropdownMenuItem(value: c.id, child: Text(c.name))).toList(),
+          items: state.companies
+              .map((c) => DropdownMenuItem(
+                    value: c.id,
+                    child: Text('${c.name} — ${formatCurrency(c.availableToSell)}', overflow: TextOverflow.ellipsis),
+                  ))
+              .toList(),
           onChanged: (value) {
             if (value != null) cubit.selectCompany(value);
           },
         ),
+        if (selectedCompany != null) ...[
+          const SizedBox(height: 4),
+          Text(
+            'newSale.packagePriceStep.availableBalance'.tr(namedArgs: {'amount': formatCurrency(selectedCompany.availableToSell)}),
+            style: AppTextStyles.body(colors.textSecondary),
+          ),
+        ],
         const SizedBox(height: AppSpacing.md),
         Text('newSale.packagePriceStep.packageLabel'.tr(), style: AppTextStyles.body(colors.textSecondary)),
         const SizedBox(height: AppSpacing.xs),
@@ -145,6 +158,13 @@ class _PackagePriceStepState extends State<PackagePriceStep> {
             ),
           ],
         ),
+        if (state.exceedsCompanyBalance) ...[
+          const SizedBox(height: 4),
+          Text(
+            'newSale.packagePriceStep.insufficientBalance'.tr(),
+            style: AppTextStyles.body(colors.danger),
+          ),
+        ],
         const SizedBox(height: AppSpacing.sm),
         Container(
           width: double.infinity,

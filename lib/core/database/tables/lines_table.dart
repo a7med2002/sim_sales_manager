@@ -1,7 +1,8 @@
 import 'package:drift/drift.dart';
 
-import 'catalog_tables.dart';
+import 'companies_table.dart';
 import 'customers_table.dart';
+import 'packages_table.dart';
 import 'tenant_columns.dart';
 
 class LinesTable extends Table with TenantColumns {
@@ -10,8 +11,8 @@ class LinesTable extends Table with TenantColumns {
 
   TextColumn get id => text()();
   TextColumn get customerId => text().references(CustomersTable, #id)();
-  TextColumn get companyCatalogId => text().references(CompanyCatalogTable, #id)();
-  TextColumn get packageCatalogId => text().references(PackageCatalogTable, #id).nullable()();
+  TextColumn get companyId => text().references(CompaniesTable, #id)();
+  TextColumn get packageId => text().references(PackagesTable, #id).nullable()();
   TextColumn get simNumber => text()();
   DateTimeColumn get purchaseDate => dateTime()();
   DateTimeColumn get expiryDate => dateTime()();

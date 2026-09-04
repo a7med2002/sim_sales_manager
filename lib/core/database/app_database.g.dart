@@ -1052,6 +1052,1137 @@ class PackageCatalogTableCompanion
   }
 }
 
+class $CompaniesTableTable extends CompaniesTable
+    with TableInfo<$CompaniesTableTable, CompaniesTableData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CompaniesTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _ownerIdMeta = const VerificationMeta(
+    'ownerId',
+  );
+  @override
+  late final GeneratedColumn<String> ownerId = GeneratedColumn<String>(
+    'owner_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _syncedMeta = const VerificationMeta('synced');
+  @override
+  late final GeneratedColumn<bool> synced = GeneratedColumn<bool>(
+    'synced',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("synced" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _logoUrlMeta = const VerificationMeta(
+    'logoUrl',
+  );
+  @override
+  late final GeneratedColumn<String> logoUrl = GeneratedColumn<String>(
+    'logo_url',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _notesMeta = const VerificationMeta('notes');
+  @override
+  late final GeneratedColumn<String> notes = GeneratedColumn<String>(
+    'notes',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('active'),
+  );
+  static const VerificationMeta _pinnedMeta = const VerificationMeta('pinned');
+  @override
+  late final GeneratedColumn<bool> pinned = GeneratedColumn<bool>(
+    'pinned',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("pinned" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _catalogCompanyIdMeta = const VerificationMeta(
+    'catalogCompanyId',
+  );
+  @override
+  late final GeneratedColumn<String> catalogCompanyId = GeneratedColumn<String>(
+    'catalog_company_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES company_catalog (id)',
+    ),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    ownerId,
+    synced,
+    updatedAt,
+    id,
+    name,
+    logoUrl,
+    notes,
+    status,
+    pinned,
+    catalogCompanyId,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'companies';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CompaniesTableData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('owner_id')) {
+      context.handle(
+        _ownerIdMeta,
+        ownerId.isAcceptableOrUnknown(data['owner_id']!, _ownerIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_ownerIdMeta);
+    }
+    if (data.containsKey('synced')) {
+      context.handle(
+        _syncedMeta,
+        synced.isAcceptableOrUnknown(data['synced']!, _syncedMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('logo_url')) {
+      context.handle(
+        _logoUrlMeta,
+        logoUrl.isAcceptableOrUnknown(data['logo_url']!, _logoUrlMeta),
+      );
+    }
+    if (data.containsKey('notes')) {
+      context.handle(
+        _notesMeta,
+        notes.isAcceptableOrUnknown(data['notes']!, _notesMeta),
+      );
+    }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    }
+    if (data.containsKey('pinned')) {
+      context.handle(
+        _pinnedMeta,
+        pinned.isAcceptableOrUnknown(data['pinned']!, _pinnedMeta),
+      );
+    }
+    if (data.containsKey('catalog_company_id')) {
+      context.handle(
+        _catalogCompanyIdMeta,
+        catalogCompanyId.isAcceptableOrUnknown(
+          data['catalog_company_id']!,
+          _catalogCompanyIdMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  CompaniesTableData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CompaniesTableData(
+      ownerId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}owner_id'],
+      )!,
+      synced: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}synced'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      logoUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}logo_url'],
+      ),
+      notes: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}notes'],
+      ),
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      )!,
+      pinned: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}pinned'],
+      )!,
+      catalogCompanyId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}catalog_company_id'],
+      ),
+    );
+  }
+
+  @override
+  $CompaniesTableTable createAlias(String alias) {
+    return $CompaniesTableTable(attachedDatabase, alias);
+  }
+}
+
+class CompaniesTableData extends DataClass
+    implements Insertable<CompaniesTableData> {
+  final String ownerId;
+  final bool synced;
+  final DateTime updatedAt;
+  final String id;
+  final String name;
+  final String? logoUrl;
+  final String? notes;
+  final String status;
+  final bool pinned;
+  final String? catalogCompanyId;
+  const CompaniesTableData({
+    required this.ownerId,
+    required this.synced,
+    required this.updatedAt,
+    required this.id,
+    required this.name,
+    this.logoUrl,
+    this.notes,
+    required this.status,
+    required this.pinned,
+    this.catalogCompanyId,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['owner_id'] = Variable<String>(ownerId);
+    map['synced'] = Variable<bool>(synced);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['id'] = Variable<String>(id);
+    map['name'] = Variable<String>(name);
+    if (!nullToAbsent || logoUrl != null) {
+      map['logo_url'] = Variable<String>(logoUrl);
+    }
+    if (!nullToAbsent || notes != null) {
+      map['notes'] = Variable<String>(notes);
+    }
+    map['status'] = Variable<String>(status);
+    map['pinned'] = Variable<bool>(pinned);
+    if (!nullToAbsent || catalogCompanyId != null) {
+      map['catalog_company_id'] = Variable<String>(catalogCompanyId);
+    }
+    return map;
+  }
+
+  CompaniesTableCompanion toCompanion(bool nullToAbsent) {
+    return CompaniesTableCompanion(
+      ownerId: Value(ownerId),
+      synced: Value(synced),
+      updatedAt: Value(updatedAt),
+      id: Value(id),
+      name: Value(name),
+      logoUrl: logoUrl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(logoUrl),
+      notes: notes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(notes),
+      status: Value(status),
+      pinned: Value(pinned),
+      catalogCompanyId: catalogCompanyId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(catalogCompanyId),
+    );
+  }
+
+  factory CompaniesTableData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CompaniesTableData(
+      ownerId: serializer.fromJson<String>(json['ownerId']),
+      synced: serializer.fromJson<bool>(json['synced']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      id: serializer.fromJson<String>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      logoUrl: serializer.fromJson<String?>(json['logoUrl']),
+      notes: serializer.fromJson<String?>(json['notes']),
+      status: serializer.fromJson<String>(json['status']),
+      pinned: serializer.fromJson<bool>(json['pinned']),
+      catalogCompanyId: serializer.fromJson<String?>(json['catalogCompanyId']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'ownerId': serializer.toJson<String>(ownerId),
+      'synced': serializer.toJson<bool>(synced),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'id': serializer.toJson<String>(id),
+      'name': serializer.toJson<String>(name),
+      'logoUrl': serializer.toJson<String?>(logoUrl),
+      'notes': serializer.toJson<String?>(notes),
+      'status': serializer.toJson<String>(status),
+      'pinned': serializer.toJson<bool>(pinned),
+      'catalogCompanyId': serializer.toJson<String?>(catalogCompanyId),
+    };
+  }
+
+  CompaniesTableData copyWith({
+    String? ownerId,
+    bool? synced,
+    DateTime? updatedAt,
+    String? id,
+    String? name,
+    Value<String?> logoUrl = const Value.absent(),
+    Value<String?> notes = const Value.absent(),
+    String? status,
+    bool? pinned,
+    Value<String?> catalogCompanyId = const Value.absent(),
+  }) => CompaniesTableData(
+    ownerId: ownerId ?? this.ownerId,
+    synced: synced ?? this.synced,
+    updatedAt: updatedAt ?? this.updatedAt,
+    id: id ?? this.id,
+    name: name ?? this.name,
+    logoUrl: logoUrl.present ? logoUrl.value : this.logoUrl,
+    notes: notes.present ? notes.value : this.notes,
+    status: status ?? this.status,
+    pinned: pinned ?? this.pinned,
+    catalogCompanyId: catalogCompanyId.present
+        ? catalogCompanyId.value
+        : this.catalogCompanyId,
+  );
+  CompaniesTableData copyWithCompanion(CompaniesTableCompanion data) {
+    return CompaniesTableData(
+      ownerId: data.ownerId.present ? data.ownerId.value : this.ownerId,
+      synced: data.synced.present ? data.synced.value : this.synced,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      logoUrl: data.logoUrl.present ? data.logoUrl.value : this.logoUrl,
+      notes: data.notes.present ? data.notes.value : this.notes,
+      status: data.status.present ? data.status.value : this.status,
+      pinned: data.pinned.present ? data.pinned.value : this.pinned,
+      catalogCompanyId: data.catalogCompanyId.present
+          ? data.catalogCompanyId.value
+          : this.catalogCompanyId,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CompaniesTableData(')
+          ..write('ownerId: $ownerId, ')
+          ..write('synced: $synced, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('logoUrl: $logoUrl, ')
+          ..write('notes: $notes, ')
+          ..write('status: $status, ')
+          ..write('pinned: $pinned, ')
+          ..write('catalogCompanyId: $catalogCompanyId')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    ownerId,
+    synced,
+    updatedAt,
+    id,
+    name,
+    logoUrl,
+    notes,
+    status,
+    pinned,
+    catalogCompanyId,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CompaniesTableData &&
+          other.ownerId == this.ownerId &&
+          other.synced == this.synced &&
+          other.updatedAt == this.updatedAt &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.logoUrl == this.logoUrl &&
+          other.notes == this.notes &&
+          other.status == this.status &&
+          other.pinned == this.pinned &&
+          other.catalogCompanyId == this.catalogCompanyId);
+}
+
+class CompaniesTableCompanion extends UpdateCompanion<CompaniesTableData> {
+  final Value<String> ownerId;
+  final Value<bool> synced;
+  final Value<DateTime> updatedAt;
+  final Value<String> id;
+  final Value<String> name;
+  final Value<String?> logoUrl;
+  final Value<String?> notes;
+  final Value<String> status;
+  final Value<bool> pinned;
+  final Value<String?> catalogCompanyId;
+  final Value<int> rowid;
+  const CompaniesTableCompanion({
+    this.ownerId = const Value.absent(),
+    this.synced = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.logoUrl = const Value.absent(),
+    this.notes = const Value.absent(),
+    this.status = const Value.absent(),
+    this.pinned = const Value.absent(),
+    this.catalogCompanyId = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CompaniesTableCompanion.insert({
+    required String ownerId,
+    this.synced = const Value.absent(),
+    required DateTime updatedAt,
+    required String id,
+    required String name,
+    this.logoUrl = const Value.absent(),
+    this.notes = const Value.absent(),
+    this.status = const Value.absent(),
+    this.pinned = const Value.absent(),
+    this.catalogCompanyId = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : ownerId = Value(ownerId),
+       updatedAt = Value(updatedAt),
+       id = Value(id),
+       name = Value(name);
+  static Insertable<CompaniesTableData> custom({
+    Expression<String>? ownerId,
+    Expression<bool>? synced,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? id,
+    Expression<String>? name,
+    Expression<String>? logoUrl,
+    Expression<String>? notes,
+    Expression<String>? status,
+    Expression<bool>? pinned,
+    Expression<String>? catalogCompanyId,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (ownerId != null) 'owner_id': ownerId,
+      if (synced != null) 'synced': synced,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (logoUrl != null) 'logo_url': logoUrl,
+      if (notes != null) 'notes': notes,
+      if (status != null) 'status': status,
+      if (pinned != null) 'pinned': pinned,
+      if (catalogCompanyId != null) 'catalog_company_id': catalogCompanyId,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CompaniesTableCompanion copyWith({
+    Value<String>? ownerId,
+    Value<bool>? synced,
+    Value<DateTime>? updatedAt,
+    Value<String>? id,
+    Value<String>? name,
+    Value<String?>? logoUrl,
+    Value<String?>? notes,
+    Value<String>? status,
+    Value<bool>? pinned,
+    Value<String?>? catalogCompanyId,
+    Value<int>? rowid,
+  }) {
+    return CompaniesTableCompanion(
+      ownerId: ownerId ?? this.ownerId,
+      synced: synced ?? this.synced,
+      updatedAt: updatedAt ?? this.updatedAt,
+      id: id ?? this.id,
+      name: name ?? this.name,
+      logoUrl: logoUrl ?? this.logoUrl,
+      notes: notes ?? this.notes,
+      status: status ?? this.status,
+      pinned: pinned ?? this.pinned,
+      catalogCompanyId: catalogCompanyId ?? this.catalogCompanyId,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (ownerId.present) {
+      map['owner_id'] = Variable<String>(ownerId.value);
+    }
+    if (synced.present) {
+      map['synced'] = Variable<bool>(synced.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (logoUrl.present) {
+      map['logo_url'] = Variable<String>(logoUrl.value);
+    }
+    if (notes.present) {
+      map['notes'] = Variable<String>(notes.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (pinned.present) {
+      map['pinned'] = Variable<bool>(pinned.value);
+    }
+    if (catalogCompanyId.present) {
+      map['catalog_company_id'] = Variable<String>(catalogCompanyId.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CompaniesTableCompanion(')
+          ..write('ownerId: $ownerId, ')
+          ..write('synced: $synced, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('logoUrl: $logoUrl, ')
+          ..write('notes: $notes, ')
+          ..write('status: $status, ')
+          ..write('pinned: $pinned, ')
+          ..write('catalogCompanyId: $catalogCompanyId, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $PackagesTableTable extends PackagesTable
+    with TableInfo<$PackagesTableTable, PackagesTableData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $PackagesTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _ownerIdMeta = const VerificationMeta(
+    'ownerId',
+  );
+  @override
+  late final GeneratedColumn<String> ownerId = GeneratedColumn<String>(
+    'owner_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _syncedMeta = const VerificationMeta('synced');
+  @override
+  late final GeneratedColumn<bool> synced = GeneratedColumn<bool>(
+    'synced',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("synced" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _companyIdMeta = const VerificationMeta(
+    'companyId',
+  );
+  @override
+  late final GeneratedColumn<String> companyId = GeneratedColumn<String>(
+    'company_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES companies (id)',
+    ),
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _wholesaleCostMeta = const VerificationMeta(
+    'wholesaleCost',
+  );
+  @override
+  late final GeneratedColumn<double> wholesaleCost = GeneratedColumn<double>(
+    'wholesale_cost',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _retailPriceMeta = const VerificationMeta(
+    'retailPrice',
+  );
+  @override
+  late final GeneratedColumn<double> retailPrice = GeneratedColumn<double>(
+    'retail_price',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    ownerId,
+    synced,
+    updatedAt,
+    id,
+    companyId,
+    name,
+    wholesaleCost,
+    retailPrice,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'packages';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<PackagesTableData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('owner_id')) {
+      context.handle(
+        _ownerIdMeta,
+        ownerId.isAcceptableOrUnknown(data['owner_id']!, _ownerIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_ownerIdMeta);
+    }
+    if (data.containsKey('synced')) {
+      context.handle(
+        _syncedMeta,
+        synced.isAcceptableOrUnknown(data['synced']!, _syncedMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('company_id')) {
+      context.handle(
+        _companyIdMeta,
+        companyId.isAcceptableOrUnknown(data['company_id']!, _companyIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_companyIdMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('wholesale_cost')) {
+      context.handle(
+        _wholesaleCostMeta,
+        wholesaleCost.isAcceptableOrUnknown(
+          data['wholesale_cost']!,
+          _wholesaleCostMeta,
+        ),
+      );
+    }
+    if (data.containsKey('retail_price')) {
+      context.handle(
+        _retailPriceMeta,
+        retailPrice.isAcceptableOrUnknown(
+          data['retail_price']!,
+          _retailPriceMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  PackagesTableData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return PackagesTableData(
+      ownerId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}owner_id'],
+      )!,
+      synced: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}synced'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      companyId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}company_id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      wholesaleCost: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}wholesale_cost'],
+      )!,
+      retailPrice: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}retail_price'],
+      )!,
+    );
+  }
+
+  @override
+  $PackagesTableTable createAlias(String alias) {
+    return $PackagesTableTable(attachedDatabase, alias);
+  }
+}
+
+class PackagesTableData extends DataClass
+    implements Insertable<PackagesTableData> {
+  final String ownerId;
+  final bool synced;
+  final DateTime updatedAt;
+  final String id;
+  final String companyId;
+  final String name;
+  final double wholesaleCost;
+  final double retailPrice;
+  const PackagesTableData({
+    required this.ownerId,
+    required this.synced,
+    required this.updatedAt,
+    required this.id,
+    required this.companyId,
+    required this.name,
+    required this.wholesaleCost,
+    required this.retailPrice,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['owner_id'] = Variable<String>(ownerId);
+    map['synced'] = Variable<bool>(synced);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['id'] = Variable<String>(id);
+    map['company_id'] = Variable<String>(companyId);
+    map['name'] = Variable<String>(name);
+    map['wholesale_cost'] = Variable<double>(wholesaleCost);
+    map['retail_price'] = Variable<double>(retailPrice);
+    return map;
+  }
+
+  PackagesTableCompanion toCompanion(bool nullToAbsent) {
+    return PackagesTableCompanion(
+      ownerId: Value(ownerId),
+      synced: Value(synced),
+      updatedAt: Value(updatedAt),
+      id: Value(id),
+      companyId: Value(companyId),
+      name: Value(name),
+      wholesaleCost: Value(wholesaleCost),
+      retailPrice: Value(retailPrice),
+    );
+  }
+
+  factory PackagesTableData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return PackagesTableData(
+      ownerId: serializer.fromJson<String>(json['ownerId']),
+      synced: serializer.fromJson<bool>(json['synced']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      id: serializer.fromJson<String>(json['id']),
+      companyId: serializer.fromJson<String>(json['companyId']),
+      name: serializer.fromJson<String>(json['name']),
+      wholesaleCost: serializer.fromJson<double>(json['wholesaleCost']),
+      retailPrice: serializer.fromJson<double>(json['retailPrice']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'ownerId': serializer.toJson<String>(ownerId),
+      'synced': serializer.toJson<bool>(synced),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'id': serializer.toJson<String>(id),
+      'companyId': serializer.toJson<String>(companyId),
+      'name': serializer.toJson<String>(name),
+      'wholesaleCost': serializer.toJson<double>(wholesaleCost),
+      'retailPrice': serializer.toJson<double>(retailPrice),
+    };
+  }
+
+  PackagesTableData copyWith({
+    String? ownerId,
+    bool? synced,
+    DateTime? updatedAt,
+    String? id,
+    String? companyId,
+    String? name,
+    double? wholesaleCost,
+    double? retailPrice,
+  }) => PackagesTableData(
+    ownerId: ownerId ?? this.ownerId,
+    synced: synced ?? this.synced,
+    updatedAt: updatedAt ?? this.updatedAt,
+    id: id ?? this.id,
+    companyId: companyId ?? this.companyId,
+    name: name ?? this.name,
+    wholesaleCost: wholesaleCost ?? this.wholesaleCost,
+    retailPrice: retailPrice ?? this.retailPrice,
+  );
+  PackagesTableData copyWithCompanion(PackagesTableCompanion data) {
+    return PackagesTableData(
+      ownerId: data.ownerId.present ? data.ownerId.value : this.ownerId,
+      synced: data.synced.present ? data.synced.value : this.synced,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      id: data.id.present ? data.id.value : this.id,
+      companyId: data.companyId.present ? data.companyId.value : this.companyId,
+      name: data.name.present ? data.name.value : this.name,
+      wholesaleCost: data.wholesaleCost.present
+          ? data.wholesaleCost.value
+          : this.wholesaleCost,
+      retailPrice: data.retailPrice.present
+          ? data.retailPrice.value
+          : this.retailPrice,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PackagesTableData(')
+          ..write('ownerId: $ownerId, ')
+          ..write('synced: $synced, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('id: $id, ')
+          ..write('companyId: $companyId, ')
+          ..write('name: $name, ')
+          ..write('wholesaleCost: $wholesaleCost, ')
+          ..write('retailPrice: $retailPrice')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    ownerId,
+    synced,
+    updatedAt,
+    id,
+    companyId,
+    name,
+    wholesaleCost,
+    retailPrice,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PackagesTableData &&
+          other.ownerId == this.ownerId &&
+          other.synced == this.synced &&
+          other.updatedAt == this.updatedAt &&
+          other.id == this.id &&
+          other.companyId == this.companyId &&
+          other.name == this.name &&
+          other.wholesaleCost == this.wholesaleCost &&
+          other.retailPrice == this.retailPrice);
+}
+
+class PackagesTableCompanion extends UpdateCompanion<PackagesTableData> {
+  final Value<String> ownerId;
+  final Value<bool> synced;
+  final Value<DateTime> updatedAt;
+  final Value<String> id;
+  final Value<String> companyId;
+  final Value<String> name;
+  final Value<double> wholesaleCost;
+  final Value<double> retailPrice;
+  final Value<int> rowid;
+  const PackagesTableCompanion({
+    this.ownerId = const Value.absent(),
+    this.synced = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.id = const Value.absent(),
+    this.companyId = const Value.absent(),
+    this.name = const Value.absent(),
+    this.wholesaleCost = const Value.absent(),
+    this.retailPrice = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  PackagesTableCompanion.insert({
+    required String ownerId,
+    this.synced = const Value.absent(),
+    required DateTime updatedAt,
+    required String id,
+    required String companyId,
+    required String name,
+    this.wholesaleCost = const Value.absent(),
+    this.retailPrice = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : ownerId = Value(ownerId),
+       updatedAt = Value(updatedAt),
+       id = Value(id),
+       companyId = Value(companyId),
+       name = Value(name);
+  static Insertable<PackagesTableData> custom({
+    Expression<String>? ownerId,
+    Expression<bool>? synced,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? id,
+    Expression<String>? companyId,
+    Expression<String>? name,
+    Expression<double>? wholesaleCost,
+    Expression<double>? retailPrice,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (ownerId != null) 'owner_id': ownerId,
+      if (synced != null) 'synced': synced,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (id != null) 'id': id,
+      if (companyId != null) 'company_id': companyId,
+      if (name != null) 'name': name,
+      if (wholesaleCost != null) 'wholesale_cost': wholesaleCost,
+      if (retailPrice != null) 'retail_price': retailPrice,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  PackagesTableCompanion copyWith({
+    Value<String>? ownerId,
+    Value<bool>? synced,
+    Value<DateTime>? updatedAt,
+    Value<String>? id,
+    Value<String>? companyId,
+    Value<String>? name,
+    Value<double>? wholesaleCost,
+    Value<double>? retailPrice,
+    Value<int>? rowid,
+  }) {
+    return PackagesTableCompanion(
+      ownerId: ownerId ?? this.ownerId,
+      synced: synced ?? this.synced,
+      updatedAt: updatedAt ?? this.updatedAt,
+      id: id ?? this.id,
+      companyId: companyId ?? this.companyId,
+      name: name ?? this.name,
+      wholesaleCost: wholesaleCost ?? this.wholesaleCost,
+      retailPrice: retailPrice ?? this.retailPrice,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (ownerId.present) {
+      map['owner_id'] = Variable<String>(ownerId.value);
+    }
+    if (synced.present) {
+      map['synced'] = Variable<bool>(synced.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (companyId.present) {
+      map['company_id'] = Variable<String>(companyId.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (wholesaleCost.present) {
+      map['wholesale_cost'] = Variable<double>(wholesaleCost.value);
+    }
+    if (retailPrice.present) {
+      map['retail_price'] = Variable<double>(retailPrice.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PackagesTableCompanion(')
+          ..write('ownerId: $ownerId, ')
+          ..write('synced: $synced, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('id: $id, ')
+          ..write('companyId: $companyId, ')
+          ..write('name: $name, ')
+          ..write('wholesaleCost: $wholesaleCost, ')
+          ..write('retailPrice: $retailPrice, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $CustomersTableTable extends CustomersTable
     with TableInfo<$CustomersTableTable, CustomersTableData> {
   @override
@@ -1706,526 +2837,6 @@ class CustomersTableCompanion extends UpdateCompanion<CustomersTableData> {
   }
 }
 
-class $SellerCompaniesTableTable extends SellerCompaniesTable
-    with TableInfo<$SellerCompaniesTableTable, SellerCompaniesTableData> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $SellerCompaniesTableTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _ownerIdMeta = const VerificationMeta(
-    'ownerId',
-  );
-  @override
-  late final GeneratedColumn<String> ownerId = GeneratedColumn<String>(
-    'owner_id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _syncedMeta = const VerificationMeta('synced');
-  @override
-  late final GeneratedColumn<bool> synced = GeneratedColumn<bool>(
-    'synced',
-    aliasedName,
-    false,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("synced" IN (0, 1))',
-    ),
-    defaultValue: const Constant(true),
-  );
-  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
-    'updatedAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
-    'updated_at',
-    aliasedName,
-    false,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
-  late final GeneratedColumn<String> id = GeneratedColumn<String>(
-    'id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _companyCatalogIdMeta = const VerificationMeta(
-    'companyCatalogId',
-  );
-  @override
-  late final GeneratedColumn<String> companyCatalogId = GeneratedColumn<String>(
-    'company_catalog_id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES company_catalog (id)',
-    ),
-  );
-  static const VerificationMeta _statusMeta = const VerificationMeta('status');
-  @override
-  late final GeneratedColumn<String> status = GeneratedColumn<String>(
-    'status',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-    defaultValue: const Constant('active'),
-  );
-  static const VerificationMeta _pinnedMeta = const VerificationMeta('pinned');
-  @override
-  late final GeneratedColumn<bool> pinned = GeneratedColumn<bool>(
-    'pinned',
-    aliasedName,
-    false,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("pinned" IN (0, 1))',
-    ),
-    defaultValue: const Constant(false),
-  );
-  static const VerificationMeta _notesMeta = const VerificationMeta('notes');
-  @override
-  late final GeneratedColumn<String> notes = GeneratedColumn<String>(
-    'notes',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  @override
-  List<GeneratedColumn> get $columns => [
-    ownerId,
-    synced,
-    updatedAt,
-    id,
-    companyCatalogId,
-    status,
-    pinned,
-    notes,
-  ];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'seller_companies';
-  @override
-  VerificationContext validateIntegrity(
-    Insertable<SellerCompaniesTableData> instance, {
-    bool isInserting = false,
-  }) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('owner_id')) {
-      context.handle(
-        _ownerIdMeta,
-        ownerId.isAcceptableOrUnknown(data['owner_id']!, _ownerIdMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_ownerIdMeta);
-    }
-    if (data.containsKey('synced')) {
-      context.handle(
-        _syncedMeta,
-        synced.isAcceptableOrUnknown(data['synced']!, _syncedMeta),
-      );
-    }
-    if (data.containsKey('updated_at')) {
-      context.handle(
-        _updatedAtMeta,
-        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_updatedAtMeta);
-    }
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    } else if (isInserting) {
-      context.missing(_idMeta);
-    }
-    if (data.containsKey('company_catalog_id')) {
-      context.handle(
-        _companyCatalogIdMeta,
-        companyCatalogId.isAcceptableOrUnknown(
-          data['company_catalog_id']!,
-          _companyCatalogIdMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_companyCatalogIdMeta);
-    }
-    if (data.containsKey('status')) {
-      context.handle(
-        _statusMeta,
-        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
-      );
-    }
-    if (data.containsKey('pinned')) {
-      context.handle(
-        _pinnedMeta,
-        pinned.isAcceptableOrUnknown(data['pinned']!, _pinnedMeta),
-      );
-    }
-    if (data.containsKey('notes')) {
-      context.handle(
-        _notesMeta,
-        notes.isAcceptableOrUnknown(data['notes']!, _notesMeta),
-      );
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {id};
-  @override
-  SellerCompaniesTableData map(
-    Map<String, dynamic> data, {
-    String? tablePrefix,
-  }) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return SellerCompaniesTableData(
-      ownerId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}owner_id'],
-      )!,
-      synced: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}synced'],
-      )!,
-      updatedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}updated_at'],
-      )!,
-      id: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}id'],
-      )!,
-      companyCatalogId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}company_catalog_id'],
-      )!,
-      status: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}status'],
-      )!,
-      pinned: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}pinned'],
-      )!,
-      notes: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}notes'],
-      ),
-    );
-  }
-
-  @override
-  $SellerCompaniesTableTable createAlias(String alias) {
-    return $SellerCompaniesTableTable(attachedDatabase, alias);
-  }
-}
-
-class SellerCompaniesTableData extends DataClass
-    implements Insertable<SellerCompaniesTableData> {
-  final String ownerId;
-  final bool synced;
-  final DateTime updatedAt;
-  final String id;
-  final String companyCatalogId;
-  final String status;
-  final bool pinned;
-  final String? notes;
-  const SellerCompaniesTableData({
-    required this.ownerId,
-    required this.synced,
-    required this.updatedAt,
-    required this.id,
-    required this.companyCatalogId,
-    required this.status,
-    required this.pinned,
-    this.notes,
-  });
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['owner_id'] = Variable<String>(ownerId);
-    map['synced'] = Variable<bool>(synced);
-    map['updated_at'] = Variable<DateTime>(updatedAt);
-    map['id'] = Variable<String>(id);
-    map['company_catalog_id'] = Variable<String>(companyCatalogId);
-    map['status'] = Variable<String>(status);
-    map['pinned'] = Variable<bool>(pinned);
-    if (!nullToAbsent || notes != null) {
-      map['notes'] = Variable<String>(notes);
-    }
-    return map;
-  }
-
-  SellerCompaniesTableCompanion toCompanion(bool nullToAbsent) {
-    return SellerCompaniesTableCompanion(
-      ownerId: Value(ownerId),
-      synced: Value(synced),
-      updatedAt: Value(updatedAt),
-      id: Value(id),
-      companyCatalogId: Value(companyCatalogId),
-      status: Value(status),
-      pinned: Value(pinned),
-      notes: notes == null && nullToAbsent
-          ? const Value.absent()
-          : Value(notes),
-    );
-  }
-
-  factory SellerCompaniesTableData.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return SellerCompaniesTableData(
-      ownerId: serializer.fromJson<String>(json['ownerId']),
-      synced: serializer.fromJson<bool>(json['synced']),
-      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
-      id: serializer.fromJson<String>(json['id']),
-      companyCatalogId: serializer.fromJson<String>(json['companyCatalogId']),
-      status: serializer.fromJson<String>(json['status']),
-      pinned: serializer.fromJson<bool>(json['pinned']),
-      notes: serializer.fromJson<String?>(json['notes']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'ownerId': serializer.toJson<String>(ownerId),
-      'synced': serializer.toJson<bool>(synced),
-      'updatedAt': serializer.toJson<DateTime>(updatedAt),
-      'id': serializer.toJson<String>(id),
-      'companyCatalogId': serializer.toJson<String>(companyCatalogId),
-      'status': serializer.toJson<String>(status),
-      'pinned': serializer.toJson<bool>(pinned),
-      'notes': serializer.toJson<String?>(notes),
-    };
-  }
-
-  SellerCompaniesTableData copyWith({
-    String? ownerId,
-    bool? synced,
-    DateTime? updatedAt,
-    String? id,
-    String? companyCatalogId,
-    String? status,
-    bool? pinned,
-    Value<String?> notes = const Value.absent(),
-  }) => SellerCompaniesTableData(
-    ownerId: ownerId ?? this.ownerId,
-    synced: synced ?? this.synced,
-    updatedAt: updatedAt ?? this.updatedAt,
-    id: id ?? this.id,
-    companyCatalogId: companyCatalogId ?? this.companyCatalogId,
-    status: status ?? this.status,
-    pinned: pinned ?? this.pinned,
-    notes: notes.present ? notes.value : this.notes,
-  );
-  SellerCompaniesTableData copyWithCompanion(
-    SellerCompaniesTableCompanion data,
-  ) {
-    return SellerCompaniesTableData(
-      ownerId: data.ownerId.present ? data.ownerId.value : this.ownerId,
-      synced: data.synced.present ? data.synced.value : this.synced,
-      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
-      id: data.id.present ? data.id.value : this.id,
-      companyCatalogId: data.companyCatalogId.present
-          ? data.companyCatalogId.value
-          : this.companyCatalogId,
-      status: data.status.present ? data.status.value : this.status,
-      pinned: data.pinned.present ? data.pinned.value : this.pinned,
-      notes: data.notes.present ? data.notes.value : this.notes,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('SellerCompaniesTableData(')
-          ..write('ownerId: $ownerId, ')
-          ..write('synced: $synced, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('id: $id, ')
-          ..write('companyCatalogId: $companyCatalogId, ')
-          ..write('status: $status, ')
-          ..write('pinned: $pinned, ')
-          ..write('notes: $notes')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode => Object.hash(
-    ownerId,
-    synced,
-    updatedAt,
-    id,
-    companyCatalogId,
-    status,
-    pinned,
-    notes,
-  );
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is SellerCompaniesTableData &&
-          other.ownerId == this.ownerId &&
-          other.synced == this.synced &&
-          other.updatedAt == this.updatedAt &&
-          other.id == this.id &&
-          other.companyCatalogId == this.companyCatalogId &&
-          other.status == this.status &&
-          other.pinned == this.pinned &&
-          other.notes == this.notes);
-}
-
-class SellerCompaniesTableCompanion
-    extends UpdateCompanion<SellerCompaniesTableData> {
-  final Value<String> ownerId;
-  final Value<bool> synced;
-  final Value<DateTime> updatedAt;
-  final Value<String> id;
-  final Value<String> companyCatalogId;
-  final Value<String> status;
-  final Value<bool> pinned;
-  final Value<String?> notes;
-  final Value<int> rowid;
-  const SellerCompaniesTableCompanion({
-    this.ownerId = const Value.absent(),
-    this.synced = const Value.absent(),
-    this.updatedAt = const Value.absent(),
-    this.id = const Value.absent(),
-    this.companyCatalogId = const Value.absent(),
-    this.status = const Value.absent(),
-    this.pinned = const Value.absent(),
-    this.notes = const Value.absent(),
-    this.rowid = const Value.absent(),
-  });
-  SellerCompaniesTableCompanion.insert({
-    required String ownerId,
-    this.synced = const Value.absent(),
-    required DateTime updatedAt,
-    required String id,
-    required String companyCatalogId,
-    this.status = const Value.absent(),
-    this.pinned = const Value.absent(),
-    this.notes = const Value.absent(),
-    this.rowid = const Value.absent(),
-  }) : ownerId = Value(ownerId),
-       updatedAt = Value(updatedAt),
-       id = Value(id),
-       companyCatalogId = Value(companyCatalogId);
-  static Insertable<SellerCompaniesTableData> custom({
-    Expression<String>? ownerId,
-    Expression<bool>? synced,
-    Expression<DateTime>? updatedAt,
-    Expression<String>? id,
-    Expression<String>? companyCatalogId,
-    Expression<String>? status,
-    Expression<bool>? pinned,
-    Expression<String>? notes,
-    Expression<int>? rowid,
-  }) {
-    return RawValuesInsertable({
-      if (ownerId != null) 'owner_id': ownerId,
-      if (synced != null) 'synced': synced,
-      if (updatedAt != null) 'updated_at': updatedAt,
-      if (id != null) 'id': id,
-      if (companyCatalogId != null) 'company_catalog_id': companyCatalogId,
-      if (status != null) 'status': status,
-      if (pinned != null) 'pinned': pinned,
-      if (notes != null) 'notes': notes,
-      if (rowid != null) 'rowid': rowid,
-    });
-  }
-
-  SellerCompaniesTableCompanion copyWith({
-    Value<String>? ownerId,
-    Value<bool>? synced,
-    Value<DateTime>? updatedAt,
-    Value<String>? id,
-    Value<String>? companyCatalogId,
-    Value<String>? status,
-    Value<bool>? pinned,
-    Value<String?>? notes,
-    Value<int>? rowid,
-  }) {
-    return SellerCompaniesTableCompanion(
-      ownerId: ownerId ?? this.ownerId,
-      synced: synced ?? this.synced,
-      updatedAt: updatedAt ?? this.updatedAt,
-      id: id ?? this.id,
-      companyCatalogId: companyCatalogId ?? this.companyCatalogId,
-      status: status ?? this.status,
-      pinned: pinned ?? this.pinned,
-      notes: notes ?? this.notes,
-      rowid: rowid ?? this.rowid,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (ownerId.present) {
-      map['owner_id'] = Variable<String>(ownerId.value);
-    }
-    if (synced.present) {
-      map['synced'] = Variable<bool>(synced.value);
-    }
-    if (updatedAt.present) {
-      map['updated_at'] = Variable<DateTime>(updatedAt.value);
-    }
-    if (id.present) {
-      map['id'] = Variable<String>(id.value);
-    }
-    if (companyCatalogId.present) {
-      map['company_catalog_id'] = Variable<String>(companyCatalogId.value);
-    }
-    if (status.present) {
-      map['status'] = Variable<String>(status.value);
-    }
-    if (pinned.present) {
-      map['pinned'] = Variable<bool>(pinned.value);
-    }
-    if (notes.present) {
-      map['notes'] = Variable<String>(notes.value);
-    }
-    if (rowid.present) {
-      map['rowid'] = Variable<int>(rowid.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('SellerCompaniesTableCompanion(')
-          ..write('ownerId: $ownerId, ')
-          ..write('synced: $synced, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('id: $id, ')
-          ..write('companyCatalogId: $companyCatalogId, ')
-          ..write('status: $status, ')
-          ..write('pinned: $pinned, ')
-          ..write('notes: $notes, ')
-          ..write('rowid: $rowid')
-          ..write(')'))
-        .toString();
-  }
-}
-
 class $ShipmentsTableTable extends ShipmentsTable
     with TableInfo<$ShipmentsTableTable, ShipmentsTableData> {
   @override
@@ -2276,18 +2887,18 @@ class $ShipmentsTableTable extends ShipmentsTable
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _companyCatalogIdMeta = const VerificationMeta(
-    'companyCatalogId',
+  static const VerificationMeta _companyIdMeta = const VerificationMeta(
+    'companyId',
   );
   @override
-  late final GeneratedColumn<String> companyCatalogId = GeneratedColumn<String>(
-    'company_catalog_id',
+  late final GeneratedColumn<String> companyId = GeneratedColumn<String>(
+    'company_id',
     aliasedName,
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES company_catalog (id)',
+      'REFERENCES companies (id)',
     ),
   );
   static const VerificationMeta _typeMeta = const VerificationMeta('type');
@@ -2383,7 +2994,7 @@ class $ShipmentsTableTable extends ShipmentsTable
     synced,
     updatedAt,
     id,
-    companyCatalogId,
+    companyId,
     type,
     totalAmount,
     amountPaid,
@@ -2432,16 +3043,13 @@ class $ShipmentsTableTable extends ShipmentsTable
     } else if (isInserting) {
       context.missing(_idMeta);
     }
-    if (data.containsKey('company_catalog_id')) {
+    if (data.containsKey('company_id')) {
       context.handle(
-        _companyCatalogIdMeta,
-        companyCatalogId.isAcceptableOrUnknown(
-          data['company_catalog_id']!,
-          _companyCatalogIdMeta,
-        ),
+        _companyIdMeta,
+        companyId.isAcceptableOrUnknown(data['company_id']!, _companyIdMeta),
       );
     } else if (isInserting) {
-      context.missing(_companyCatalogIdMeta);
+      context.missing(_companyIdMeta);
     }
     if (data.containsKey('type')) {
       context.handle(
@@ -2535,9 +3143,9 @@ class $ShipmentsTableTable extends ShipmentsTable
         DriftSqlType.string,
         data['${effectivePrefix}id'],
       )!,
-      companyCatalogId: attachedDatabase.typeMapping.read(
+      companyId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}company_catalog_id'],
+        data['${effectivePrefix}company_id'],
       )!,
       type: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
@@ -2586,7 +3194,7 @@ class ShipmentsTableData extends DataClass
   final bool synced;
   final DateTime updatedAt;
   final String id;
-  final String companyCatalogId;
+  final String companyId;
   final String type;
   final double totalAmount;
   final double amountPaid;
@@ -2600,7 +3208,7 @@ class ShipmentsTableData extends DataClass
     required this.synced,
     required this.updatedAt,
     required this.id,
-    required this.companyCatalogId,
+    required this.companyId,
     required this.type,
     required this.totalAmount,
     required this.amountPaid,
@@ -2617,7 +3225,7 @@ class ShipmentsTableData extends DataClass
     map['synced'] = Variable<bool>(synced);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     map['id'] = Variable<String>(id);
-    map['company_catalog_id'] = Variable<String>(companyCatalogId);
+    map['company_id'] = Variable<String>(companyId);
     map['type'] = Variable<String>(type);
     map['total_amount'] = Variable<double>(totalAmount);
     map['amount_paid'] = Variable<double>(amountPaid);
@@ -2641,7 +3249,7 @@ class ShipmentsTableData extends DataClass
       synced: Value(synced),
       updatedAt: Value(updatedAt),
       id: Value(id),
-      companyCatalogId: Value(companyCatalogId),
+      companyId: Value(companyId),
       type: Value(type),
       totalAmount: Value(totalAmount),
       amountPaid: Value(amountPaid),
@@ -2669,7 +3277,7 @@ class ShipmentsTableData extends DataClass
       synced: serializer.fromJson<bool>(json['synced']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
       id: serializer.fromJson<String>(json['id']),
-      companyCatalogId: serializer.fromJson<String>(json['companyCatalogId']),
+      companyId: serializer.fromJson<String>(json['companyId']),
       type: serializer.fromJson<String>(json['type']),
       totalAmount: serializer.fromJson<double>(json['totalAmount']),
       amountPaid: serializer.fromJson<double>(json['amountPaid']),
@@ -2688,7 +3296,7 @@ class ShipmentsTableData extends DataClass
       'synced': serializer.toJson<bool>(synced),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
       'id': serializer.toJson<String>(id),
-      'companyCatalogId': serializer.toJson<String>(companyCatalogId),
+      'companyId': serializer.toJson<String>(companyId),
       'type': serializer.toJson<String>(type),
       'totalAmount': serializer.toJson<double>(totalAmount),
       'amountPaid': serializer.toJson<double>(amountPaid),
@@ -2705,7 +3313,7 @@ class ShipmentsTableData extends DataClass
     bool? synced,
     DateTime? updatedAt,
     String? id,
-    String? companyCatalogId,
+    String? companyId,
     String? type,
     double? totalAmount,
     double? amountPaid,
@@ -2719,7 +3327,7 @@ class ShipmentsTableData extends DataClass
     synced: synced ?? this.synced,
     updatedAt: updatedAt ?? this.updatedAt,
     id: id ?? this.id,
-    companyCatalogId: companyCatalogId ?? this.companyCatalogId,
+    companyId: companyId ?? this.companyId,
     type: type ?? this.type,
     totalAmount: totalAmount ?? this.totalAmount,
     amountPaid: amountPaid ?? this.amountPaid,
@@ -2739,9 +3347,7 @@ class ShipmentsTableData extends DataClass
       synced: data.synced.present ? data.synced.value : this.synced,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       id: data.id.present ? data.id.value : this.id,
-      companyCatalogId: data.companyCatalogId.present
-          ? data.companyCatalogId.value
-          : this.companyCatalogId,
+      companyId: data.companyId.present ? data.companyId.value : this.companyId,
       type: data.type.present ? data.type.value : this.type,
       totalAmount: data.totalAmount.present
           ? data.totalAmount.value
@@ -2772,7 +3378,7 @@ class ShipmentsTableData extends DataClass
           ..write('synced: $synced, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('id: $id, ')
-          ..write('companyCatalogId: $companyCatalogId, ')
+          ..write('companyId: $companyId, ')
           ..write('type: $type, ')
           ..write('totalAmount: $totalAmount, ')
           ..write('amountPaid: $amountPaid, ')
@@ -2791,7 +3397,7 @@ class ShipmentsTableData extends DataClass
     synced,
     updatedAt,
     id,
-    companyCatalogId,
+    companyId,
     type,
     totalAmount,
     amountPaid,
@@ -2809,7 +3415,7 @@ class ShipmentsTableData extends DataClass
           other.synced == this.synced &&
           other.updatedAt == this.updatedAt &&
           other.id == this.id &&
-          other.companyCatalogId == this.companyCatalogId &&
+          other.companyId == this.companyId &&
           other.type == this.type &&
           other.totalAmount == this.totalAmount &&
           other.amountPaid == this.amountPaid &&
@@ -2825,7 +3431,7 @@ class ShipmentsTableCompanion extends UpdateCompanion<ShipmentsTableData> {
   final Value<bool> synced;
   final Value<DateTime> updatedAt;
   final Value<String> id;
-  final Value<String> companyCatalogId;
+  final Value<String> companyId;
   final Value<String> type;
   final Value<double> totalAmount;
   final Value<double> amountPaid;
@@ -2840,7 +3446,7 @@ class ShipmentsTableCompanion extends UpdateCompanion<ShipmentsTableData> {
     this.synced = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.id = const Value.absent(),
-    this.companyCatalogId = const Value.absent(),
+    this.companyId = const Value.absent(),
     this.type = const Value.absent(),
     this.totalAmount = const Value.absent(),
     this.amountPaid = const Value.absent(),
@@ -2856,7 +3462,7 @@ class ShipmentsTableCompanion extends UpdateCompanion<ShipmentsTableData> {
     this.synced = const Value.absent(),
     required DateTime updatedAt,
     required String id,
-    required String companyCatalogId,
+    required String companyId,
     required String type,
     this.totalAmount = const Value.absent(),
     this.amountPaid = const Value.absent(),
@@ -2869,7 +3475,7 @@ class ShipmentsTableCompanion extends UpdateCompanion<ShipmentsTableData> {
   }) : ownerId = Value(ownerId),
        updatedAt = Value(updatedAt),
        id = Value(id),
-       companyCatalogId = Value(companyCatalogId),
+       companyId = Value(companyId),
        type = Value(type),
        shipmentDate = Value(shipmentDate);
   static Insertable<ShipmentsTableData> custom({
@@ -2877,7 +3483,7 @@ class ShipmentsTableCompanion extends UpdateCompanion<ShipmentsTableData> {
     Expression<bool>? synced,
     Expression<DateTime>? updatedAt,
     Expression<String>? id,
-    Expression<String>? companyCatalogId,
+    Expression<String>? companyId,
     Expression<String>? type,
     Expression<double>? totalAmount,
     Expression<double>? amountPaid,
@@ -2893,7 +3499,7 @@ class ShipmentsTableCompanion extends UpdateCompanion<ShipmentsTableData> {
       if (synced != null) 'synced': synced,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (id != null) 'id': id,
-      if (companyCatalogId != null) 'company_catalog_id': companyCatalogId,
+      if (companyId != null) 'company_id': companyId,
       if (type != null) 'type': type,
       if (totalAmount != null) 'total_amount': totalAmount,
       if (amountPaid != null) 'amount_paid': amountPaid,
@@ -2911,7 +3517,7 @@ class ShipmentsTableCompanion extends UpdateCompanion<ShipmentsTableData> {
     Value<bool>? synced,
     Value<DateTime>? updatedAt,
     Value<String>? id,
-    Value<String>? companyCatalogId,
+    Value<String>? companyId,
     Value<String>? type,
     Value<double>? totalAmount,
     Value<double>? amountPaid,
@@ -2927,7 +3533,7 @@ class ShipmentsTableCompanion extends UpdateCompanion<ShipmentsTableData> {
       synced: synced ?? this.synced,
       updatedAt: updatedAt ?? this.updatedAt,
       id: id ?? this.id,
-      companyCatalogId: companyCatalogId ?? this.companyCatalogId,
+      companyId: companyId ?? this.companyId,
       type: type ?? this.type,
       totalAmount: totalAmount ?? this.totalAmount,
       amountPaid: amountPaid ?? this.amountPaid,
@@ -2955,8 +3561,8 @@ class ShipmentsTableCompanion extends UpdateCompanion<ShipmentsTableData> {
     if (id.present) {
       map['id'] = Variable<String>(id.value);
     }
-    if (companyCatalogId.present) {
-      map['company_catalog_id'] = Variable<String>(companyCatalogId.value);
+    if (companyId.present) {
+      map['company_id'] = Variable<String>(companyId.value);
     }
     if (type.present) {
       map['type'] = Variable<String>(type.value);
@@ -2995,7 +3601,7 @@ class ShipmentsTableCompanion extends UpdateCompanion<ShipmentsTableData> {
           ..write('synced: $synced, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('id: $id, ')
-          ..write('companyCatalogId: $companyCatalogId, ')
+          ..write('companyId: $companyId, ')
           ..write('type: $type, ')
           ..write('totalAmount: $totalAmount, ')
           ..write('amountPaid: $amountPaid, ')
@@ -3074,32 +3680,32 @@ class $LinesTableTable extends LinesTable
       'REFERENCES customers (id)',
     ),
   );
-  static const VerificationMeta _companyCatalogIdMeta = const VerificationMeta(
-    'companyCatalogId',
+  static const VerificationMeta _companyIdMeta = const VerificationMeta(
+    'companyId',
   );
   @override
-  late final GeneratedColumn<String> companyCatalogId = GeneratedColumn<String>(
-    'company_catalog_id',
+  late final GeneratedColumn<String> companyId = GeneratedColumn<String>(
+    'company_id',
     aliasedName,
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES company_catalog (id)',
+      'REFERENCES companies (id)',
     ),
   );
-  static const VerificationMeta _packageCatalogIdMeta = const VerificationMeta(
-    'packageCatalogId',
+  static const VerificationMeta _packageIdMeta = const VerificationMeta(
+    'packageId',
   );
   @override
-  late final GeneratedColumn<String> packageCatalogId = GeneratedColumn<String>(
-    'package_catalog_id',
+  late final GeneratedColumn<String> packageId = GeneratedColumn<String>(
+    'package_id',
     aliasedName,
     true,
     type: DriftSqlType.string,
     requiredDuringInsert: false,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES package_catalog (id)',
+      'REFERENCES packages (id)',
     ),
   );
   static const VerificationMeta _simNumberMeta = const VerificationMeta(
@@ -3212,8 +3818,8 @@ class $LinesTableTable extends LinesTable
     updatedAt,
     id,
     customerId,
-    companyCatalogId,
-    packageCatalogId,
+    companyId,
+    packageId,
     simNumber,
     purchaseDate,
     expiryDate,
@@ -3271,24 +3877,18 @@ class $LinesTableTable extends LinesTable
     } else if (isInserting) {
       context.missing(_customerIdMeta);
     }
-    if (data.containsKey('company_catalog_id')) {
+    if (data.containsKey('company_id')) {
       context.handle(
-        _companyCatalogIdMeta,
-        companyCatalogId.isAcceptableOrUnknown(
-          data['company_catalog_id']!,
-          _companyCatalogIdMeta,
-        ),
+        _companyIdMeta,
+        companyId.isAcceptableOrUnknown(data['company_id']!, _companyIdMeta),
       );
     } else if (isInserting) {
-      context.missing(_companyCatalogIdMeta);
+      context.missing(_companyIdMeta);
     }
-    if (data.containsKey('package_catalog_id')) {
+    if (data.containsKey('package_id')) {
       context.handle(
-        _packageCatalogIdMeta,
-        packageCatalogId.isAcceptableOrUnknown(
-          data['package_catalog_id']!,
-          _packageCatalogIdMeta,
-        ),
+        _packageIdMeta,
+        packageId.isAcceptableOrUnknown(data['package_id']!, _packageIdMeta),
       );
     }
     if (data.containsKey('sim_number')) {
@@ -3395,13 +3995,13 @@ class $LinesTableTable extends LinesTable
         DriftSqlType.string,
         data['${effectivePrefix}customer_id'],
       )!,
-      companyCatalogId: attachedDatabase.typeMapping.read(
+      companyId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}company_catalog_id'],
+        data['${effectivePrefix}company_id'],
       )!,
-      packageCatalogId: attachedDatabase.typeMapping.read(
+      packageId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}package_catalog_id'],
+        data['${effectivePrefix}package_id'],
       ),
       simNumber: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
@@ -3454,8 +4054,8 @@ class LinesTableData extends DataClass implements Insertable<LinesTableData> {
   final DateTime updatedAt;
   final String id;
   final String customerId;
-  final String companyCatalogId;
-  final String? packageCatalogId;
+  final String companyId;
+  final String? packageId;
   final String simNumber;
   final DateTime purchaseDate;
   final DateTime expiryDate;
@@ -3471,8 +4071,8 @@ class LinesTableData extends DataClass implements Insertable<LinesTableData> {
     required this.updatedAt,
     required this.id,
     required this.customerId,
-    required this.companyCatalogId,
-    this.packageCatalogId,
+    required this.companyId,
+    this.packageId,
     required this.simNumber,
     required this.purchaseDate,
     required this.expiryDate,
@@ -3491,9 +4091,9 @@ class LinesTableData extends DataClass implements Insertable<LinesTableData> {
     map['updated_at'] = Variable<DateTime>(updatedAt);
     map['id'] = Variable<String>(id);
     map['customer_id'] = Variable<String>(customerId);
-    map['company_catalog_id'] = Variable<String>(companyCatalogId);
-    if (!nullToAbsent || packageCatalogId != null) {
-      map['package_catalog_id'] = Variable<String>(packageCatalogId);
+    map['company_id'] = Variable<String>(companyId);
+    if (!nullToAbsent || packageId != null) {
+      map['package_id'] = Variable<String>(packageId);
     }
     map['sim_number'] = Variable<String>(simNumber);
     map['purchase_date'] = Variable<DateTime>(purchaseDate);
@@ -3514,10 +4114,10 @@ class LinesTableData extends DataClass implements Insertable<LinesTableData> {
       updatedAt: Value(updatedAt),
       id: Value(id),
       customerId: Value(customerId),
-      companyCatalogId: Value(companyCatalogId),
-      packageCatalogId: packageCatalogId == null && nullToAbsent
+      companyId: Value(companyId),
+      packageId: packageId == null && nullToAbsent
           ? const Value.absent()
-          : Value(packageCatalogId),
+          : Value(packageId),
       simNumber: Value(simNumber),
       purchaseDate: Value(purchaseDate),
       expiryDate: Value(expiryDate),
@@ -3541,8 +4141,8 @@ class LinesTableData extends DataClass implements Insertable<LinesTableData> {
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
       id: serializer.fromJson<String>(json['id']),
       customerId: serializer.fromJson<String>(json['customerId']),
-      companyCatalogId: serializer.fromJson<String>(json['companyCatalogId']),
-      packageCatalogId: serializer.fromJson<String?>(json['packageCatalogId']),
+      companyId: serializer.fromJson<String>(json['companyId']),
+      packageId: serializer.fromJson<String?>(json['packageId']),
       simNumber: serializer.fromJson<String>(json['simNumber']),
       purchaseDate: serializer.fromJson<DateTime>(json['purchaseDate']),
       expiryDate: serializer.fromJson<DateTime>(json['expiryDate']),
@@ -3563,8 +4163,8 @@ class LinesTableData extends DataClass implements Insertable<LinesTableData> {
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
       'id': serializer.toJson<String>(id),
       'customerId': serializer.toJson<String>(customerId),
-      'companyCatalogId': serializer.toJson<String>(companyCatalogId),
-      'packageCatalogId': serializer.toJson<String?>(packageCatalogId),
+      'companyId': serializer.toJson<String>(companyId),
+      'packageId': serializer.toJson<String?>(packageId),
       'simNumber': serializer.toJson<String>(simNumber),
       'purchaseDate': serializer.toJson<DateTime>(purchaseDate),
       'expiryDate': serializer.toJson<DateTime>(expiryDate),
@@ -3583,8 +4183,8 @@ class LinesTableData extends DataClass implements Insertable<LinesTableData> {
     DateTime? updatedAt,
     String? id,
     String? customerId,
-    String? companyCatalogId,
-    Value<String?> packageCatalogId = const Value.absent(),
+    String? companyId,
+    Value<String?> packageId = const Value.absent(),
     String? simNumber,
     DateTime? purchaseDate,
     DateTime? expiryDate,
@@ -3600,10 +4200,8 @@ class LinesTableData extends DataClass implements Insertable<LinesTableData> {
     updatedAt: updatedAt ?? this.updatedAt,
     id: id ?? this.id,
     customerId: customerId ?? this.customerId,
-    companyCatalogId: companyCatalogId ?? this.companyCatalogId,
-    packageCatalogId: packageCatalogId.present
-        ? packageCatalogId.value
-        : this.packageCatalogId,
+    companyId: companyId ?? this.companyId,
+    packageId: packageId.present ? packageId.value : this.packageId,
     simNumber: simNumber ?? this.simNumber,
     purchaseDate: purchaseDate ?? this.purchaseDate,
     expiryDate: expiryDate ?? this.expiryDate,
@@ -3623,12 +4221,8 @@ class LinesTableData extends DataClass implements Insertable<LinesTableData> {
       customerId: data.customerId.present
           ? data.customerId.value
           : this.customerId,
-      companyCatalogId: data.companyCatalogId.present
-          ? data.companyCatalogId.value
-          : this.companyCatalogId,
-      packageCatalogId: data.packageCatalogId.present
-          ? data.packageCatalogId.value
-          : this.packageCatalogId,
+      companyId: data.companyId.present ? data.companyId.value : this.companyId,
+      packageId: data.packageId.present ? data.packageId.value : this.packageId,
       simNumber: data.simNumber.present ? data.simNumber.value : this.simNumber,
       purchaseDate: data.purchaseDate.present
           ? data.purchaseDate.value
@@ -3663,8 +4257,8 @@ class LinesTableData extends DataClass implements Insertable<LinesTableData> {
           ..write('updatedAt: $updatedAt, ')
           ..write('id: $id, ')
           ..write('customerId: $customerId, ')
-          ..write('companyCatalogId: $companyCatalogId, ')
-          ..write('packageCatalogId: $packageCatalogId, ')
+          ..write('companyId: $companyId, ')
+          ..write('packageId: $packageId, ')
           ..write('simNumber: $simNumber, ')
           ..write('purchaseDate: $purchaseDate, ')
           ..write('expiryDate: $expiryDate, ')
@@ -3685,8 +4279,8 @@ class LinesTableData extends DataClass implements Insertable<LinesTableData> {
     updatedAt,
     id,
     customerId,
-    companyCatalogId,
-    packageCatalogId,
+    companyId,
+    packageId,
     simNumber,
     purchaseDate,
     expiryDate,
@@ -3706,8 +4300,8 @@ class LinesTableData extends DataClass implements Insertable<LinesTableData> {
           other.updatedAt == this.updatedAt &&
           other.id == this.id &&
           other.customerId == this.customerId &&
-          other.companyCatalogId == this.companyCatalogId &&
-          other.packageCatalogId == this.packageCatalogId &&
+          other.companyId == this.companyId &&
+          other.packageId == this.packageId &&
           other.simNumber == this.simNumber &&
           other.purchaseDate == this.purchaseDate &&
           other.expiryDate == this.expiryDate &&
@@ -3725,8 +4319,8 @@ class LinesTableCompanion extends UpdateCompanion<LinesTableData> {
   final Value<DateTime> updatedAt;
   final Value<String> id;
   final Value<String> customerId;
-  final Value<String> companyCatalogId;
-  final Value<String?> packageCatalogId;
+  final Value<String> companyId;
+  final Value<String?> packageId;
   final Value<String> simNumber;
   final Value<DateTime> purchaseDate;
   final Value<DateTime> expiryDate;
@@ -3743,8 +4337,8 @@ class LinesTableCompanion extends UpdateCompanion<LinesTableData> {
     this.updatedAt = const Value.absent(),
     this.id = const Value.absent(),
     this.customerId = const Value.absent(),
-    this.companyCatalogId = const Value.absent(),
-    this.packageCatalogId = const Value.absent(),
+    this.companyId = const Value.absent(),
+    this.packageId = const Value.absent(),
     this.simNumber = const Value.absent(),
     this.purchaseDate = const Value.absent(),
     this.expiryDate = const Value.absent(),
@@ -3762,8 +4356,8 @@ class LinesTableCompanion extends UpdateCompanion<LinesTableData> {
     required DateTime updatedAt,
     required String id,
     required String customerId,
-    required String companyCatalogId,
-    this.packageCatalogId = const Value.absent(),
+    required String companyId,
+    this.packageId = const Value.absent(),
     required String simNumber,
     required DateTime purchaseDate,
     required DateTime expiryDate,
@@ -3778,7 +4372,7 @@ class LinesTableCompanion extends UpdateCompanion<LinesTableData> {
        updatedAt = Value(updatedAt),
        id = Value(id),
        customerId = Value(customerId),
-       companyCatalogId = Value(companyCatalogId),
+       companyId = Value(companyId),
        simNumber = Value(simNumber),
        purchaseDate = Value(purchaseDate),
        expiryDate = Value(expiryDate);
@@ -3788,8 +4382,8 @@ class LinesTableCompanion extends UpdateCompanion<LinesTableData> {
     Expression<DateTime>? updatedAt,
     Expression<String>? id,
     Expression<String>? customerId,
-    Expression<String>? companyCatalogId,
-    Expression<String>? packageCatalogId,
+    Expression<String>? companyId,
+    Expression<String>? packageId,
     Expression<String>? simNumber,
     Expression<DateTime>? purchaseDate,
     Expression<DateTime>? expiryDate,
@@ -3807,8 +4401,8 @@ class LinesTableCompanion extends UpdateCompanion<LinesTableData> {
       if (updatedAt != null) 'updated_at': updatedAt,
       if (id != null) 'id': id,
       if (customerId != null) 'customer_id': customerId,
-      if (companyCatalogId != null) 'company_catalog_id': companyCatalogId,
-      if (packageCatalogId != null) 'package_catalog_id': packageCatalogId,
+      if (companyId != null) 'company_id': companyId,
+      if (packageId != null) 'package_id': packageId,
       if (simNumber != null) 'sim_number': simNumber,
       if (purchaseDate != null) 'purchase_date': purchaseDate,
       if (expiryDate != null) 'expiry_date': expiryDate,
@@ -3828,8 +4422,8 @@ class LinesTableCompanion extends UpdateCompanion<LinesTableData> {
     Value<DateTime>? updatedAt,
     Value<String>? id,
     Value<String>? customerId,
-    Value<String>? companyCatalogId,
-    Value<String?>? packageCatalogId,
+    Value<String>? companyId,
+    Value<String?>? packageId,
     Value<String>? simNumber,
     Value<DateTime>? purchaseDate,
     Value<DateTime>? expiryDate,
@@ -3847,8 +4441,8 @@ class LinesTableCompanion extends UpdateCompanion<LinesTableData> {
       updatedAt: updatedAt ?? this.updatedAt,
       id: id ?? this.id,
       customerId: customerId ?? this.customerId,
-      companyCatalogId: companyCatalogId ?? this.companyCatalogId,
-      packageCatalogId: packageCatalogId ?? this.packageCatalogId,
+      companyId: companyId ?? this.companyId,
+      packageId: packageId ?? this.packageId,
       simNumber: simNumber ?? this.simNumber,
       purchaseDate: purchaseDate ?? this.purchaseDate,
       expiryDate: expiryDate ?? this.expiryDate,
@@ -3880,11 +4474,11 @@ class LinesTableCompanion extends UpdateCompanion<LinesTableData> {
     if (customerId.present) {
       map['customer_id'] = Variable<String>(customerId.value);
     }
-    if (companyCatalogId.present) {
-      map['company_catalog_id'] = Variable<String>(companyCatalogId.value);
+    if (companyId.present) {
+      map['company_id'] = Variable<String>(companyId.value);
     }
-    if (packageCatalogId.present) {
-      map['package_catalog_id'] = Variable<String>(packageCatalogId.value);
+    if (packageId.present) {
+      map['package_id'] = Variable<String>(packageId.value);
     }
     if (simNumber.present) {
       map['sim_number'] = Variable<String>(simNumber.value);
@@ -3927,8 +4521,8 @@ class LinesTableCompanion extends UpdateCompanion<LinesTableData> {
           ..write('updatedAt: $updatedAt, ')
           ..write('id: $id, ')
           ..write('customerId: $customerId, ')
-          ..write('companyCatalogId: $companyCatalogId, ')
-          ..write('packageCatalogId: $packageCatalogId, ')
+          ..write('companyId: $companyId, ')
+          ..write('packageId: $packageId, ')
           ..write('simNumber: $simNumber, ')
           ..write('purchaseDate: $purchaseDate, ')
           ..write('expiryDate: $expiryDate, ')
@@ -4020,18 +4614,18 @@ class $OperationsTableTable extends OperationsTable
       'REFERENCES lines (id)',
     ),
   );
-  static const VerificationMeta _companyCatalogIdMeta = const VerificationMeta(
-    'companyCatalogId',
+  static const VerificationMeta _companyIdMeta = const VerificationMeta(
+    'companyId',
   );
   @override
-  late final GeneratedColumn<String> companyCatalogId = GeneratedColumn<String>(
-    'company_catalog_id',
+  late final GeneratedColumn<String> companyId = GeneratedColumn<String>(
+    'company_id',
     aliasedName,
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES company_catalog (id)',
+      'REFERENCES companies (id)',
     ),
   );
   static const VerificationMeta _occurredAtMeta = const VerificationMeta(
@@ -4108,7 +4702,7 @@ class $OperationsTableTable extends OperationsTable
     id,
     customerId,
     lineId,
-    companyCatalogId,
+    companyId,
     occurredAt,
     salePrice,
     cost,
@@ -4169,16 +4763,13 @@ class $OperationsTableTable extends OperationsTable
         lineId.isAcceptableOrUnknown(data['line_id']!, _lineIdMeta),
       );
     }
-    if (data.containsKey('company_catalog_id')) {
+    if (data.containsKey('company_id')) {
       context.handle(
-        _companyCatalogIdMeta,
-        companyCatalogId.isAcceptableOrUnknown(
-          data['company_catalog_id']!,
-          _companyCatalogIdMeta,
-        ),
+        _companyIdMeta,
+        companyId.isAcceptableOrUnknown(data['company_id']!, _companyIdMeta),
       );
     } else if (isInserting) {
-      context.missing(_companyCatalogIdMeta);
+      context.missing(_companyIdMeta);
     }
     if (data.containsKey('occurred_at')) {
       context.handle(
@@ -4254,9 +4845,9 @@ class $OperationsTableTable extends OperationsTable
         DriftSqlType.string,
         data['${effectivePrefix}line_id'],
       ),
-      companyCatalogId: attachedDatabase.typeMapping.read(
+      companyId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}company_catalog_id'],
+        data['${effectivePrefix}company_id'],
       )!,
       occurredAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
@@ -4299,7 +4890,7 @@ class OperationsTableData extends DataClass
   final String id;
   final String customerId;
   final String? lineId;
-  final String companyCatalogId;
+  final String companyId;
   final DateTime occurredAt;
   final double salePrice;
   final double cost;
@@ -4313,7 +4904,7 @@ class OperationsTableData extends DataClass
     required this.id,
     required this.customerId,
     this.lineId,
-    required this.companyCatalogId,
+    required this.companyId,
     required this.occurredAt,
     required this.salePrice,
     required this.cost,
@@ -4332,7 +4923,7 @@ class OperationsTableData extends DataClass
     if (!nullToAbsent || lineId != null) {
       map['line_id'] = Variable<String>(lineId);
     }
-    map['company_catalog_id'] = Variable<String>(companyCatalogId);
+    map['company_id'] = Variable<String>(companyId);
     map['occurred_at'] = Variable<DateTime>(occurredAt);
     map['sale_price'] = Variable<double>(salePrice);
     map['cost'] = Variable<double>(cost);
@@ -4354,7 +4945,7 @@ class OperationsTableData extends DataClass
       lineId: lineId == null && nullToAbsent
           ? const Value.absent()
           : Value(lineId),
-      companyCatalogId: Value(companyCatalogId),
+      companyId: Value(companyId),
       occurredAt: Value(occurredAt),
       salePrice: Value(salePrice),
       cost: Value(cost),
@@ -4378,7 +4969,7 @@ class OperationsTableData extends DataClass
       id: serializer.fromJson<String>(json['id']),
       customerId: serializer.fromJson<String>(json['customerId']),
       lineId: serializer.fromJson<String?>(json['lineId']),
-      companyCatalogId: serializer.fromJson<String>(json['companyCatalogId']),
+      companyId: serializer.fromJson<String>(json['companyId']),
       occurredAt: serializer.fromJson<DateTime>(json['occurredAt']),
       salePrice: serializer.fromJson<double>(json['salePrice']),
       cost: serializer.fromJson<double>(json['cost']),
@@ -4397,7 +4988,7 @@ class OperationsTableData extends DataClass
       'id': serializer.toJson<String>(id),
       'customerId': serializer.toJson<String>(customerId),
       'lineId': serializer.toJson<String?>(lineId),
-      'companyCatalogId': serializer.toJson<String>(companyCatalogId),
+      'companyId': serializer.toJson<String>(companyId),
       'occurredAt': serializer.toJson<DateTime>(occurredAt),
       'salePrice': serializer.toJson<double>(salePrice),
       'cost': serializer.toJson<double>(cost),
@@ -4414,7 +5005,7 @@ class OperationsTableData extends DataClass
     String? id,
     String? customerId,
     Value<String?> lineId = const Value.absent(),
-    String? companyCatalogId,
+    String? companyId,
     DateTime? occurredAt,
     double? salePrice,
     double? cost,
@@ -4428,7 +5019,7 @@ class OperationsTableData extends DataClass
     id: id ?? this.id,
     customerId: customerId ?? this.customerId,
     lineId: lineId.present ? lineId.value : this.lineId,
-    companyCatalogId: companyCatalogId ?? this.companyCatalogId,
+    companyId: companyId ?? this.companyId,
     occurredAt: occurredAt ?? this.occurredAt,
     salePrice: salePrice ?? this.salePrice,
     cost: cost ?? this.cost,
@@ -4446,9 +5037,7 @@ class OperationsTableData extends DataClass
           ? data.customerId.value
           : this.customerId,
       lineId: data.lineId.present ? data.lineId.value : this.lineId,
-      companyCatalogId: data.companyCatalogId.present
-          ? data.companyCatalogId.value
-          : this.companyCatalogId,
+      companyId: data.companyId.present ? data.companyId.value : this.companyId,
       occurredAt: data.occurredAt.present
           ? data.occurredAt.value
           : this.occurredAt,
@@ -4471,7 +5060,7 @@ class OperationsTableData extends DataClass
           ..write('id: $id, ')
           ..write('customerId: $customerId, ')
           ..write('lineId: $lineId, ')
-          ..write('companyCatalogId: $companyCatalogId, ')
+          ..write('companyId: $companyId, ')
           ..write('occurredAt: $occurredAt, ')
           ..write('salePrice: $salePrice, ')
           ..write('cost: $cost, ')
@@ -4490,7 +5079,7 @@ class OperationsTableData extends DataClass
     id,
     customerId,
     lineId,
-    companyCatalogId,
+    companyId,
     occurredAt,
     salePrice,
     cost,
@@ -4508,7 +5097,7 @@ class OperationsTableData extends DataClass
           other.id == this.id &&
           other.customerId == this.customerId &&
           other.lineId == this.lineId &&
-          other.companyCatalogId == this.companyCatalogId &&
+          other.companyId == this.companyId &&
           other.occurredAt == this.occurredAt &&
           other.salePrice == this.salePrice &&
           other.cost == this.cost &&
@@ -4524,7 +5113,7 @@ class OperationsTableCompanion extends UpdateCompanion<OperationsTableData> {
   final Value<String> id;
   final Value<String> customerId;
   final Value<String?> lineId;
-  final Value<String> companyCatalogId;
+  final Value<String> companyId;
   final Value<DateTime> occurredAt;
   final Value<double> salePrice;
   final Value<double> cost;
@@ -4539,7 +5128,7 @@ class OperationsTableCompanion extends UpdateCompanion<OperationsTableData> {
     this.id = const Value.absent(),
     this.customerId = const Value.absent(),
     this.lineId = const Value.absent(),
-    this.companyCatalogId = const Value.absent(),
+    this.companyId = const Value.absent(),
     this.occurredAt = const Value.absent(),
     this.salePrice = const Value.absent(),
     this.cost = const Value.absent(),
@@ -4555,7 +5144,7 @@ class OperationsTableCompanion extends UpdateCompanion<OperationsTableData> {
     required String id,
     required String customerId,
     this.lineId = const Value.absent(),
-    required String companyCatalogId,
+    required String companyId,
     required DateTime occurredAt,
     this.salePrice = const Value.absent(),
     this.cost = const Value.absent(),
@@ -4567,7 +5156,7 @@ class OperationsTableCompanion extends UpdateCompanion<OperationsTableData> {
        updatedAt = Value(updatedAt),
        id = Value(id),
        customerId = Value(customerId),
-       companyCatalogId = Value(companyCatalogId),
+       companyId = Value(companyId),
        occurredAt = Value(occurredAt);
   static Insertable<OperationsTableData> custom({
     Expression<String>? ownerId,
@@ -4576,7 +5165,7 @@ class OperationsTableCompanion extends UpdateCompanion<OperationsTableData> {
     Expression<String>? id,
     Expression<String>? customerId,
     Expression<String>? lineId,
-    Expression<String>? companyCatalogId,
+    Expression<String>? companyId,
     Expression<DateTime>? occurredAt,
     Expression<double>? salePrice,
     Expression<double>? cost,
@@ -4592,7 +5181,7 @@ class OperationsTableCompanion extends UpdateCompanion<OperationsTableData> {
       if (id != null) 'id': id,
       if (customerId != null) 'customer_id': customerId,
       if (lineId != null) 'line_id': lineId,
-      if (companyCatalogId != null) 'company_catalog_id': companyCatalogId,
+      if (companyId != null) 'company_id': companyId,
       if (occurredAt != null) 'occurred_at': occurredAt,
       if (salePrice != null) 'sale_price': salePrice,
       if (cost != null) 'cost': cost,
@@ -4610,7 +5199,7 @@ class OperationsTableCompanion extends UpdateCompanion<OperationsTableData> {
     Value<String>? id,
     Value<String>? customerId,
     Value<String?>? lineId,
-    Value<String>? companyCatalogId,
+    Value<String>? companyId,
     Value<DateTime>? occurredAt,
     Value<double>? salePrice,
     Value<double>? cost,
@@ -4626,7 +5215,7 @@ class OperationsTableCompanion extends UpdateCompanion<OperationsTableData> {
       id: id ?? this.id,
       customerId: customerId ?? this.customerId,
       lineId: lineId ?? this.lineId,
-      companyCatalogId: companyCatalogId ?? this.companyCatalogId,
+      companyId: companyId ?? this.companyId,
       occurredAt: occurredAt ?? this.occurredAt,
       salePrice: salePrice ?? this.salePrice,
       cost: cost ?? this.cost,
@@ -4658,8 +5247,8 @@ class OperationsTableCompanion extends UpdateCompanion<OperationsTableData> {
     if (lineId.present) {
       map['line_id'] = Variable<String>(lineId.value);
     }
-    if (companyCatalogId.present) {
-      map['company_catalog_id'] = Variable<String>(companyCatalogId.value);
+    if (companyId.present) {
+      map['company_id'] = Variable<String>(companyId.value);
     }
     if (occurredAt.present) {
       map['occurred_at'] = Variable<DateTime>(occurredAt.value);
@@ -4694,7 +5283,7 @@ class OperationsTableCompanion extends UpdateCompanion<OperationsTableData> {
           ..write('id: $id, ')
           ..write('customerId: $customerId, ')
           ..write('lineId: $lineId, ')
-          ..write('companyCatalogId: $companyCatalogId, ')
+          ..write('companyId: $companyId, ')
           ..write('occurredAt: $occurredAt, ')
           ..write('salePrice: $salePrice, ')
           ..write('cost: $cost, ')
@@ -6762,9 +7351,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $CompanyCatalogTableTable(this);
   late final $PackageCatalogTableTable packageCatalogTable =
       $PackageCatalogTableTable(this);
+  late final $CompaniesTableTable companiesTable = $CompaniesTableTable(this);
+  late final $PackagesTableTable packagesTable = $PackagesTableTable(this);
   late final $CustomersTableTable customersTable = $CustomersTableTable(this);
-  late final $SellerCompaniesTableTable sellerCompaniesTable =
-      $SellerCompaniesTableTable(this);
   late final $ShipmentsTableTable shipmentsTable = $ShipmentsTableTable(this);
   late final $LinesTableTable linesTable = $LinesTableTable(this);
   late final $OperationsTableTable operationsTable = $OperationsTableTable(
@@ -6785,8 +7374,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   List<DatabaseSchemaEntity> get allSchemaEntities => [
     companyCatalogTable,
     packageCatalogTable,
+    companiesTable,
+    packagesTable,
     customersTable,
-    sellerCompaniesTable,
     shipmentsTable,
     linesTable,
     operationsTable,
@@ -6862,84 +7452,19 @@ final class $$CompanyCatalogTableTableReferences
     );
   }
 
-  static MultiTypedResultKey<
-    $SellerCompaniesTableTable,
-    List<SellerCompaniesTableData>
-  >
-  _sellerCompaniesTableRefsTable(_$AppDatabase db) =>
-      MultiTypedResultKey.fromTable(
-        db.sellerCompaniesTable,
-        aliasName: 'company_catalog__id__seller_companies__company_catalog_id',
-      );
-
-  $$SellerCompaniesTableTableProcessedTableManager
-  get sellerCompaniesTableRefs {
-    final manager =
-        $$SellerCompaniesTableTableTableManager(
-          $_db,
-          $_db.sellerCompaniesTable,
-        ).filter(
-          (f) => f.companyCatalogId.id.sqlEquals($_itemColumn<String>('id')!),
-        );
-
-    final cache = $_typedResult.readTableOrNull(
-      _sellerCompaniesTableRefsTable($_db),
-    );
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: cache),
-    );
-  }
-
-  static MultiTypedResultKey<$ShipmentsTableTable, List<ShipmentsTableData>>
-  _shipmentsTableRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
-    db.shipmentsTable,
-    aliasName: 'company_catalog__id__shipments__company_catalog_id',
+  static MultiTypedResultKey<$CompaniesTableTable, List<CompaniesTableData>>
+  _companiesTableRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.companiesTable,
+    aliasName: 'company_catalog__id__companies__catalog_company_id',
   );
 
-  $$ShipmentsTableTableProcessedTableManager get shipmentsTableRefs {
-    final manager = $$ShipmentsTableTableTableManager($_db, $_db.shipmentsTable)
+  $$CompaniesTableTableProcessedTableManager get companiesTableRefs {
+    final manager = $$CompaniesTableTableTableManager($_db, $_db.companiesTable)
         .filter(
-          (f) => f.companyCatalogId.id.sqlEquals($_itemColumn<String>('id')!),
+          (f) => f.catalogCompanyId.id.sqlEquals($_itemColumn<String>('id')!),
         );
 
-    final cache = $_typedResult.readTableOrNull(_shipmentsTableRefsTable($_db));
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: cache),
-    );
-  }
-
-  static MultiTypedResultKey<$LinesTableTable, List<LinesTableData>>
-  _linesTableRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
-    db.linesTable,
-    aliasName: 'company_catalog__id__lines__company_catalog_id',
-  );
-
-  $$LinesTableTableProcessedTableManager get linesTableRefs {
-    final manager = $$LinesTableTableTableManager($_db, $_db.linesTable).filter(
-      (f) => f.companyCatalogId.id.sqlEquals($_itemColumn<String>('id')!),
-    );
-
-    final cache = $_typedResult.readTableOrNull(_linesTableRefsTable($_db));
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: cache),
-    );
-  }
-
-  static MultiTypedResultKey<$OperationsTableTable, List<OperationsTableData>>
-  _operationsTableRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
-    db.operationsTable,
-    aliasName: 'company_catalog__id__operations__company_catalog_id',
-  );
-
-  $$OperationsTableTableProcessedTableManager get operationsTableRefs {
-    final manager =
-        $$OperationsTableTableTableManager($_db, $_db.operationsTable).filter(
-          (f) => f.companyCatalogId.id.sqlEquals($_itemColumn<String>('id')!),
-        );
-
-    final cache = $_typedResult.readTableOrNull(
-      _operationsTableRefsTable($_db),
-    );
+    final cache = $_typedResult.readTableOrNull(_companiesTableRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -7020,97 +7545,22 @@ class $$CompanyCatalogTableTableFilterComposer
     return f(composer);
   }
 
-  Expression<bool> sellerCompaniesTableRefs(
-    Expression<bool> Function($$SellerCompaniesTableTableFilterComposer f) f,
+  Expression<bool> companiesTableRefs(
+    Expression<bool> Function($$CompaniesTableTableFilterComposer f) f,
   ) {
-    final $$SellerCompaniesTableTableFilterComposer composer = $composerBuilder(
+    final $$CompaniesTableTableFilterComposer composer = $composerBuilder(
       composer: this,
       getCurrentColumn: (t) => t.id,
-      referencedTable: $db.sellerCompaniesTable,
-      getReferencedColumn: (t) => t.companyCatalogId,
+      referencedTable: $db.companiesTable,
+      getReferencedColumn: (t) => t.catalogCompanyId,
       builder:
           (
             joinBuilder, {
             $addJoinBuilderToRootComposer,
             $removeJoinBuilderFromRootComposer,
-          }) => $$SellerCompaniesTableTableFilterComposer(
+          }) => $$CompaniesTableTableFilterComposer(
             $db: $db,
-            $table: $db.sellerCompaniesTable,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
-
-  Expression<bool> shipmentsTableRefs(
-    Expression<bool> Function($$ShipmentsTableTableFilterComposer f) f,
-  ) {
-    final $$ShipmentsTableTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.shipmentsTable,
-      getReferencedColumn: (t) => t.companyCatalogId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$ShipmentsTableTableFilterComposer(
-            $db: $db,
-            $table: $db.shipmentsTable,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
-
-  Expression<bool> linesTableRefs(
-    Expression<bool> Function($$LinesTableTableFilterComposer f) f,
-  ) {
-    final $$LinesTableTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.linesTable,
-      getReferencedColumn: (t) => t.companyCatalogId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$LinesTableTableFilterComposer(
-            $db: $db,
-            $table: $db.linesTable,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
-
-  Expression<bool> operationsTableRefs(
-    Expression<bool> Function($$OperationsTableTableFilterComposer f) f,
-  ) {
-    final $$OperationsTableTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.operationsTable,
-      getReferencedColumn: (t) => t.companyCatalogId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$OperationsTableTableFilterComposer(
-            $db: $db,
-            $table: $db.operationsTable,
+            $table: $db.companiesTable,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -7232,98 +7682,22 @@ class $$CompanyCatalogTableTableAnnotationComposer
     return f(composer);
   }
 
-  Expression<T> sellerCompaniesTableRefs<T extends Object>(
-    Expression<T> Function($$SellerCompaniesTableTableAnnotationComposer a) f,
+  Expression<T> companiesTableRefs<T extends Object>(
+    Expression<T> Function($$CompaniesTableTableAnnotationComposer a) f,
   ) {
-    final $$SellerCompaniesTableTableAnnotationComposer composer =
-        $composerBuilder(
-          composer: this,
-          getCurrentColumn: (t) => t.id,
-          referencedTable: $db.sellerCompaniesTable,
-          getReferencedColumn: (t) => t.companyCatalogId,
-          builder:
-              (
-                joinBuilder, {
-                $addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer,
-              }) => $$SellerCompaniesTableTableAnnotationComposer(
-                $db: $db,
-                $table: $db.sellerCompaniesTable,
-                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-                joinBuilder: joinBuilder,
-                $removeJoinBuilderFromRootComposer:
-                    $removeJoinBuilderFromRootComposer,
-              ),
-        );
-    return f(composer);
-  }
-
-  Expression<T> shipmentsTableRefs<T extends Object>(
-    Expression<T> Function($$ShipmentsTableTableAnnotationComposer a) f,
-  ) {
-    final $$ShipmentsTableTableAnnotationComposer composer = $composerBuilder(
+    final $$CompaniesTableTableAnnotationComposer composer = $composerBuilder(
       composer: this,
       getCurrentColumn: (t) => t.id,
-      referencedTable: $db.shipmentsTable,
-      getReferencedColumn: (t) => t.companyCatalogId,
+      referencedTable: $db.companiesTable,
+      getReferencedColumn: (t) => t.catalogCompanyId,
       builder:
           (
             joinBuilder, {
             $addJoinBuilderToRootComposer,
             $removeJoinBuilderFromRootComposer,
-          }) => $$ShipmentsTableTableAnnotationComposer(
+          }) => $$CompaniesTableTableAnnotationComposer(
             $db: $db,
-            $table: $db.shipmentsTable,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
-
-  Expression<T> linesTableRefs<T extends Object>(
-    Expression<T> Function($$LinesTableTableAnnotationComposer a) f,
-  ) {
-    final $$LinesTableTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.linesTable,
-      getReferencedColumn: (t) => t.companyCatalogId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$LinesTableTableAnnotationComposer(
-            $db: $db,
-            $table: $db.linesTable,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
-
-  Expression<T> operationsTableRefs<T extends Object>(
-    Expression<T> Function($$OperationsTableTableAnnotationComposer a) f,
-  ) {
-    final $$OperationsTableTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.operationsTable,
-      getReferencedColumn: (t) => t.companyCatalogId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$OperationsTableTableAnnotationComposer(
-            $db: $db,
-            $table: $db.operationsTable,
+            $table: $db.companiesTable,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -7349,10 +7723,7 @@ class $$CompanyCatalogTableTableTableManager
           CompanyCatalogTableData,
           PrefetchHooks Function({
             bool packageCatalogTableRefs,
-            bool sellerCompaniesTableRefs,
-            bool shipmentsTableRefs,
-            bool linesTableRefs,
-            bool operationsTableRefs,
+            bool companiesTableRefs,
           })
         > {
   $$CompanyCatalogTableTableTableManager(
@@ -7427,21 +7798,12 @@ class $$CompanyCatalogTableTableTableManager
               )
               .toList(),
           prefetchHooksCallback:
-              ({
-                packageCatalogTableRefs = false,
-                sellerCompaniesTableRefs = false,
-                shipmentsTableRefs = false,
-                linesTableRefs = false,
-                operationsTableRefs = false,
-              }) {
+              ({packageCatalogTableRefs = false, companiesTableRefs = false}) {
                 return PrefetchHooks(
                   db: db,
                   explicitlyWatchedTables: [
                     if (packageCatalogTableRefs) db.packageCatalogTable,
-                    if (sellerCompaniesTableRefs) db.sellerCompaniesTable,
-                    if (shipmentsTableRefs) db.shipmentsTable,
-                    if (linesTableRefs) db.linesTable,
-                    if (operationsTableRefs) db.operationsTable,
+                    if (companiesTableRefs) db.companiesTable,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -7467,87 +7829,24 @@ class $$CompanyCatalogTableTableTableManager
                               ),
                           typedResults: items,
                         ),
-                      if (sellerCompaniesTableRefs)
+                      if (companiesTableRefs)
                         await $_getPrefetchedData<
                           CompanyCatalogTableData,
                           $CompanyCatalogTableTable,
-                          SellerCompaniesTableData
+                          CompaniesTableData
                         >(
                           currentTable: table,
                           referencedTable: $$CompanyCatalogTableTableReferences
-                              ._sellerCompaniesTableRefsTable(db),
+                              ._companiesTableRefsTable(db),
                           managerFromTypedResult: (p0) =>
                               $$CompanyCatalogTableTableReferences(
                                 db,
                                 table,
                                 p0,
-                              ).sellerCompaniesTableRefs,
+                              ).companiesTableRefs,
                           referencedItemsForCurrentItem:
                               (item, referencedItems) => referencedItems.where(
-                                (e) => e.companyCatalogId == item.id,
-                              ),
-                          typedResults: items,
-                        ),
-                      if (shipmentsTableRefs)
-                        await $_getPrefetchedData<
-                          CompanyCatalogTableData,
-                          $CompanyCatalogTableTable,
-                          ShipmentsTableData
-                        >(
-                          currentTable: table,
-                          referencedTable: $$CompanyCatalogTableTableReferences
-                              ._shipmentsTableRefsTable(db),
-                          managerFromTypedResult: (p0) =>
-                              $$CompanyCatalogTableTableReferences(
-                                db,
-                                table,
-                                p0,
-                              ).shipmentsTableRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.companyCatalogId == item.id,
-                              ),
-                          typedResults: items,
-                        ),
-                      if (linesTableRefs)
-                        await $_getPrefetchedData<
-                          CompanyCatalogTableData,
-                          $CompanyCatalogTableTable,
-                          LinesTableData
-                        >(
-                          currentTable: table,
-                          referencedTable: $$CompanyCatalogTableTableReferences
-                              ._linesTableRefsTable(db),
-                          managerFromTypedResult: (p0) =>
-                              $$CompanyCatalogTableTableReferences(
-                                db,
-                                table,
-                                p0,
-                              ).linesTableRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.companyCatalogId == item.id,
-                              ),
-                          typedResults: items,
-                        ),
-                      if (operationsTableRefs)
-                        await $_getPrefetchedData<
-                          CompanyCatalogTableData,
-                          $CompanyCatalogTableTable,
-                          OperationsTableData
-                        >(
-                          currentTable: table,
-                          referencedTable: $$CompanyCatalogTableTableReferences
-                              ._operationsTableRefsTable(db),
-                          managerFromTypedResult: (p0) =>
-                              $$CompanyCatalogTableTableReferences(
-                                db,
-                                table,
-                                p0,
-                              ).operationsTableRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.companyCatalogId == item.id,
+                                (e) => e.catalogCompanyId == item.id,
                               ),
                           typedResults: items,
                         ),
@@ -7573,10 +7872,7 @@ typedef $$CompanyCatalogTableTableProcessedTableManager =
       CompanyCatalogTableData,
       PrefetchHooks Function({
         bool packageCatalogTableRefs,
-        bool sellerCompaniesTableRefs,
-        bool shipmentsTableRefs,
-        bool linesTableRefs,
-        bool operationsTableRefs,
+        bool companiesTableRefs,
       })
     >;
 typedef $$PackageCatalogTableTableCreateCompanionBuilder =
@@ -7633,23 +7929,6 @@ final class $$PackageCatalogTableTableReferences
     if (item == null) return manager;
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: [item]),
-    );
-  }
-
-  static MultiTypedResultKey<$LinesTableTable, List<LinesTableData>>
-  _linesTableRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
-    db.linesTable,
-    aliasName: 'package_catalog__id__lines__package_catalog_id',
-  );
-
-  $$LinesTableTableProcessedTableManager get linesTableRefs {
-    final manager = $$LinesTableTableTableManager($_db, $_db.linesTable).filter(
-      (f) => f.packageCatalogId.id.sqlEquals($_itemColumn<String>('id')!),
-    );
-
-    final cache = $_typedResult.readTableOrNull(_linesTableRefsTable($_db));
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: cache),
     );
   }
 }
@@ -7719,31 +7998,6 @@ class $$PackageCatalogTableTableFilterComposer
           ),
     );
     return composer;
-  }
-
-  Expression<bool> linesTableRefs(
-    Expression<bool> Function($$LinesTableTableFilterComposer f) f,
-  ) {
-    final $$LinesTableTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.linesTable,
-      getReferencedColumn: (t) => t.packageCatalogId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$LinesTableTableFilterComposer(
-            $db: $db,
-            $table: $db.linesTable,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
   }
 }
 
@@ -7873,31 +8127,6 @@ class $$PackageCatalogTableTableAnnotationComposer
         );
     return composer;
   }
-
-  Expression<T> linesTableRefs<T extends Object>(
-    Expression<T> Function($$LinesTableTableAnnotationComposer a) f,
-  ) {
-    final $$LinesTableTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.linesTable,
-      getReferencedColumn: (t) => t.packageCatalogId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$LinesTableTableAnnotationComposer(
-            $db: $db,
-            $table: $db.linesTable,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
 }
 
 class $$PackageCatalogTableTableTableManager
@@ -7913,7 +8142,7 @@ class $$PackageCatalogTableTableTableManager
           $$PackageCatalogTableTableUpdateCompanionBuilder,
           (PackageCatalogTableData, $$PackageCatalogTableTableReferences),
           PackageCatalogTableData,
-          PrefetchHooks Function({bool companyCatalogId, bool linesTableRefs})
+          PrefetchHooks Function({bool companyCatalogId})
         > {
   $$PackageCatalogTableTableTableManager(
     _$AppDatabase db,
@@ -7986,72 +8215,49 @@ class $$PackageCatalogTableTableTableManager
                 ),
               )
               .toList(),
-          prefetchHooksCallback:
-              ({companyCatalogId = false, linesTableRefs = false}) {
-                return PrefetchHooks(
-                  db: db,
-                  explicitlyWatchedTables: [if (linesTableRefs) db.linesTable],
-                  addJoins:
-                      <
-                        T extends TableManagerState<
-                          dynamic,
-                          dynamic,
-                          dynamic,
-                          dynamic,
-                          dynamic,
-                          dynamic,
-                          dynamic,
-                          dynamic,
-                          dynamic,
-                          dynamic,
-                          dynamic
-                        >
-                      >(state) {
-                        if (companyCatalogId) {
-                          state =
-                              state.withJoin(
-                                    currentTable: table,
-                                    currentColumn: table.companyCatalogId,
-                                    referencedTable:
-                                        $$PackageCatalogTableTableReferences
-                                            ._companyCatalogIdTable(db),
-                                    referencedColumn:
-                                        $$PackageCatalogTableTableReferences
-                                            ._companyCatalogIdTable(db)
-                                            .id,
-                                  )
-                                  as T;
-                        }
+          prefetchHooksCallback: ({companyCatalogId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (companyCatalogId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.companyCatalogId,
+                                referencedTable:
+                                    $$PackageCatalogTableTableReferences
+                                        ._companyCatalogIdTable(db),
+                                referencedColumn:
+                                    $$PackageCatalogTableTableReferences
+                                        ._companyCatalogIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
 
-                        return state;
-                      },
-                  getPrefetchedDataCallback: (items) async {
-                    return [
-                      if (linesTableRefs)
-                        await $_getPrefetchedData<
-                          PackageCatalogTableData,
-                          $PackageCatalogTableTable,
-                          LinesTableData
-                        >(
-                          currentTable: table,
-                          referencedTable: $$PackageCatalogTableTableReferences
-                              ._linesTableRefsTable(db),
-                          managerFromTypedResult: (p0) =>
-                              $$PackageCatalogTableTableReferences(
-                                db,
-                                table,
-                                p0,
-                              ).linesTableRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.packageCatalogId == item.id,
-                              ),
-                          typedResults: items,
-                        ),
-                    ];
+                    return state;
                   },
-                );
+              getPrefetchedDataCallback: (items) async {
+                return [];
               },
+            );
+          },
         ),
       );
 }
@@ -8068,7 +8274,1290 @@ typedef $$PackageCatalogTableTableProcessedTableManager =
       $$PackageCatalogTableTableUpdateCompanionBuilder,
       (PackageCatalogTableData, $$PackageCatalogTableTableReferences),
       PackageCatalogTableData,
-      PrefetchHooks Function({bool companyCatalogId, bool linesTableRefs})
+      PrefetchHooks Function({bool companyCatalogId})
+    >;
+typedef $$CompaniesTableTableCreateCompanionBuilder =
+    CompaniesTableCompanion Function({
+      required String ownerId,
+      Value<bool> synced,
+      required DateTime updatedAt,
+      required String id,
+      required String name,
+      Value<String?> logoUrl,
+      Value<String?> notes,
+      Value<String> status,
+      Value<bool> pinned,
+      Value<String?> catalogCompanyId,
+      Value<int> rowid,
+    });
+typedef $$CompaniesTableTableUpdateCompanionBuilder =
+    CompaniesTableCompanion Function({
+      Value<String> ownerId,
+      Value<bool> synced,
+      Value<DateTime> updatedAt,
+      Value<String> id,
+      Value<String> name,
+      Value<String?> logoUrl,
+      Value<String?> notes,
+      Value<String> status,
+      Value<bool> pinned,
+      Value<String?> catalogCompanyId,
+      Value<int> rowid,
+    });
+
+final class $$CompaniesTableTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $CompaniesTableTable,
+          CompaniesTableData
+        > {
+  $$CompaniesTableTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $CompanyCatalogTableTable _catalogCompanyIdTable(_$AppDatabase db) =>
+      db.companyCatalogTable.createAlias(
+        'companies__catalog_company_id__company_catalog__id',
+      );
+
+  $$CompanyCatalogTableTableProcessedTableManager? get catalogCompanyId {
+    final $_column = $_itemColumn<String>('catalog_company_id');
+    if ($_column == null) return null;
+    final manager = $$CompanyCatalogTableTableTableManager(
+      $_db,
+      $_db.companyCatalogTable,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_catalogCompanyIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static MultiTypedResultKey<$PackagesTableTable, List<PackagesTableData>>
+  _packagesTableRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.packagesTable,
+    aliasName: 'companies__id__packages__company_id',
+  );
+
+  $$PackagesTableTableProcessedTableManager get packagesTableRefs {
+    final manager = $$PackagesTableTableTableManager(
+      $_db,
+      $_db.packagesTable,
+    ).filter((f) => f.companyId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_packagesTableRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$ShipmentsTableTable, List<ShipmentsTableData>>
+  _shipmentsTableRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.shipmentsTable,
+    aliasName: 'companies__id__shipments__company_id',
+  );
+
+  $$ShipmentsTableTableProcessedTableManager get shipmentsTableRefs {
+    final manager = $$ShipmentsTableTableTableManager(
+      $_db,
+      $_db.shipmentsTable,
+    ).filter((f) => f.companyId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_shipmentsTableRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$LinesTableTable, List<LinesTableData>>
+  _linesTableRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.linesTable,
+    aliasName: 'companies__id__lines__company_id',
+  );
+
+  $$LinesTableTableProcessedTableManager get linesTableRefs {
+    final manager = $$LinesTableTableTableManager(
+      $_db,
+      $_db.linesTable,
+    ).filter((f) => f.companyId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_linesTableRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$OperationsTableTable, List<OperationsTableData>>
+  _operationsTableRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.operationsTable,
+    aliasName: 'companies__id__operations__company_id',
+  );
+
+  $$OperationsTableTableProcessedTableManager get operationsTableRefs {
+    final manager = $$OperationsTableTableTableManager(
+      $_db,
+      $_db.operationsTable,
+    ).filter((f) => f.companyId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _operationsTableRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$CompaniesTableTableFilterComposer
+    extends Composer<_$AppDatabase, $CompaniesTableTable> {
+  $$CompaniesTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get ownerId => $composableBuilder(
+    column: $table.ownerId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get synced => $composableBuilder(
+    column: $table.synced,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get logoUrl => $composableBuilder(
+    column: $table.logoUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get pinned => $composableBuilder(
+    column: $table.pinned,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$CompanyCatalogTableTableFilterComposer get catalogCompanyId {
+    final $$CompanyCatalogTableTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.catalogCompanyId,
+      referencedTable: $db.companyCatalogTable,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CompanyCatalogTableTableFilterComposer(
+            $db: $db,
+            $table: $db.companyCatalogTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  Expression<bool> packagesTableRefs(
+    Expression<bool> Function($$PackagesTableTableFilterComposer f) f,
+  ) {
+    final $$PackagesTableTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.packagesTable,
+      getReferencedColumn: (t) => t.companyId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PackagesTableTableFilterComposer(
+            $db: $db,
+            $table: $db.packagesTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> shipmentsTableRefs(
+    Expression<bool> Function($$ShipmentsTableTableFilterComposer f) f,
+  ) {
+    final $$ShipmentsTableTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.shipmentsTable,
+      getReferencedColumn: (t) => t.companyId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ShipmentsTableTableFilterComposer(
+            $db: $db,
+            $table: $db.shipmentsTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> linesTableRefs(
+    Expression<bool> Function($$LinesTableTableFilterComposer f) f,
+  ) {
+    final $$LinesTableTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.linesTable,
+      getReferencedColumn: (t) => t.companyId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$LinesTableTableFilterComposer(
+            $db: $db,
+            $table: $db.linesTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> operationsTableRefs(
+    Expression<bool> Function($$OperationsTableTableFilterComposer f) f,
+  ) {
+    final $$OperationsTableTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.operationsTable,
+      getReferencedColumn: (t) => t.companyId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$OperationsTableTableFilterComposer(
+            $db: $db,
+            $table: $db.operationsTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$CompaniesTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $CompaniesTableTable> {
+  $$CompaniesTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get ownerId => $composableBuilder(
+    column: $table.ownerId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get synced => $composableBuilder(
+    column: $table.synced,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get logoUrl => $composableBuilder(
+    column: $table.logoUrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get pinned => $composableBuilder(
+    column: $table.pinned,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$CompanyCatalogTableTableOrderingComposer get catalogCompanyId {
+    final $$CompanyCatalogTableTableOrderingComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.catalogCompanyId,
+          referencedTable: $db.companyCatalogTable,
+          getReferencedColumn: (t) => t.id,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$CompanyCatalogTableTableOrderingComposer(
+                $db: $db,
+                $table: $db.companyCatalogTable,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return composer;
+  }
+}
+
+class $$CompaniesTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CompaniesTableTable> {
+  $$CompaniesTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get ownerId =>
+      $composableBuilder(column: $table.ownerId, builder: (column) => column);
+
+  GeneratedColumn<bool> get synced =>
+      $composableBuilder(column: $table.synced, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get logoUrl =>
+      $composableBuilder(column: $table.logoUrl, builder: (column) => column);
+
+  GeneratedColumn<String> get notes =>
+      $composableBuilder(column: $table.notes, builder: (column) => column);
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<bool> get pinned =>
+      $composableBuilder(column: $table.pinned, builder: (column) => column);
+
+  $$CompanyCatalogTableTableAnnotationComposer get catalogCompanyId {
+    final $$CompanyCatalogTableTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.catalogCompanyId,
+          referencedTable: $db.companyCatalogTable,
+          getReferencedColumn: (t) => t.id,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$CompanyCatalogTableTableAnnotationComposer(
+                $db: $db,
+                $table: $db.companyCatalogTable,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return composer;
+  }
+
+  Expression<T> packagesTableRefs<T extends Object>(
+    Expression<T> Function($$PackagesTableTableAnnotationComposer a) f,
+  ) {
+    final $$PackagesTableTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.packagesTable,
+      getReferencedColumn: (t) => t.companyId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PackagesTableTableAnnotationComposer(
+            $db: $db,
+            $table: $db.packagesTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<T> shipmentsTableRefs<T extends Object>(
+    Expression<T> Function($$ShipmentsTableTableAnnotationComposer a) f,
+  ) {
+    final $$ShipmentsTableTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.shipmentsTable,
+      getReferencedColumn: (t) => t.companyId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ShipmentsTableTableAnnotationComposer(
+            $db: $db,
+            $table: $db.shipmentsTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<T> linesTableRefs<T extends Object>(
+    Expression<T> Function($$LinesTableTableAnnotationComposer a) f,
+  ) {
+    final $$LinesTableTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.linesTable,
+      getReferencedColumn: (t) => t.companyId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$LinesTableTableAnnotationComposer(
+            $db: $db,
+            $table: $db.linesTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<T> operationsTableRefs<T extends Object>(
+    Expression<T> Function($$OperationsTableTableAnnotationComposer a) f,
+  ) {
+    final $$OperationsTableTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.operationsTable,
+      getReferencedColumn: (t) => t.companyId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$OperationsTableTableAnnotationComposer(
+            $db: $db,
+            $table: $db.operationsTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$CompaniesTableTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CompaniesTableTable,
+          CompaniesTableData,
+          $$CompaniesTableTableFilterComposer,
+          $$CompaniesTableTableOrderingComposer,
+          $$CompaniesTableTableAnnotationComposer,
+          $$CompaniesTableTableCreateCompanionBuilder,
+          $$CompaniesTableTableUpdateCompanionBuilder,
+          (CompaniesTableData, $$CompaniesTableTableReferences),
+          CompaniesTableData,
+          PrefetchHooks Function({
+            bool catalogCompanyId,
+            bool packagesTableRefs,
+            bool shipmentsTableRefs,
+            bool linesTableRefs,
+            bool operationsTableRefs,
+          })
+        > {
+  $$CompaniesTableTableTableManager(
+    _$AppDatabase db,
+    $CompaniesTableTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CompaniesTableTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CompaniesTableTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CompaniesTableTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> ownerId = const Value.absent(),
+                Value<bool> synced = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<String> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String?> logoUrl = const Value.absent(),
+                Value<String?> notes = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<bool> pinned = const Value.absent(),
+                Value<String?> catalogCompanyId = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => CompaniesTableCompanion(
+                ownerId: ownerId,
+                synced: synced,
+                updatedAt: updatedAt,
+                id: id,
+                name: name,
+                logoUrl: logoUrl,
+                notes: notes,
+                status: status,
+                pinned: pinned,
+                catalogCompanyId: catalogCompanyId,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String ownerId,
+                Value<bool> synced = const Value.absent(),
+                required DateTime updatedAt,
+                required String id,
+                required String name,
+                Value<String?> logoUrl = const Value.absent(),
+                Value<String?> notes = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<bool> pinned = const Value.absent(),
+                Value<String?> catalogCompanyId = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => CompaniesTableCompanion.insert(
+                ownerId: ownerId,
+                synced: synced,
+                updatedAt: updatedAt,
+                id: id,
+                name: name,
+                logoUrl: logoUrl,
+                notes: notes,
+                status: status,
+                pinned: pinned,
+                catalogCompanyId: catalogCompanyId,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$CompaniesTableTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback:
+              ({
+                catalogCompanyId = false,
+                packagesTableRefs = false,
+                shipmentsTableRefs = false,
+                linesTableRefs = false,
+                operationsTableRefs = false,
+              }) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (packagesTableRefs) db.packagesTable,
+                    if (shipmentsTableRefs) db.shipmentsTable,
+                    if (linesTableRefs) db.linesTable,
+                    if (operationsTableRefs) db.operationsTable,
+                  ],
+                  addJoins:
+                      <
+                        T extends TableManagerState<
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic
+                        >
+                      >(state) {
+                        if (catalogCompanyId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.catalogCompanyId,
+                                    referencedTable:
+                                        $$CompaniesTableTableReferences
+                                            ._catalogCompanyIdTable(db),
+                                    referencedColumn:
+                                        $$CompaniesTableTableReferences
+                                            ._catalogCompanyIdTable(db)
+                                            .id,
+                                  )
+                                  as T;
+                        }
+
+                        return state;
+                      },
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (packagesTableRefs)
+                        await $_getPrefetchedData<
+                          CompaniesTableData,
+                          $CompaniesTableTable,
+                          PackagesTableData
+                        >(
+                          currentTable: table,
+                          referencedTable: $$CompaniesTableTableReferences
+                              ._packagesTableRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$CompaniesTableTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).packagesTableRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.companyId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (shipmentsTableRefs)
+                        await $_getPrefetchedData<
+                          CompaniesTableData,
+                          $CompaniesTableTable,
+                          ShipmentsTableData
+                        >(
+                          currentTable: table,
+                          referencedTable: $$CompaniesTableTableReferences
+                              ._shipmentsTableRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$CompaniesTableTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).shipmentsTableRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.companyId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (linesTableRefs)
+                        await $_getPrefetchedData<
+                          CompaniesTableData,
+                          $CompaniesTableTable,
+                          LinesTableData
+                        >(
+                          currentTable: table,
+                          referencedTable: $$CompaniesTableTableReferences
+                              ._linesTableRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$CompaniesTableTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).linesTableRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.companyId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (operationsTableRefs)
+                        await $_getPrefetchedData<
+                          CompaniesTableData,
+                          $CompaniesTableTable,
+                          OperationsTableData
+                        >(
+                          currentTable: table,
+                          referencedTable: $$CompaniesTableTableReferences
+                              ._operationsTableRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$CompaniesTableTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).operationsTableRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.companyId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                    ];
+                  },
+                );
+              },
+        ),
+      );
+}
+
+typedef $$CompaniesTableTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CompaniesTableTable,
+      CompaniesTableData,
+      $$CompaniesTableTableFilterComposer,
+      $$CompaniesTableTableOrderingComposer,
+      $$CompaniesTableTableAnnotationComposer,
+      $$CompaniesTableTableCreateCompanionBuilder,
+      $$CompaniesTableTableUpdateCompanionBuilder,
+      (CompaniesTableData, $$CompaniesTableTableReferences),
+      CompaniesTableData,
+      PrefetchHooks Function({
+        bool catalogCompanyId,
+        bool packagesTableRefs,
+        bool shipmentsTableRefs,
+        bool linesTableRefs,
+        bool operationsTableRefs,
+      })
+    >;
+typedef $$PackagesTableTableCreateCompanionBuilder =
+    PackagesTableCompanion Function({
+      required String ownerId,
+      Value<bool> synced,
+      required DateTime updatedAt,
+      required String id,
+      required String companyId,
+      required String name,
+      Value<double> wholesaleCost,
+      Value<double> retailPrice,
+      Value<int> rowid,
+    });
+typedef $$PackagesTableTableUpdateCompanionBuilder =
+    PackagesTableCompanion Function({
+      Value<String> ownerId,
+      Value<bool> synced,
+      Value<DateTime> updatedAt,
+      Value<String> id,
+      Value<String> companyId,
+      Value<String> name,
+      Value<double> wholesaleCost,
+      Value<double> retailPrice,
+      Value<int> rowid,
+    });
+
+final class $$PackagesTableTableReferences
+    extends
+        BaseReferences<_$AppDatabase, $PackagesTableTable, PackagesTableData> {
+  $$PackagesTableTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $CompaniesTableTable _companyIdTable(_$AppDatabase db) =>
+      db.companiesTable.createAlias('packages__company_id__companies__id');
+
+  $$CompaniesTableTableProcessedTableManager get companyId {
+    final $_column = $_itemColumn<String>('company_id')!;
+
+    final manager = $$CompaniesTableTableTableManager(
+      $_db,
+      $_db.companiesTable,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_companyIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static MultiTypedResultKey<$LinesTableTable, List<LinesTableData>>
+  _linesTableRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.linesTable,
+    aliasName: 'packages__id__lines__package_id',
+  );
+
+  $$LinesTableTableProcessedTableManager get linesTableRefs {
+    final manager = $$LinesTableTableTableManager(
+      $_db,
+      $_db.linesTable,
+    ).filter((f) => f.packageId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_linesTableRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$PackagesTableTableFilterComposer
+    extends Composer<_$AppDatabase, $PackagesTableTable> {
+  $$PackagesTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get ownerId => $composableBuilder(
+    column: $table.ownerId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get synced => $composableBuilder(
+    column: $table.synced,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get wholesaleCost => $composableBuilder(
+    column: $table.wholesaleCost,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get retailPrice => $composableBuilder(
+    column: $table.retailPrice,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$CompaniesTableTableFilterComposer get companyId {
+    final $$CompaniesTableTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.companyId,
+      referencedTable: $db.companiesTable,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CompaniesTableTableFilterComposer(
+            $db: $db,
+            $table: $db.companiesTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  Expression<bool> linesTableRefs(
+    Expression<bool> Function($$LinesTableTableFilterComposer f) f,
+  ) {
+    final $$LinesTableTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.linesTable,
+      getReferencedColumn: (t) => t.packageId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$LinesTableTableFilterComposer(
+            $db: $db,
+            $table: $db.linesTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$PackagesTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $PackagesTableTable> {
+  $$PackagesTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get ownerId => $composableBuilder(
+    column: $table.ownerId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get synced => $composableBuilder(
+    column: $table.synced,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get wholesaleCost => $composableBuilder(
+    column: $table.wholesaleCost,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get retailPrice => $composableBuilder(
+    column: $table.retailPrice,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$CompaniesTableTableOrderingComposer get companyId {
+    final $$CompaniesTableTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.companyId,
+      referencedTable: $db.companiesTable,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CompaniesTableTableOrderingComposer(
+            $db: $db,
+            $table: $db.companiesTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$PackagesTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $PackagesTableTable> {
+  $$PackagesTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get ownerId =>
+      $composableBuilder(column: $table.ownerId, builder: (column) => column);
+
+  GeneratedColumn<bool> get synced =>
+      $composableBuilder(column: $table.synced, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<double> get wholesaleCost => $composableBuilder(
+    column: $table.wholesaleCost,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get retailPrice => $composableBuilder(
+    column: $table.retailPrice,
+    builder: (column) => column,
+  );
+
+  $$CompaniesTableTableAnnotationComposer get companyId {
+    final $$CompaniesTableTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.companyId,
+      referencedTable: $db.companiesTable,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CompaniesTableTableAnnotationComposer(
+            $db: $db,
+            $table: $db.companiesTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  Expression<T> linesTableRefs<T extends Object>(
+    Expression<T> Function($$LinesTableTableAnnotationComposer a) f,
+  ) {
+    final $$LinesTableTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.linesTable,
+      getReferencedColumn: (t) => t.packageId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$LinesTableTableAnnotationComposer(
+            $db: $db,
+            $table: $db.linesTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$PackagesTableTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $PackagesTableTable,
+          PackagesTableData,
+          $$PackagesTableTableFilterComposer,
+          $$PackagesTableTableOrderingComposer,
+          $$PackagesTableTableAnnotationComposer,
+          $$PackagesTableTableCreateCompanionBuilder,
+          $$PackagesTableTableUpdateCompanionBuilder,
+          (PackagesTableData, $$PackagesTableTableReferences),
+          PackagesTableData,
+          PrefetchHooks Function({bool companyId, bool linesTableRefs})
+        > {
+  $$PackagesTableTableTableManager(_$AppDatabase db, $PackagesTableTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$PackagesTableTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$PackagesTableTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$PackagesTableTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> ownerId = const Value.absent(),
+                Value<bool> synced = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<String> id = const Value.absent(),
+                Value<String> companyId = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<double> wholesaleCost = const Value.absent(),
+                Value<double> retailPrice = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => PackagesTableCompanion(
+                ownerId: ownerId,
+                synced: synced,
+                updatedAt: updatedAt,
+                id: id,
+                companyId: companyId,
+                name: name,
+                wholesaleCost: wholesaleCost,
+                retailPrice: retailPrice,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String ownerId,
+                Value<bool> synced = const Value.absent(),
+                required DateTime updatedAt,
+                required String id,
+                required String companyId,
+                required String name,
+                Value<double> wholesaleCost = const Value.absent(),
+                Value<double> retailPrice = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => PackagesTableCompanion.insert(
+                ownerId: ownerId,
+                synced: synced,
+                updatedAt: updatedAt,
+                id: id,
+                companyId: companyId,
+                name: name,
+                wholesaleCost: wholesaleCost,
+                retailPrice: retailPrice,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$PackagesTableTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({companyId = false, linesTableRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [if (linesTableRefs) db.linesTable],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (companyId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.companyId,
+                                referencedTable: $$PackagesTableTableReferences
+                                    ._companyIdTable(db),
+                                referencedColumn: $$PackagesTableTableReferences
+                                    ._companyIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (linesTableRefs)
+                    await $_getPrefetchedData<
+                      PackagesTableData,
+                      $PackagesTableTable,
+                      LinesTableData
+                    >(
+                      currentTable: table,
+                      referencedTable: $$PackagesTableTableReferences
+                          ._linesTableRefsTable(db),
+                      managerFromTypedResult: (p0) =>
+                          $$PackagesTableTableReferences(
+                            db,
+                            table,
+                            p0,
+                          ).linesTableRefs,
+                      referencedItemsForCurrentItem: (item, referencedItems) =>
+                          referencedItems.where((e) => e.packageId == item.id),
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$PackagesTableTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $PackagesTableTable,
+      PackagesTableData,
+      $$PackagesTableTableFilterComposer,
+      $$PackagesTableTableOrderingComposer,
+      $$PackagesTableTableAnnotationComposer,
+      $$PackagesTableTableCreateCompanionBuilder,
+      $$PackagesTableTableUpdateCompanionBuilder,
+      (PackagesTableData, $$PackagesTableTableReferences),
+      PackagesTableData,
+      PrefetchHooks Function({bool companyId, bool linesTableRefs})
     >;
 typedef $$CustomersTableTableCreateCompanionBuilder =
     CustomersTableCompanion Function({
@@ -8598,410 +10087,13 @@ typedef $$CustomersTableTableProcessedTableManager =
       CustomersTableData,
       PrefetchHooks Function({bool linesTableRefs, bool operationsTableRefs})
     >;
-typedef $$SellerCompaniesTableTableCreateCompanionBuilder =
-    SellerCompaniesTableCompanion Function({
-      required String ownerId,
-      Value<bool> synced,
-      required DateTime updatedAt,
-      required String id,
-      required String companyCatalogId,
-      Value<String> status,
-      Value<bool> pinned,
-      Value<String?> notes,
-      Value<int> rowid,
-    });
-typedef $$SellerCompaniesTableTableUpdateCompanionBuilder =
-    SellerCompaniesTableCompanion Function({
-      Value<String> ownerId,
-      Value<bool> synced,
-      Value<DateTime> updatedAt,
-      Value<String> id,
-      Value<String> companyCatalogId,
-      Value<String> status,
-      Value<bool> pinned,
-      Value<String?> notes,
-      Value<int> rowid,
-    });
-
-final class $$SellerCompaniesTableTableReferences
-    extends
-        BaseReferences<
-          _$AppDatabase,
-          $SellerCompaniesTableTable,
-          SellerCompaniesTableData
-        > {
-  $$SellerCompaniesTableTableReferences(
-    super.$_db,
-    super.$_table,
-    super.$_typedResult,
-  );
-
-  static $CompanyCatalogTableTable _companyCatalogIdTable(_$AppDatabase db) =>
-      db.companyCatalogTable.createAlias(
-        'seller_companies__company_catalog_id__company_catalog__id',
-      );
-
-  $$CompanyCatalogTableTableProcessedTableManager get companyCatalogId {
-    final $_column = $_itemColumn<String>('company_catalog_id')!;
-
-    final manager = $$CompanyCatalogTableTableTableManager(
-      $_db,
-      $_db.companyCatalogTable,
-    ).filter((f) => f.id.sqlEquals($_column));
-    final item = $_typedResult.readTableOrNull(_companyCatalogIdTable($_db));
-    if (item == null) return manager;
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: [item]),
-    );
-  }
-}
-
-class $$SellerCompaniesTableTableFilterComposer
-    extends Composer<_$AppDatabase, $SellerCompaniesTableTable> {
-  $$SellerCompaniesTableTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnFilters<String> get ownerId => $composableBuilder(
-    column: $table.ownerId,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<bool> get synced => $composableBuilder(
-    column: $table.synced,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
-    column: $table.updatedAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get status => $composableBuilder(
-    column: $table.status,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<bool> get pinned => $composableBuilder(
-    column: $table.pinned,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get notes => $composableBuilder(
-    column: $table.notes,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  $$CompanyCatalogTableTableFilterComposer get companyCatalogId {
-    final $$CompanyCatalogTableTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.companyCatalogId,
-      referencedTable: $db.companyCatalogTable,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$CompanyCatalogTableTableFilterComposer(
-            $db: $db,
-            $table: $db.companyCatalogTable,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$SellerCompaniesTableTableOrderingComposer
-    extends Composer<_$AppDatabase, $SellerCompaniesTableTable> {
-  $$SellerCompaniesTableTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnOrderings<String> get ownerId => $composableBuilder(
-    column: $table.ownerId,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<bool> get synced => $composableBuilder(
-    column: $table.synced,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
-    column: $table.updatedAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get status => $composableBuilder(
-    column: $table.status,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<bool> get pinned => $composableBuilder(
-    column: $table.pinned,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get notes => $composableBuilder(
-    column: $table.notes,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  $$CompanyCatalogTableTableOrderingComposer get companyCatalogId {
-    final $$CompanyCatalogTableTableOrderingComposer composer =
-        $composerBuilder(
-          composer: this,
-          getCurrentColumn: (t) => t.companyCatalogId,
-          referencedTable: $db.companyCatalogTable,
-          getReferencedColumn: (t) => t.id,
-          builder:
-              (
-                joinBuilder, {
-                $addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer,
-              }) => $$CompanyCatalogTableTableOrderingComposer(
-                $db: $db,
-                $table: $db.companyCatalogTable,
-                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-                joinBuilder: joinBuilder,
-                $removeJoinBuilderFromRootComposer:
-                    $removeJoinBuilderFromRootComposer,
-              ),
-        );
-    return composer;
-  }
-}
-
-class $$SellerCompaniesTableTableAnnotationComposer
-    extends Composer<_$AppDatabase, $SellerCompaniesTableTable> {
-  $$SellerCompaniesTableTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  GeneratedColumn<String> get ownerId =>
-      $composableBuilder(column: $table.ownerId, builder: (column) => column);
-
-  GeneratedColumn<bool> get synced =>
-      $composableBuilder(column: $table.synced, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get updatedAt =>
-      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
-
-  GeneratedColumn<String> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumn<String> get status =>
-      $composableBuilder(column: $table.status, builder: (column) => column);
-
-  GeneratedColumn<bool> get pinned =>
-      $composableBuilder(column: $table.pinned, builder: (column) => column);
-
-  GeneratedColumn<String> get notes =>
-      $composableBuilder(column: $table.notes, builder: (column) => column);
-
-  $$CompanyCatalogTableTableAnnotationComposer get companyCatalogId {
-    final $$CompanyCatalogTableTableAnnotationComposer composer =
-        $composerBuilder(
-          composer: this,
-          getCurrentColumn: (t) => t.companyCatalogId,
-          referencedTable: $db.companyCatalogTable,
-          getReferencedColumn: (t) => t.id,
-          builder:
-              (
-                joinBuilder, {
-                $addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer,
-              }) => $$CompanyCatalogTableTableAnnotationComposer(
-                $db: $db,
-                $table: $db.companyCatalogTable,
-                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-                joinBuilder: joinBuilder,
-                $removeJoinBuilderFromRootComposer:
-                    $removeJoinBuilderFromRootComposer,
-              ),
-        );
-    return composer;
-  }
-}
-
-class $$SellerCompaniesTableTableTableManager
-    extends
-        RootTableManager<
-          _$AppDatabase,
-          $SellerCompaniesTableTable,
-          SellerCompaniesTableData,
-          $$SellerCompaniesTableTableFilterComposer,
-          $$SellerCompaniesTableTableOrderingComposer,
-          $$SellerCompaniesTableTableAnnotationComposer,
-          $$SellerCompaniesTableTableCreateCompanionBuilder,
-          $$SellerCompaniesTableTableUpdateCompanionBuilder,
-          (SellerCompaniesTableData, $$SellerCompaniesTableTableReferences),
-          SellerCompaniesTableData,
-          PrefetchHooks Function({bool companyCatalogId})
-        > {
-  $$SellerCompaniesTableTableTableManager(
-    _$AppDatabase db,
-    $SellerCompaniesTableTable table,
-  ) : super(
-        TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer: () =>
-              $$SellerCompaniesTableTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$SellerCompaniesTableTableOrderingComposer(
-                $db: db,
-                $table: table,
-              ),
-          createComputedFieldComposer: () =>
-              $$SellerCompaniesTableTableAnnotationComposer(
-                $db: db,
-                $table: table,
-              ),
-          updateCompanionCallback:
-              ({
-                Value<String> ownerId = const Value.absent(),
-                Value<bool> synced = const Value.absent(),
-                Value<DateTime> updatedAt = const Value.absent(),
-                Value<String> id = const Value.absent(),
-                Value<String> companyCatalogId = const Value.absent(),
-                Value<String> status = const Value.absent(),
-                Value<bool> pinned = const Value.absent(),
-                Value<String?> notes = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
-              }) => SellerCompaniesTableCompanion(
-                ownerId: ownerId,
-                synced: synced,
-                updatedAt: updatedAt,
-                id: id,
-                companyCatalogId: companyCatalogId,
-                status: status,
-                pinned: pinned,
-                notes: notes,
-                rowid: rowid,
-              ),
-          createCompanionCallback:
-              ({
-                required String ownerId,
-                Value<bool> synced = const Value.absent(),
-                required DateTime updatedAt,
-                required String id,
-                required String companyCatalogId,
-                Value<String> status = const Value.absent(),
-                Value<bool> pinned = const Value.absent(),
-                Value<String?> notes = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
-              }) => SellerCompaniesTableCompanion.insert(
-                ownerId: ownerId,
-                synced: synced,
-                updatedAt: updatedAt,
-                id: id,
-                companyCatalogId: companyCatalogId,
-                status: status,
-                pinned: pinned,
-                notes: notes,
-                rowid: rowid,
-              ),
-          withReferenceMapper: (p0) => p0
-              .map(
-                (e) => (
-                  e.readTable(table),
-                  $$SellerCompaniesTableTableReferences(db, table, e),
-                ),
-              )
-              .toList(),
-          prefetchHooksCallback: ({companyCatalogId = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [],
-              addJoins:
-                  <
-                    T extends TableManagerState<
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic
-                    >
-                  >(state) {
-                    if (companyCatalogId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.companyCatalogId,
-                                referencedTable:
-                                    $$SellerCompaniesTableTableReferences
-                                        ._companyCatalogIdTable(db),
-                                referencedColumn:
-                                    $$SellerCompaniesTableTableReferences
-                                        ._companyCatalogIdTable(db)
-                                        .id,
-                              )
-                              as T;
-                    }
-
-                    return state;
-                  },
-              getPrefetchedDataCallback: (items) async {
-                return [];
-              },
-            );
-          },
-        ),
-      );
-}
-
-typedef $$SellerCompaniesTableTableProcessedTableManager =
-    ProcessedTableManager<
-      _$AppDatabase,
-      $SellerCompaniesTableTable,
-      SellerCompaniesTableData,
-      $$SellerCompaniesTableTableFilterComposer,
-      $$SellerCompaniesTableTableOrderingComposer,
-      $$SellerCompaniesTableTableAnnotationComposer,
-      $$SellerCompaniesTableTableCreateCompanionBuilder,
-      $$SellerCompaniesTableTableUpdateCompanionBuilder,
-      (SellerCompaniesTableData, $$SellerCompaniesTableTableReferences),
-      SellerCompaniesTableData,
-      PrefetchHooks Function({bool companyCatalogId})
-    >;
 typedef $$ShipmentsTableTableCreateCompanionBuilder =
     ShipmentsTableCompanion Function({
       required String ownerId,
       Value<bool> synced,
       required DateTime updatedAt,
       required String id,
-      required String companyCatalogId,
+      required String companyId,
       required String type,
       Value<double> totalAmount,
       Value<double> amountPaid,
@@ -9018,7 +10110,7 @@ typedef $$ShipmentsTableTableUpdateCompanionBuilder =
       Value<bool> synced,
       Value<DateTime> updatedAt,
       Value<String> id,
-      Value<String> companyCatalogId,
+      Value<String> companyId,
       Value<String> type,
       Value<double> totalAmount,
       Value<double> amountPaid,
@@ -9043,19 +10135,17 @@ final class $$ShipmentsTableTableReferences
     super.$_typedResult,
   );
 
-  static $CompanyCatalogTableTable _companyCatalogIdTable(_$AppDatabase db) =>
-      db.companyCatalogTable.createAlias(
-        'shipments__company_catalog_id__company_catalog__id',
-      );
+  static $CompaniesTableTable _companyIdTable(_$AppDatabase db) =>
+      db.companiesTable.createAlias('shipments__company_id__companies__id');
 
-  $$CompanyCatalogTableTableProcessedTableManager get companyCatalogId {
-    final $_column = $_itemColumn<String>('company_catalog_id')!;
+  $$CompaniesTableTableProcessedTableManager get companyId {
+    final $_column = $_itemColumn<String>('company_id')!;
 
-    final manager = $$CompanyCatalogTableTableTableManager(
+    final manager = $$CompaniesTableTableTableManager(
       $_db,
-      $_db.companyCatalogTable,
+      $_db.companiesTable,
     ).filter((f) => f.id.sqlEquals($_column));
-    final item = $_typedResult.readTableOrNull(_companyCatalogIdTable($_db));
+    final item = $_typedResult.readTableOrNull(_companyIdTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: [item]),
@@ -9132,20 +10222,20 @@ class $$ShipmentsTableTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  $$CompanyCatalogTableTableFilterComposer get companyCatalogId {
-    final $$CompanyCatalogTableTableFilterComposer composer = $composerBuilder(
+  $$CompaniesTableTableFilterComposer get companyId {
+    final $$CompaniesTableTableFilterComposer composer = $composerBuilder(
       composer: this,
-      getCurrentColumn: (t) => t.companyCatalogId,
-      referencedTable: $db.companyCatalogTable,
+      getCurrentColumn: (t) => t.companyId,
+      referencedTable: $db.companiesTable,
       getReferencedColumn: (t) => t.id,
       builder:
           (
             joinBuilder, {
             $addJoinBuilderToRootComposer,
             $removeJoinBuilderFromRootComposer,
-          }) => $$CompanyCatalogTableTableFilterComposer(
+          }) => $$CompaniesTableTableFilterComposer(
             $db: $db,
-            $table: $db.companyCatalogTable,
+            $table: $db.companiesTable,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -9225,27 +10315,26 @@ class $$ShipmentsTableTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  $$CompanyCatalogTableTableOrderingComposer get companyCatalogId {
-    final $$CompanyCatalogTableTableOrderingComposer composer =
-        $composerBuilder(
-          composer: this,
-          getCurrentColumn: (t) => t.companyCatalogId,
-          referencedTable: $db.companyCatalogTable,
-          getReferencedColumn: (t) => t.id,
-          builder:
-              (
-                joinBuilder, {
-                $addJoinBuilderToRootComposer,
+  $$CompaniesTableTableOrderingComposer get companyId {
+    final $$CompaniesTableTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.companyId,
+      referencedTable: $db.companiesTable,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CompaniesTableTableOrderingComposer(
+            $db: $db,
+            $table: $db.companiesTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
                 $removeJoinBuilderFromRootComposer,
-              }) => $$CompanyCatalogTableTableOrderingComposer(
-                $db: $db,
-                $table: $db.companyCatalogTable,
-                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-                joinBuilder: joinBuilder,
-                $removeJoinBuilderFromRootComposer:
-                    $removeJoinBuilderFromRootComposer,
-              ),
-        );
+          ),
+    );
     return composer;
   }
 }
@@ -9307,27 +10396,26 @@ class $$ShipmentsTableTableAnnotationComposer
   GeneratedColumn<String> get notes =>
       $composableBuilder(column: $table.notes, builder: (column) => column);
 
-  $$CompanyCatalogTableTableAnnotationComposer get companyCatalogId {
-    final $$CompanyCatalogTableTableAnnotationComposer composer =
-        $composerBuilder(
-          composer: this,
-          getCurrentColumn: (t) => t.companyCatalogId,
-          referencedTable: $db.companyCatalogTable,
-          getReferencedColumn: (t) => t.id,
-          builder:
-              (
-                joinBuilder, {
-                $addJoinBuilderToRootComposer,
+  $$CompaniesTableTableAnnotationComposer get companyId {
+    final $$CompaniesTableTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.companyId,
+      referencedTable: $db.companiesTable,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CompaniesTableTableAnnotationComposer(
+            $db: $db,
+            $table: $db.companiesTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
                 $removeJoinBuilderFromRootComposer,
-              }) => $$CompanyCatalogTableTableAnnotationComposer(
-                $db: $db,
-                $table: $db.companyCatalogTable,
-                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-                joinBuilder: joinBuilder,
-                $removeJoinBuilderFromRootComposer:
-                    $removeJoinBuilderFromRootComposer,
-              ),
-        );
+          ),
+    );
     return composer;
   }
 }
@@ -9345,7 +10433,7 @@ class $$ShipmentsTableTableTableManager
           $$ShipmentsTableTableUpdateCompanionBuilder,
           (ShipmentsTableData, $$ShipmentsTableTableReferences),
           ShipmentsTableData,
-          PrefetchHooks Function({bool companyCatalogId})
+          PrefetchHooks Function({bool companyId})
         > {
   $$ShipmentsTableTableTableManager(
     _$AppDatabase db,
@@ -9366,7 +10454,7 @@ class $$ShipmentsTableTableTableManager
                 Value<bool> synced = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<String> id = const Value.absent(),
-                Value<String> companyCatalogId = const Value.absent(),
+                Value<String> companyId = const Value.absent(),
                 Value<String> type = const Value.absent(),
                 Value<double> totalAmount = const Value.absent(),
                 Value<double> amountPaid = const Value.absent(),
@@ -9381,7 +10469,7 @@ class $$ShipmentsTableTableTableManager
                 synced: synced,
                 updatedAt: updatedAt,
                 id: id,
-                companyCatalogId: companyCatalogId,
+                companyId: companyId,
                 type: type,
                 totalAmount: totalAmount,
                 amountPaid: amountPaid,
@@ -9398,7 +10486,7 @@ class $$ShipmentsTableTableTableManager
                 Value<bool> synced = const Value.absent(),
                 required DateTime updatedAt,
                 required String id,
-                required String companyCatalogId,
+                required String companyId,
                 required String type,
                 Value<double> totalAmount = const Value.absent(),
                 Value<double> amountPaid = const Value.absent(),
@@ -9413,7 +10501,7 @@ class $$ShipmentsTableTableTableManager
                 synced: synced,
                 updatedAt: updatedAt,
                 id: id,
-                companyCatalogId: companyCatalogId,
+                companyId: companyId,
                 type: type,
                 totalAmount: totalAmount,
                 amountPaid: amountPaid,
@@ -9432,7 +10520,7 @@ class $$ShipmentsTableTableTableManager
                 ),
               )
               .toList(),
-          prefetchHooksCallback: ({companyCatalogId = false}) {
+          prefetchHooksCallback: ({companyId = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [],
@@ -9452,16 +10540,16 @@ class $$ShipmentsTableTableTableManager
                       dynamic
                     >
                   >(state) {
-                    if (companyCatalogId) {
+                    if (companyId) {
                       state =
                           state.withJoin(
                                 currentTable: table,
-                                currentColumn: table.companyCatalogId,
+                                currentColumn: table.companyId,
                                 referencedTable: $$ShipmentsTableTableReferences
-                                    ._companyCatalogIdTable(db),
+                                    ._companyIdTable(db),
                                 referencedColumn:
                                     $$ShipmentsTableTableReferences
-                                        ._companyCatalogIdTable(db)
+                                        ._companyIdTable(db)
                                         .id,
                               )
                               as T;
@@ -9490,7 +10578,7 @@ typedef $$ShipmentsTableTableProcessedTableManager =
       $$ShipmentsTableTableUpdateCompanionBuilder,
       (ShipmentsTableData, $$ShipmentsTableTableReferences),
       ShipmentsTableData,
-      PrefetchHooks Function({bool companyCatalogId})
+      PrefetchHooks Function({bool companyId})
     >;
 typedef $$LinesTableTableCreateCompanionBuilder =
     LinesTableCompanion Function({
@@ -9499,8 +10587,8 @@ typedef $$LinesTableTableCreateCompanionBuilder =
       required DateTime updatedAt,
       required String id,
       required String customerId,
-      required String companyCatalogId,
-      Value<String?> packageCatalogId,
+      required String companyId,
+      Value<String?> packageId,
       required String simNumber,
       required DateTime purchaseDate,
       required DateTime expiryDate,
@@ -9519,8 +10607,8 @@ typedef $$LinesTableTableUpdateCompanionBuilder =
       Value<DateTime> updatedAt,
       Value<String> id,
       Value<String> customerId,
-      Value<String> companyCatalogId,
-      Value<String?> packageCatalogId,
+      Value<String> companyId,
+      Value<String?> packageId,
       Value<String> simNumber,
       Value<DateTime> purchaseDate,
       Value<DateTime> expiryDate,
@@ -9554,38 +10642,34 @@ final class $$LinesTableTableReferences
     );
   }
 
-  static $CompanyCatalogTableTable _companyCatalogIdTable(_$AppDatabase db) =>
-      db.companyCatalogTable.createAlias(
-        'lines__company_catalog_id__company_catalog__id',
-      );
+  static $CompaniesTableTable _companyIdTable(_$AppDatabase db) =>
+      db.companiesTable.createAlias('lines__company_id__companies__id');
 
-  $$CompanyCatalogTableTableProcessedTableManager get companyCatalogId {
-    final $_column = $_itemColumn<String>('company_catalog_id')!;
+  $$CompaniesTableTableProcessedTableManager get companyId {
+    final $_column = $_itemColumn<String>('company_id')!;
 
-    final manager = $$CompanyCatalogTableTableTableManager(
+    final manager = $$CompaniesTableTableTableManager(
       $_db,
-      $_db.companyCatalogTable,
+      $_db.companiesTable,
     ).filter((f) => f.id.sqlEquals($_column));
-    final item = $_typedResult.readTableOrNull(_companyCatalogIdTable($_db));
+    final item = $_typedResult.readTableOrNull(_companyIdTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: [item]),
     );
   }
 
-  static $PackageCatalogTableTable _packageCatalogIdTable(_$AppDatabase db) =>
-      db.packageCatalogTable.createAlias(
-        'lines__package_catalog_id__package_catalog__id',
-      );
+  static $PackagesTableTable _packageIdTable(_$AppDatabase db) =>
+      db.packagesTable.createAlias('lines__package_id__packages__id');
 
-  $$PackageCatalogTableTableProcessedTableManager? get packageCatalogId {
-    final $_column = $_itemColumn<String>('package_catalog_id');
+  $$PackagesTableTableProcessedTableManager? get packageId {
+    final $_column = $_itemColumn<String>('package_id');
     if ($_column == null) return null;
-    final manager = $$PackageCatalogTableTableTableManager(
+    final manager = $$PackagesTableTableTableManager(
       $_db,
-      $_db.packageCatalogTable,
+      $_db.packagesTable,
     ).filter((f) => f.id.sqlEquals($_column));
-    final item = $_typedResult.readTableOrNull(_packageCatalogIdTable($_db));
+    final item = $_typedResult.readTableOrNull(_packageIdTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: [item]),
@@ -9710,20 +10794,20 @@ class $$LinesTableTableFilterComposer
     return composer;
   }
 
-  $$CompanyCatalogTableTableFilterComposer get companyCatalogId {
-    final $$CompanyCatalogTableTableFilterComposer composer = $composerBuilder(
+  $$CompaniesTableTableFilterComposer get companyId {
+    final $$CompaniesTableTableFilterComposer composer = $composerBuilder(
       composer: this,
-      getCurrentColumn: (t) => t.companyCatalogId,
-      referencedTable: $db.companyCatalogTable,
+      getCurrentColumn: (t) => t.companyId,
+      referencedTable: $db.companiesTable,
       getReferencedColumn: (t) => t.id,
       builder:
           (
             joinBuilder, {
             $addJoinBuilderToRootComposer,
             $removeJoinBuilderFromRootComposer,
-          }) => $$CompanyCatalogTableTableFilterComposer(
+          }) => $$CompaniesTableTableFilterComposer(
             $db: $db,
-            $table: $db.companyCatalogTable,
+            $table: $db.companiesTable,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -9733,20 +10817,20 @@ class $$LinesTableTableFilterComposer
     return composer;
   }
 
-  $$PackageCatalogTableTableFilterComposer get packageCatalogId {
-    final $$PackageCatalogTableTableFilterComposer composer = $composerBuilder(
+  $$PackagesTableTableFilterComposer get packageId {
+    final $$PackagesTableTableFilterComposer composer = $composerBuilder(
       composer: this,
-      getCurrentColumn: (t) => t.packageCatalogId,
-      referencedTable: $db.packageCatalogTable,
+      getCurrentColumn: (t) => t.packageId,
+      referencedTable: $db.packagesTable,
       getReferencedColumn: (t) => t.id,
       builder:
           (
             joinBuilder, {
             $addJoinBuilderToRootComposer,
             $removeJoinBuilderFromRootComposer,
-          }) => $$PackageCatalogTableTableFilterComposer(
+          }) => $$PackagesTableTableFilterComposer(
             $db: $db,
-            $table: $db.packageCatalogTable,
+            $table: $db.packagesTable,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -9879,51 +10963,49 @@ class $$LinesTableTableOrderingComposer
     return composer;
   }
 
-  $$CompanyCatalogTableTableOrderingComposer get companyCatalogId {
-    final $$CompanyCatalogTableTableOrderingComposer composer =
-        $composerBuilder(
-          composer: this,
-          getCurrentColumn: (t) => t.companyCatalogId,
-          referencedTable: $db.companyCatalogTable,
-          getReferencedColumn: (t) => t.id,
-          builder:
-              (
-                joinBuilder, {
-                $addJoinBuilderToRootComposer,
+  $$CompaniesTableTableOrderingComposer get companyId {
+    final $$CompaniesTableTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.companyId,
+      referencedTable: $db.companiesTable,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CompaniesTableTableOrderingComposer(
+            $db: $db,
+            $table: $db.companiesTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
                 $removeJoinBuilderFromRootComposer,
-              }) => $$CompanyCatalogTableTableOrderingComposer(
-                $db: $db,
-                $table: $db.companyCatalogTable,
-                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-                joinBuilder: joinBuilder,
-                $removeJoinBuilderFromRootComposer:
-                    $removeJoinBuilderFromRootComposer,
-              ),
-        );
+          ),
+    );
     return composer;
   }
 
-  $$PackageCatalogTableTableOrderingComposer get packageCatalogId {
-    final $$PackageCatalogTableTableOrderingComposer composer =
-        $composerBuilder(
-          composer: this,
-          getCurrentColumn: (t) => t.packageCatalogId,
-          referencedTable: $db.packageCatalogTable,
-          getReferencedColumn: (t) => t.id,
-          builder:
-              (
-                joinBuilder, {
-                $addJoinBuilderToRootComposer,
+  $$PackagesTableTableOrderingComposer get packageId {
+    final $$PackagesTableTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.packageId,
+      referencedTable: $db.packagesTable,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PackagesTableTableOrderingComposer(
+            $db: $db,
+            $table: $db.packagesTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
                 $removeJoinBuilderFromRootComposer,
-              }) => $$PackageCatalogTableTableOrderingComposer(
-                $db: $db,
-                $table: $db.packageCatalogTable,
-                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-                joinBuilder: joinBuilder,
-                $removeJoinBuilderFromRootComposer:
-                    $removeJoinBuilderFromRootComposer,
-              ),
-        );
+          ),
+    );
     return composer;
   }
 }
@@ -10013,51 +11095,49 @@ class $$LinesTableTableAnnotationComposer
     return composer;
   }
 
-  $$CompanyCatalogTableTableAnnotationComposer get companyCatalogId {
-    final $$CompanyCatalogTableTableAnnotationComposer composer =
-        $composerBuilder(
-          composer: this,
-          getCurrentColumn: (t) => t.companyCatalogId,
-          referencedTable: $db.companyCatalogTable,
-          getReferencedColumn: (t) => t.id,
-          builder:
-              (
-                joinBuilder, {
-                $addJoinBuilderToRootComposer,
+  $$CompaniesTableTableAnnotationComposer get companyId {
+    final $$CompaniesTableTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.companyId,
+      referencedTable: $db.companiesTable,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CompaniesTableTableAnnotationComposer(
+            $db: $db,
+            $table: $db.companiesTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
                 $removeJoinBuilderFromRootComposer,
-              }) => $$CompanyCatalogTableTableAnnotationComposer(
-                $db: $db,
-                $table: $db.companyCatalogTable,
-                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-                joinBuilder: joinBuilder,
-                $removeJoinBuilderFromRootComposer:
-                    $removeJoinBuilderFromRootComposer,
-              ),
-        );
+          ),
+    );
     return composer;
   }
 
-  $$PackageCatalogTableTableAnnotationComposer get packageCatalogId {
-    final $$PackageCatalogTableTableAnnotationComposer composer =
-        $composerBuilder(
-          composer: this,
-          getCurrentColumn: (t) => t.packageCatalogId,
-          referencedTable: $db.packageCatalogTable,
-          getReferencedColumn: (t) => t.id,
-          builder:
-              (
-                joinBuilder, {
-                $addJoinBuilderToRootComposer,
+  $$PackagesTableTableAnnotationComposer get packageId {
+    final $$PackagesTableTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.packageId,
+      referencedTable: $db.packagesTable,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PackagesTableTableAnnotationComposer(
+            $db: $db,
+            $table: $db.packagesTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
                 $removeJoinBuilderFromRootComposer,
-              }) => $$PackageCatalogTableTableAnnotationComposer(
-                $db: $db,
-                $table: $db.packageCatalogTable,
-                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-                joinBuilder: joinBuilder,
-                $removeJoinBuilderFromRootComposer:
-                    $removeJoinBuilderFromRootComposer,
-              ),
-        );
+          ),
+    );
     return composer;
   }
 
@@ -10102,8 +11182,8 @@ class $$LinesTableTableTableManager
           LinesTableData,
           PrefetchHooks Function({
             bool customerId,
-            bool companyCatalogId,
-            bool packageCatalogId,
+            bool companyId,
+            bool packageId,
             bool operationsTableRefs,
           })
         > {
@@ -10125,8 +11205,8 @@ class $$LinesTableTableTableManager
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<String> id = const Value.absent(),
                 Value<String> customerId = const Value.absent(),
-                Value<String> companyCatalogId = const Value.absent(),
-                Value<String?> packageCatalogId = const Value.absent(),
+                Value<String> companyId = const Value.absent(),
+                Value<String?> packageId = const Value.absent(),
                 Value<String> simNumber = const Value.absent(),
                 Value<DateTime> purchaseDate = const Value.absent(),
                 Value<DateTime> expiryDate = const Value.absent(),
@@ -10143,8 +11223,8 @@ class $$LinesTableTableTableManager
                 updatedAt: updatedAt,
                 id: id,
                 customerId: customerId,
-                companyCatalogId: companyCatalogId,
-                packageCatalogId: packageCatalogId,
+                companyId: companyId,
+                packageId: packageId,
                 simNumber: simNumber,
                 purchaseDate: purchaseDate,
                 expiryDate: expiryDate,
@@ -10163,8 +11243,8 @@ class $$LinesTableTableTableManager
                 required DateTime updatedAt,
                 required String id,
                 required String customerId,
-                required String companyCatalogId,
-                Value<String?> packageCatalogId = const Value.absent(),
+                required String companyId,
+                Value<String?> packageId = const Value.absent(),
                 required String simNumber,
                 required DateTime purchaseDate,
                 required DateTime expiryDate,
@@ -10181,8 +11261,8 @@ class $$LinesTableTableTableManager
                 updatedAt: updatedAt,
                 id: id,
                 customerId: customerId,
-                companyCatalogId: companyCatalogId,
-                packageCatalogId: packageCatalogId,
+                companyId: companyId,
+                packageId: packageId,
                 simNumber: simNumber,
                 purchaseDate: purchaseDate,
                 expiryDate: expiryDate,
@@ -10205,8 +11285,8 @@ class $$LinesTableTableTableManager
           prefetchHooksCallback:
               ({
                 customerId = false,
-                companyCatalogId = false,
-                packageCatalogId = false,
+                companyId = false,
+                packageId = false,
                 operationsTableRefs = false,
               }) {
                 return PrefetchHooks(
@@ -10244,30 +11324,30 @@ class $$LinesTableTableTableManager
                                   )
                                   as T;
                         }
-                        if (companyCatalogId) {
+                        if (companyId) {
                           state =
                               state.withJoin(
                                     currentTable: table,
-                                    currentColumn: table.companyCatalogId,
+                                    currentColumn: table.companyId,
                                     referencedTable: $$LinesTableTableReferences
-                                        ._companyCatalogIdTable(db),
+                                        ._companyIdTable(db),
                                     referencedColumn:
                                         $$LinesTableTableReferences
-                                            ._companyCatalogIdTable(db)
+                                            ._companyIdTable(db)
                                             .id,
                                   )
                                   as T;
                         }
-                        if (packageCatalogId) {
+                        if (packageId) {
                           state =
                               state.withJoin(
                                     currentTable: table,
-                                    currentColumn: table.packageCatalogId,
+                                    currentColumn: table.packageId,
                                     referencedTable: $$LinesTableTableReferences
-                                        ._packageCatalogIdTable(db),
+                                        ._packageIdTable(db),
                                     referencedColumn:
                                         $$LinesTableTableReferences
-                                            ._packageCatalogIdTable(db)
+                                            ._packageIdTable(db)
                                             .id,
                                   )
                                   as T;
@@ -10320,8 +11400,8 @@ typedef $$LinesTableTableProcessedTableManager =
       LinesTableData,
       PrefetchHooks Function({
         bool customerId,
-        bool companyCatalogId,
-        bool packageCatalogId,
+        bool companyId,
+        bool packageId,
         bool operationsTableRefs,
       })
     >;
@@ -10333,7 +11413,7 @@ typedef $$OperationsTableTableCreateCompanionBuilder =
       required String id,
       required String customerId,
       Value<String?> lineId,
-      required String companyCatalogId,
+      required String companyId,
       required DateTime occurredAt,
       Value<double> salePrice,
       Value<double> cost,
@@ -10350,7 +11430,7 @@ typedef $$OperationsTableTableUpdateCompanionBuilder =
       Value<String> id,
       Value<String> customerId,
       Value<String?> lineId,
-      Value<String> companyCatalogId,
+      Value<String> companyId,
       Value<DateTime> occurredAt,
       Value<double> salePrice,
       Value<double> cost,
@@ -10407,19 +11487,17 @@ final class $$OperationsTableTableReferences
     );
   }
 
-  static $CompanyCatalogTableTable _companyCatalogIdTable(_$AppDatabase db) =>
-      db.companyCatalogTable.createAlias(
-        'operations__company_catalog_id__company_catalog__id',
-      );
+  static $CompaniesTableTable _companyIdTable(_$AppDatabase db) =>
+      db.companiesTable.createAlias('operations__company_id__companies__id');
 
-  $$CompanyCatalogTableTableProcessedTableManager get companyCatalogId {
-    final $_column = $_itemColumn<String>('company_catalog_id')!;
+  $$CompaniesTableTableProcessedTableManager get companyId {
+    final $_column = $_itemColumn<String>('company_id')!;
 
-    final manager = $$CompanyCatalogTableTableTableManager(
+    final manager = $$CompaniesTableTableTableManager(
       $_db,
-      $_db.companyCatalogTable,
+      $_db.companiesTable,
     ).filter((f) => f.id.sqlEquals($_column));
-    final item = $_typedResult.readTableOrNull(_companyCatalogIdTable($_db));
+    final item = $_typedResult.readTableOrNull(_companyIdTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: [item]),
@@ -10532,20 +11610,20 @@ class $$OperationsTableTableFilterComposer
     return composer;
   }
 
-  $$CompanyCatalogTableTableFilterComposer get companyCatalogId {
-    final $$CompanyCatalogTableTableFilterComposer composer = $composerBuilder(
+  $$CompaniesTableTableFilterComposer get companyId {
+    final $$CompaniesTableTableFilterComposer composer = $composerBuilder(
       composer: this,
-      getCurrentColumn: (t) => t.companyCatalogId,
-      referencedTable: $db.companyCatalogTable,
+      getCurrentColumn: (t) => t.companyId,
+      referencedTable: $db.companiesTable,
       getReferencedColumn: (t) => t.id,
       builder:
           (
             joinBuilder, {
             $addJoinBuilderToRootComposer,
             $removeJoinBuilderFromRootComposer,
-          }) => $$CompanyCatalogTableTableFilterComposer(
+          }) => $$CompaniesTableTableFilterComposer(
             $db: $db,
-            $table: $db.companyCatalogTable,
+            $table: $db.companiesTable,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -10661,27 +11739,26 @@ class $$OperationsTableTableOrderingComposer
     return composer;
   }
 
-  $$CompanyCatalogTableTableOrderingComposer get companyCatalogId {
-    final $$CompanyCatalogTableTableOrderingComposer composer =
-        $composerBuilder(
-          composer: this,
-          getCurrentColumn: (t) => t.companyCatalogId,
-          referencedTable: $db.companyCatalogTable,
-          getReferencedColumn: (t) => t.id,
-          builder:
-              (
-                joinBuilder, {
-                $addJoinBuilderToRootComposer,
+  $$CompaniesTableTableOrderingComposer get companyId {
+    final $$CompaniesTableTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.companyId,
+      referencedTable: $db.companiesTable,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CompaniesTableTableOrderingComposer(
+            $db: $db,
+            $table: $db.companiesTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
                 $removeJoinBuilderFromRootComposer,
-              }) => $$CompanyCatalogTableTableOrderingComposer(
-                $db: $db,
-                $table: $db.companyCatalogTable,
-                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-                joinBuilder: joinBuilder,
-                $removeJoinBuilderFromRootComposer:
-                    $removeJoinBuilderFromRootComposer,
-              ),
-        );
+          ),
+    );
     return composer;
   }
 }
@@ -10775,27 +11852,26 @@ class $$OperationsTableTableAnnotationComposer
     return composer;
   }
 
-  $$CompanyCatalogTableTableAnnotationComposer get companyCatalogId {
-    final $$CompanyCatalogTableTableAnnotationComposer composer =
-        $composerBuilder(
-          composer: this,
-          getCurrentColumn: (t) => t.companyCatalogId,
-          referencedTable: $db.companyCatalogTable,
-          getReferencedColumn: (t) => t.id,
-          builder:
-              (
-                joinBuilder, {
-                $addJoinBuilderToRootComposer,
+  $$CompaniesTableTableAnnotationComposer get companyId {
+    final $$CompaniesTableTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.companyId,
+      referencedTable: $db.companiesTable,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CompaniesTableTableAnnotationComposer(
+            $db: $db,
+            $table: $db.companiesTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
                 $removeJoinBuilderFromRootComposer,
-              }) => $$CompanyCatalogTableTableAnnotationComposer(
-                $db: $db,
-                $table: $db.companyCatalogTable,
-                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-                joinBuilder: joinBuilder,
-                $removeJoinBuilderFromRootComposer:
-                    $removeJoinBuilderFromRootComposer,
-              ),
-        );
+          ),
+    );
     return composer;
   }
 }
@@ -10813,11 +11889,7 @@ class $$OperationsTableTableTableManager
           $$OperationsTableTableUpdateCompanionBuilder,
           (OperationsTableData, $$OperationsTableTableReferences),
           OperationsTableData,
-          PrefetchHooks Function({
-            bool customerId,
-            bool lineId,
-            bool companyCatalogId,
-          })
+          PrefetchHooks Function({bool customerId, bool lineId, bool companyId})
         > {
   $$OperationsTableTableTableManager(
     _$AppDatabase db,
@@ -10840,7 +11912,7 @@ class $$OperationsTableTableTableManager
                 Value<String> id = const Value.absent(),
                 Value<String> customerId = const Value.absent(),
                 Value<String?> lineId = const Value.absent(),
-                Value<String> companyCatalogId = const Value.absent(),
+                Value<String> companyId = const Value.absent(),
                 Value<DateTime> occurredAt = const Value.absent(),
                 Value<double> salePrice = const Value.absent(),
                 Value<double> cost = const Value.absent(),
@@ -10855,7 +11927,7 @@ class $$OperationsTableTableTableManager
                 id: id,
                 customerId: customerId,
                 lineId: lineId,
-                companyCatalogId: companyCatalogId,
+                companyId: companyId,
                 occurredAt: occurredAt,
                 salePrice: salePrice,
                 cost: cost,
@@ -10872,7 +11944,7 @@ class $$OperationsTableTableTableManager
                 required String id,
                 required String customerId,
                 Value<String?> lineId = const Value.absent(),
-                required String companyCatalogId,
+                required String companyId,
                 required DateTime occurredAt,
                 Value<double> salePrice = const Value.absent(),
                 Value<double> cost = const Value.absent(),
@@ -10887,7 +11959,7 @@ class $$OperationsTableTableTableManager
                 id: id,
                 customerId: customerId,
                 lineId: lineId,
-                companyCatalogId: companyCatalogId,
+                companyId: companyId,
                 occurredAt: occurredAt,
                 salePrice: salePrice,
                 cost: cost,
@@ -10905,7 +11977,7 @@ class $$OperationsTableTableTableManager
               )
               .toList(),
           prefetchHooksCallback:
-              ({customerId = false, lineId = false, companyCatalogId = false}) {
+              ({customerId = false, lineId = false, companyId = false}) {
                 return PrefetchHooks(
                   db: db,
                   explicitlyWatchedTables: [],
@@ -10955,17 +12027,17 @@ class $$OperationsTableTableTableManager
                                   )
                                   as T;
                         }
-                        if (companyCatalogId) {
+                        if (companyId) {
                           state =
                               state.withJoin(
                                     currentTable: table,
-                                    currentColumn: table.companyCatalogId,
+                                    currentColumn: table.companyId,
                                     referencedTable:
                                         $$OperationsTableTableReferences
-                                            ._companyCatalogIdTable(db),
+                                            ._companyIdTable(db),
                                     referencedColumn:
                                         $$OperationsTableTableReferences
-                                            ._companyCatalogIdTable(db)
+                                            ._companyIdTable(db)
                                             .id,
                                   )
                                   as T;
@@ -10994,11 +12066,7 @@ typedef $$OperationsTableTableProcessedTableManager =
       $$OperationsTableTableUpdateCompanionBuilder,
       (OperationsTableData, $$OperationsTableTableReferences),
       OperationsTableData,
-      PrefetchHooks Function({
-        bool customerId,
-        bool lineId,
-        bool companyCatalogId,
-      })
+      PrefetchHooks Function({bool customerId, bool lineId, bool companyId})
     >;
 typedef $$ActivityLogTableTableCreateCompanionBuilder =
     ActivityLogTableCompanion Function({
@@ -12081,10 +13149,12 @@ class $AppDatabaseManager {
       $$CompanyCatalogTableTableTableManager(_db, _db.companyCatalogTable);
   $$PackageCatalogTableTableTableManager get packageCatalogTable =>
       $$PackageCatalogTableTableTableManager(_db, _db.packageCatalogTable);
+  $$CompaniesTableTableTableManager get companiesTable =>
+      $$CompaniesTableTableTableManager(_db, _db.companiesTable);
+  $$PackagesTableTableTableManager get packagesTable =>
+      $$PackagesTableTableTableManager(_db, _db.packagesTable);
   $$CustomersTableTableTableManager get customersTable =>
       $$CustomersTableTableTableManager(_db, _db.customersTable);
-  $$SellerCompaniesTableTableTableManager get sellerCompaniesTable =>
-      $$SellerCompaniesTableTableTableManager(_db, _db.sellerCompaniesTable);
   $$ShipmentsTableTableTableManager get shipmentsTable =>
       $$ShipmentsTableTableTableManager(_db, _db.shipmentsTable);
   $$LinesTableTableTableManager get linesTable =>

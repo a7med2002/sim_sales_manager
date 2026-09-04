@@ -22,6 +22,12 @@ class Company extends Equatable {
   final double availableToSell;
   final double owedToCompany;
 
+  /// Set only when this company was created via "Import Ready-Made" — a
+  /// one-time copy source (see `CompaniesCubit`'s doc comment), not a
+  /// live link. Used to detect "already imported" in the import sheet
+  /// and to look up the catalog's number-update URL, if any.
+  final String? catalogCompanyId;
+
   const Company({
     required this.id,
     required this.name,
@@ -36,6 +42,7 @@ class Company extends Equatable {
     this.consumed = 0,
     this.availableToSell = 0,
     this.owedToCompany = 0,
+    this.catalogCompanyId,
   });
 
   Company copyWith({
@@ -60,6 +67,7 @@ class Company extends Equatable {
       consumed: consumed,
       availableToSell: availableToSell,
       owedToCompany: owedToCompany,
+      catalogCompanyId: catalogCompanyId,
     );
   }
 
@@ -86,6 +94,35 @@ class Company extends Equatable {
       consumed: newConsumed,
       availableToSell: newAvailable,
       owedToCompany: owedToCompany,
+      catalogCompanyId: catalogCompanyId,
+    );
+  }
+
+  /// Undoes a previously-applied sale (a Line being deleted, or edited
+  /// to a different company/cost) — the exact inverse of [applySale]:
+  /// wholesale cost moves back from consumed into available-to-sell,
+  /// operations/profit counters drop back down.
+  Company reverseSale({required double wholesaleCost, required double profit}) {
+    final newConsumed = (consumed - wholesaleCost).clamp(0, double.infinity).toDouble();
+    final newAvailable = availableToSell + wholesaleCost;
+    final total = newConsumed + newAvailable;
+    final newUsagePercent = total <= 0 ? 0 : ((newConsumed / total) * 100).round();
+
+    return Company(
+      id: id,
+      name: name,
+      initials: initials,
+      notes: notes,
+      pinned: pinned,
+      status: status,
+      packages: packages,
+      operationsCount: (operationsCount - 1).clamp(0, 1 << 31),
+      profitGenerated: profitGenerated - profit,
+      usagePercent: newUsagePercent,
+      consumed: newConsumed,
+      availableToSell: newAvailable,
+      owedToCompany: owedToCompany,
+      catalogCompanyId: catalogCompanyId,
     );
   }
 
@@ -112,6 +149,7 @@ class Company extends Equatable {
       consumed: consumed,
       availableToSell: newAvailable,
       owedToCompany: owedToCompany + unpaid,
+      catalogCompanyId: catalogCompanyId,
     );
   }
 
@@ -129,6 +167,7 @@ class Company extends Equatable {
         usagePercent,
         consumed,
         availableToSell,
+        catalogCompanyId,
         owedToCompany,
       ];
 }

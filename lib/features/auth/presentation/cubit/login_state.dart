@@ -9,12 +9,18 @@ class LoginState extends Equatable {
   final LoginStatus status;
   final String? errorMessage;
 
+  /// Only meaningful once [status] is [LoginStatus.success] — which
+  /// route to land on (admin's own home vs. the seller shell), resolved
+  /// by `LoginCubit.submit()` right after a successful sign-in.
+  final bool isAdmin;
+
   const LoginState({
     this.username = '',
     this.password = '',
     this.rememberMe = true,
     this.status = LoginStatus.idle,
     this.errorMessage,
+    this.isAdmin = false,
   });
 
   LoginState copyWith({
@@ -23,6 +29,7 @@ class LoginState extends Equatable {
     bool? rememberMe,
     LoginStatus? status,
     String? errorMessage,
+    bool? isAdmin,
   }) {
     return LoginState(
       username: username ?? this.username,
@@ -30,9 +37,10 @@ class LoginState extends Equatable {
       rememberMe: rememberMe ?? this.rememberMe,
       status: status ?? this.status,
       errorMessage: errorMessage,
+      isAdmin: isAdmin ?? this.isAdmin,
     );
   }
 
   @override
-  List<Object?> get props => [username, password, rememberMe, status, errorMessage];
+  List<Object?> get props => [username, password, rememberMe, status, errorMessage, isAdmin];
 }

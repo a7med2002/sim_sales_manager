@@ -20,6 +20,10 @@ import '../../../profile/presentation/cubit/profile_cubit.dart';
 /// More landing page: profile card + the 9 sub-page menu rows + Logout.
 /// Matches design/screenshots/more.png (the original 8 rows) plus Number
 /// Update, added later per design/screenshots/numbers update.png.
+/// No "Admin" row here (there was one, briefly) — an admin account never
+/// reaches this page at all, since it lands on its own home
+/// (`AdminHubPage`) straight from login/session-restore instead of the
+/// seller shell. See `AdminHubPage`'s doc comment for why.
 class MorePage extends StatelessWidget {
   const MorePage({super.key});
 

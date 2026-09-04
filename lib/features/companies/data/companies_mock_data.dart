@@ -74,6 +74,7 @@ class CompaniesMockData {
 
   static const presetCompanies = [
     PresetCompany(
+      id: 'preset-jawwal',
       name: 'Jawwal',
       initials: 'J',
       defaultPackages: [
@@ -83,6 +84,7 @@ class CompaniesMockData {
       ],
     ),
     PresetCompany(
+      id: 'preset-ooredoo',
       name: 'Ooredoo',
       initials: 'O',
       defaultPackages: [
@@ -91,6 +93,7 @@ class CompaniesMockData {
       ],
     ),
     PresetCompany(
+      id: 'preset-airalo',
       name: 'Airalo eSIM',
       initials: 'AE',
       defaultPackages: [
@@ -99,6 +102,7 @@ class CompaniesMockData {
       ],
     ),
     PresetCompany(
+      id: 'preset-holafly',
       name: 'Holafly',
       initials: 'H',
       defaultPackages: [
@@ -107,6 +111,7 @@ class CompaniesMockData {
       ],
     ),
     PresetCompany(
+      id: 'preset-nomad',
       name: 'Nomad eSIM',
       initials: 'NE',
       defaultPackages: [
@@ -115,6 +120,7 @@ class CompaniesMockData {
       ],
     ),
     PresetCompany(
+      id: 'preset-orange',
       name: 'Orange',
       initials: 'O',
       defaultPackages: [

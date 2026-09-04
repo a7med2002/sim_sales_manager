@@ -1733,25 +1733,754 @@ everywhere it appears:
   company). Verified: `flutter analyze` clean, `flutter test` 24/25 (new
   tests pass; same pre-existing Profits flake, no new regressions).
 
+## Real Supabase project connected
+- The user created a live Supabase project, applied
+  `supabase/migrations/0001_init.sql`, deployed `admin-manage-user`, and
+  manually promoted their own account to `role = 'admin'` (the one
+  necessarily-manual bootstrap step — see the schema's design doc for
+  why: only an admin can create/promote another admin).
+- Verified both live, from outside the app, before wiring anything:
+  `GET /rest/v1/company_catalog` with the anon key → `200 []` (schema +
+  RLS reachable, correctly empty); `POST /functions/v1/admin-manage-user`
+  with the anon key (no user session) → `401 Invalid session` (correctly
+  rejects an unauthenticated caller, confirming the function is deployed
+  and enforcing its admin check).
+- Project URL + anon/publishable key (safe to hold locally — RLS is the
+  real security boundary, not this key, unlike `service_role`) are in
+  **`run_dev.sh` / `run_dev.ps1`** at the repo root — both **git-ignored**
+  (added to `.gitignore`), so `flutter run`/`flutter build` with real
+  credentials is one local script away without ever committing them.
+- `Supabase.initialize` in `main.dart` and `SyncEngine` registration in
+  `service_locator.dart` already only activate when `Env.isConfigured`
+  (built in Phase 2, before a project existed) — no code changes were
+  needed to go from "no project" to "real project", only supplying the
+  two values.
+
+## Real Supabase Auth wired (Login/Forgot password/Signup)
+- Caught a real sequencing gap before starting Companies: every
+  tenant-scoped Drift row needs a real `owner_id`, and Login was still
+  fully mock — so nothing had a real id to write yet. Asked the user,
+  agreed to wire Auth first.
+- **`core/auth/auth_service.dart`** (new) — thin wrapper over Supabase
+  Auth: `signIn`/`signUp`/`signOut`, `currentOwnerId` (the id every
+  tenant-scoped write will use), `fetchCurrentRole()` (reads
+  `profiles.role` fresh each call, not cached, since an admin can change
+  it mid-session). Registered in `service_locator.dart` only when
+  `Env.isConfigured`, same pattern as `SyncEngine`.
+- **`LoginCubit`** now calls `AuthService.signIn` for real when
+  configured; falls back to the original mock (any username + 6+ char
+  password) when it isn't, so the app/demo still runs without a backend.
+  New error keys `login.errors.invalidCredentials`/`networkError`.
+- **`ForgotPasswordCubit`** now calls real
+  `Supabase.auth.resetPasswordForEmail` when configured; deliberately
+  still reports success even on failure (never reveal whether an email
+  is registered — standard account-enumeration protection).
+- **New: real signup flow** (`SignupCubit`/`SignupPage`, reachable from
+  Login via "Don't have an account? Create one") — a seller creates their
+  own account, per the multi-tenant design (public signup only ever
+  creates `role = 'seller'`; admin accounts are never self-served).
+  Handles both cases Supabase can return: session issued immediately, or
+  `awaitingEmailConfirmation` if the project requires email confirmation
+  (confirmed via `GET /auth/v1/settings` on the user's real project:
+  `mailer_autoconfirm: false`, so confirmation is required here).
+- Added `signup.*` and the two new `login.errors.*` keys to both
+  `en.json`/`ar.json`. Verified: `flutter analyze` clean, `flutter test`
+  24/25 (same pre-existing flake, no regressions — the new Cubits aren't
+  exercised by existing tests since `Env.isConfigured` is false without
+  `--dart-define` in the test harness).
+
+## Companies migrated off mock data (first real Phase 3 feature)
+- **`CompaniesCubit`** now reads/writes real Drift when
+  `Env.isConfigured` and `AuthService.currentOwnerId` is available;
+  falls back to the original in-memory mock list otherwise (same
+  conditional pattern as `LoginCubit`/`ForgotPasswordCubit`), so the
+  demo still works fully offline.
+  - **Read**: `_loadFromDrift()` joins `seller_companies` (this seller's
+    own archive/pin/notes) with `company_catalog` (shared name/logo) via
+    `innerJoin`, filtered by `ownerId`; packages loaded separately from
+    `package_catalog` and grouped by `companyCatalogId`. `Company.id` is
+    the `company_catalog` id throughout — the same id `shipments`/
+    `operations` will reference once those migrate, so nothing needs
+    remapping later.
+  - **Write**: `togglePin`/`archive`/`restoreToActive`/`softDelete`/
+    `updateCompany` (notes only) all go through one `_updateSellerCompany`
+    helper that tags `synced = false` + `updatedAt = now()` per
+    CLAUDE.md's offline-first rule, then reloads from Drift so `state`
+    always reflects exactly what's persisted. `permanentlyDelete` issues
+    a real Drift delete. `importPreset` inserts a new `seller_companies`
+    row (or restores an archived one) referencing an existing
+    `company_catalog_id` — a seller can never create a `company_catalog`
+    row themselves (admin-only, per the architecture doc).
+  - **`addCompany`** (typing a brand-new company from scratch) stays
+    mock-only by design — the page now hides that button entirely when
+    `Env.isConfigured`, leaving only "Import Ready-Made" (now backed by
+    the live catalog via `loadCatalogOptions()`, itself falling back to
+    the static preset list offline).
+  - **Deliberately not persisted yet**: balance/stats fields (`consumed`,
+    `availableToSell`, `owedToCompany`, `profitGenerated`,
+    `operationsCount`, `usagePercent`) — `recordSale`/`addShipment` still
+    only mutate in-memory state, same as before a restart loses this
+    progress in real mode. These move to real `shipments`/`operations`
+    rows once Shipments & Operations migrates (separate feature, not
+    started).
+- **`CompanyFormSheet`** gained `catalogFieldsReadOnly` (set from
+  `Env.isConfigured`): in real mode the name field goes read-only and the
+  packages section hides entirely (both catalog-owned), leaving only
+  notes editable — the underlying save callback still fires with the
+  original unchanged name/packages, which `CompaniesCubit.updateCompany`
+  ignores anyway in real mode, so nothing is silently dropped.
+- **`ImportReadyMadeSheet`** now takes `presets` as a parameter instead
+  of hardcoding `CompaniesMockData.presetCompanies`, and matches by
+  `preset.id` instead of `preset.name` (both `PresetCompany` and the
+  static preset list gained real `id`s). Added an empty-state for when
+  the catalog has no companies yet (`companies.import.emptyCatalogTitle`/
+  `Description`).
+- New `core/utils/uuid.dart` — a small manual UUID v4 generator (no new
+  package: Postgres' `id uuid` columns require a real UUID once a
+  locally-created row eventually pushes to Supabase, and this was easy
+  enough to write directly rather than adding the `uuid` pub package for
+  one function).
+- New test in `test/app_database_test.dart` validating the exact
+  `innerJoin` pattern `CompaniesCubit._loadFromDrift()` uses (one seller
+  sees only their own seller_companies row, joined to the right catalog
+  name/packages). Verified: `flutter analyze` clean, `flutter test`
+  24/25 (3/3 new database tests pass; same pre-existing Profits flake,
+  no regressions).
+- **Not yet done**: live on-device verification against the real
+  Supabase project (sign up a seller, have an admin add a
+  `company_catalog` row via SQL Editor, confirm it shows up in "Import
+  Ready-Made" and persists after an app restart). The join logic is
+  covered by the new Drift test above, but nobody has driven the actual
+  UI against the live backend yet.
+
+## Correction: companies are seller-owned, not catalog-linked
+- User feedback right after the pass above: this is a per-seller
+  management program — adding/editing a company must stay the seller's
+  own free decision, exactly like the original single-user design.
+  "Import Ready-Made" was only ever meant as a convenience (skip typing
+  a company's data by hand), not a restriction to catalog-only companies
+  — that reading of the earlier design was wrong, confirmed with the
+  user before reworking.
+- **Schema**: `supabase/migrations/0002_owned_companies.sql` (new —
+  `0001` is left as-is since it's already applied to the live project;
+  dropping/recreating is safe here since these tables held no real data
+  yet). Drops `seller_companies`; adds tenant-owned `companies` (name,
+  logo_url, notes, status, pinned, `catalog_company_id` nullable) and
+  `packages` (company_id, name, wholesale_cost, retail_price), both
+  owner-only RLS like every other tenant table. `shipments`/`lines`/
+  `operations` re-created referencing `companies`/`packages` instead of
+  `company_catalog`/`package_catalog`. **`company_catalog`/`package_catalog`
+  themselves are unchanged** — they keep existing, just purely as an
+  admin-curated template library "Import Ready-Made" copies from once,
+  never a live link. **Not yet applied to the live project** — needs
+  running via the SQL Editor same as `0001` was (Supabase CLI wasn't
+  authenticated in this session to push it directly).
+- **Drift**: `seller_companies_table.dart` deleted; new
+  `companies_table.dart`/`packages_table.dart` (tenant, via the same
+  `TenantColumns` mixin). `shipments_table.dart`/`lines_table.dart`/
+  `operations_table.dart` updated to reference `CompaniesTable`/
+  `PackagesTable`. Regenerated via `build_runner`.
+- **`CompaniesCubit`** rewritten: `_loadFromDrift()` now reads the
+  seller's own `companies`/`packages` directly (no join needed — no
+  longer joining to a shared catalog for name/packages). `addCompany`
+  now works in real mode too (previously mock-only) — inserts a fresh
+  `companies` row + `packages` rows. `updateCompany` now updates name AND
+  packages for real (previously notes-only) — packages are replaced
+  wholesale on each save (delete this company's rows, re-insert what the
+  form hands back) since they have no stable identity worth diffing.
+  `importPreset` inserts a new, independent `companies` row copying
+  name/packages from the picked `PresetCompany`, tagging
+  `catalogCompanyId` so the import sheet can still show "already
+  imported" / "archived, tap to re-import" — matching is now by
+  `company.catalogCompanyId == preset.id` instead of `company.id ==
+  preset.id`, since `Company.id` is now the seller's own id, not the
+  catalog's.
+- **UI reverted**: `companies_page.dart`'s "+ Add Company" button is no
+  longer hidden in real mode; `CompanyFormSheet`'s `catalogFieldsReadOnly`
+  (added, then removed same pass) is gone — name/notes/packages are all
+  freely editable again in every mode, matching `addCompany`/
+  `updateCompany`'s corrected real-mode behavior.
+- Rewrote `test/app_database_test.dart` for the new schema — 4 tests,
+  including one specifically asserting the "import is a copy, not a
+  link" invariant (editing an imported company's name leaves the
+  catalog's template row untouched). Verified: `flutter analyze` clean,
+  `flutter test` 26/27 (same pre-existing Profits flake, no
+  regressions), `flutter build apk --debug` with real
+  `--dart-define` credentials succeeds.
+- Corrected `design/APP_CONTEXT.md`'s "Multi-Tenant & Admin Architecture"
+  section and the Companies/Data-Model sections to match (added an
+  explicit "Import vs. catalog" subsection so this distinction doesn't
+  get lost again).
+
+## Public signup removed; admin provisions every account
+- User feedback: no self-signup at all — every seller account is
+  created by an admin (handed the login/password directly), matching a
+  private per-seller management tool rather than an open SaaS signup.
+- Deleted `SignupPage`/`SignupCubit`/`SignupState` entirely (dead code
+  once the "Create account" link on Login was removed), and
+  `AuthService.signUp` along with them — account creation only ever
+  happens through the `admin-manage-user` Edge Function (service role),
+  never the public client `signUp` call.
+- Removed the `signup.*` and `login.noAccount`/`createAccount`
+  translation keys; `design/APP_CONTEXT.md`'s Authentication section
+  corrected to state explicitly there's no public signup flow.
+- **Recommended follow-up on the Supabase project itself** (not code):
+  disable "Enable email signups" under Authentication → Providers →
+  Email in the Supabase dashboard, since the public Auth API would still
+  accept a signup call directly even with no UI for it in this app.
+
+## Login/Forgot password UI polish
+- `AuthTextField` gained: a leading icon (`icon`) that switches to
+  `primaryAction` color on focus (border already did this; the icon now
+  visibly responds too), a `helperText` line below the field, and a
+  show/hide toggle for password fields instead of always obscuring the
+  value. Converted from `StatelessWidget` to `StatefulWidget` to track
+  focus and the obscure toggle.
+- Login: email field gets an `alternate_email` icon + "use the email
+  your admin gave you" helper; password field gets a `lock_outline` icon
+  + "at least 6 characters" helper + the new show/hide toggle.
+- Forgot password: same email icon + a "we'll email a reset link here"
+  helper.
+
+## VS Code run config for real backend testing
+- The user tested on a real device via VS Code's inline "Run" link above
+  `main()` — that bypasses `launch.json` entirely and always runs
+  without `--dart-define`, landing in offline/demo mode (explains "أي
+  يوزر وهمي بيفوت" / signup saying "no backend configured"). Root cause
+  found and explained; the fix is using the **Run and Debug side panel**
+  (`Ctrl+Shift+D`) instead, which does read `launch.json`.
+- Added `.vscode/launch.json` (git-ignored — same reasoning as
+  `run_dev.sh`/`.ps1`, the anon key doesn't need to be secret but stays
+  local by convention) with two configurations: **"sim_sales_manager
+  (connected to Supabase)"** (real project credentials via
+  `--dart-define`) and **"sim_sales_manager (offline/demo)"** (no args).
+  Select the first one in the Run and Debug dropdown before pressing ▶.
+
+## Real push/pull sync implemented (the missing offline-first half)
+- Root cause of "Supabase tables are empty even though the app shows
+  data": `SyncEngine` only ever implemented `pullCatalog()` (Phase 2) —
+  every write `CompaniesCubit` made went to local Drift only, with
+  nothing pushing it to Supabase and nothing pulling remote changes
+  down. Data was real, just device-local, never round-tripping through
+  the server. Decided (with the user) to build this properly now, before
+  migrating any other feature, rather than defer it and have to retrofit
+  sync into multiple already-built features later.
+- **`SyncEngine`** gained, for `companies` and `packages`:
+  `pushPendingCompanies`/`pushPendingPackages` (upsert local
+  `synced = false` rows to Supabase, then mark them synced),
+  `pullCompanies`/`pullPackages` (fetch this owner's rows, upsert into
+  Drift), `deleteCompanyRemote` (permanent deletes aren't in the
+  `synced` queue — a deleted row has nothing left to "push", so this
+  calls Supabase directly), and `syncAll(ownerId)` orchestrating all of
+  it in the right order (catalog → companies → packages, since packages
+  reference companies by id).
+  - **Deliberate simplification** (documented in the class doc comment,
+    per CLAUDE.md "don't over-engineer conflict resolution"): push
+    always runs before pull in `syncAll`, so no separate `updated_at`
+    comparison is needed on pull — by the time pull runs, this device's
+    own edits are already reflected server-side. No tombstone tracking
+    for permanent deletes made on *another* device while this one was
+    offline (that row will reappear on next pull) — acceptable for a
+    single-seller-across-devices scenario, revisit if it matters later.
+- **`CompaniesCubit`** now actually syncs: `_syncThenLoad()` runs
+  `SyncEngine.syncAll` before the first `_loadFromDrift()`, and every
+  write method calls a new `_pushBestEffort()` afterward so changes
+  reach Supabase promptly instead of waiting for the next
+  connectivity-triggered sync. Both are best-effort (try/catch swallowed)
+  — a failed sync never blocks the UI, the row just stays
+  `synced = false` locally until the next successful sync.
+  - Fixed a real bug found while wiring this: `_insertCompany` wasn't
+    setting `synced: false` on insert, so new rows relied on the Drift
+    column's default (`true`) and would have silently never been pushed.
+  - Fixed a second gap: `permanentlyDelete` deleted the local `companies`
+    row but left its `packages` rows orphaned (Drift doesn't cascade
+    deletes locally the way Postgres' `ON DELETE CASCADE` does
+    server-side) — now deletes local packages explicitly too, and calls
+    the new `deleteCompanyRemote`.
+- **`SyncBloc`** gained an optional `AuthService? auth` — `_runSync` now
+  calls `engine.syncAll(ownerId)` when someone's signed in, falling back
+  to `pullCatalog()`-only otherwise (e.g. before login). **`LoginCubit`**
+  now dispatches `SyncRequested()` right after a successful sign-in,
+  since the app-startup sync (in `main()`) ran before anyone was signed
+  in and so only pulled the catalog.
+- **Not automated-tested**: this all talks to the live Supabase network,
+  and there's no mocking package in the project to fake `SupabaseClient`
+  (would need to add one, e.g. `mocktail` — asking first, not done this
+  pass). Verified via `flutter analyze`/`flutter test` (unaffected —
+  network paths aren't exercised without `--dart-define`) plus manual
+  live testing on the user's own device, in progress as of this pass.
+
+## Customers migrated off mock data (second Phase 3 feature)
+- Same real/mock conditional pattern as `CompaniesCubit`, but writes are
+  **optimistic** instead of await-then-reload: `state` updates
+  synchronously from the given data first, and the Drift write + push
+  happens in the background (fire-and-forget). Required by
+  `CustomerCatalog.quickAddCustomer`'s contract — New Sale needs the new
+  customer's id back immediately, synchronously, to attach a line to it
+  in the same flow, so there's no room for an `await` before returning.
+- `SyncEngine` gained `pushPendingCustomers`/`pullCustomers`/
+  `deleteCustomerRemote`, added to `syncAll`'s orchestration (no
+  ordering dependency on companies/packages). One real mapping subtlety:
+  `tags` is stored locally as a comma-joined string (Drift has no native
+  array column) but Postgres' `customers.tags` is a real `text[]` — the
+  push/pull mapping is the one place that converts between the two.
+- **Lines are deliberately still not migrated** — a Line references a
+  Company + Package, so migrating it properly is really a New Sale/
+  Operations-shaped piece of work, not a Customers one (documented in
+  `CustomersCubit`'s class doc comment, same "defer the cross-cutting
+  part" precedent as Companies deferred shipments/operations balance
+  data). In real mode, `lines` now starts **empty** rather than seeded
+  with `CustomersMockData.initialLines()` — those mock lines reference
+  mock customer ids that don't exist once real `customers` loads, so
+  keeping them would show orphaned/mismatched rows; an honest empty list
+  is more correct until Lines actually migrates.
+- New test in `test/app_database_test.dart`: inserts two customers for
+  different owners, confirms per-owner isolation, tag round-tripping
+  (comma-string ↔ list), and that only the explicitly-`synced: false`
+  row is picked up by a `pushPendingCustomers`-style filter query — this
+  guards against the exact bug found and fixed in the Companies pass
+  (an insert silently defaulting to `synced: true` and never getting
+  pushed).
+- Verified: `flutter analyze` clean, `flutter test` 27/28 (5/5 database
+  tests pass; same pre-existing Profits flake, no regressions);
+  `flutter build apk --debug` with real `--dart-define` credentials in
+  progress as of this pass.
+- **Not yet live-tested** on the user's own device (unlike Companies,
+  which is mid-verification) — same open item as Companies: confirm a
+  customer added on the phone appears in Supabase's `customers` table,
+  survives a reinstall.
+
+## Lines migrated too (New Sale's path only)
+- Went further than planned this pass: while wiring Customers, realized
+  Lines could mostly migrate too, since `Line`'s only missing piece for
+  real persistence was a real `companyId` — and New Sale already has
+  `company.id` on hand (`state.selectedCompany!.id`) when it calls
+  `addSaleLine`, it just wasn't being passed through.
+- **`Line` entity** gained `companyId` (required) and `packageId`
+  (nullable — a free-typed price during New Sale has no matching
+  `packages` row) alongside the existing `companyName`/
+  `companyInitials`/`packageName` display strings, which stay so
+  existing widgets (`LineCard`, Numbers table, ...) don't need to look
+  the company back up just to render a row.
+- **`CustomerCatalog.addSaleLine`** (the shared interface New Sale calls
+  through) gained `required String companyId` / `String? packageId`.
+  `NewSaleCubit.confirmAndSave` now passes `company.id`/`package.id`
+  through. Updated the one other implementer (`_FakeCustomerCatalog` in
+  `test/new_sale_cubit_test.dart`) to match.
+- **Split behavior, on purpose**: `addSaleLine` (New Sale → real
+  `companyId` in hand) now persists for real when `_isReal`, inserting
+  into Drift's `lines` table and pushing best-effort. `addLine`/
+  `updateLine` (Customer Detail's own free-text "+ Add Line" quick form,
+  `LineFormSheet`) **stay in-memory-only** — that form has no real
+  company/package picker yet (already tracked in this file as a
+  follow-up), so there's no valid `companyId` to satisfy `lines.company_id`'s
+  NOT NULL FK on Supabase. Documented directly on `addLine` so the
+  asymmetry doesn't read as an oversight.
+- `CustomersCubit._loadFromDrift()` now also loads `lines` for the
+  signed-in owner, and reconstructs each Line's display strings
+  (`companyName`/`companyInitials`/`packageName`) by looking up
+  `companyId`/`packageId` against `CompanyCatalog.activeCompanies`
+  (`getIt<CompanyCatalog>()`) rather than re-querying Drift directly —
+  this Cubit otherwise has no dependency on the Companies feature, and
+  the catalog interface already has exactly this data loaded.
+- `SyncEngine` gained `pushPendingLines`/`pullLines`/`deleteLineRemote`,
+  added to `syncAll` after customers (a Line references both a customer
+  and a company).
+- **Still deliberately not covered**: `Operations`/`Shipments` — a sale
+  is still supposed to deduct from the company's balance
+  (`CompanyCatalog.recordSale`), and that still only mutates
+  `CompaniesCubit`'s in-memory state, unpersisted, exactly as before.
+  Migrating that is genuinely a Shipments & Operations-shaped piece of
+  work (its own feature, its own tables), not something to fold into
+  this pass.
+- New test in `test/app_database_test.dart`: inserts a customer +
+  company + package for one seller, then a Line referencing them by id,
+  confirms the FK ids and computed `profit` round-trip and the row
+  starts `synced: false`. Verified: `flutter analyze` clean,
+  `flutter test` 28/29 (6/6 database tests pass; same pre-existing
+  Profits flake, no regressions); `flutter build apk --debug` with real
+  `--dart-define` credentials in progress as of this pass.
+- **Not yet live-tested**: complete a New Sale on the phone, confirm the
+  Line lands in Supabase's `lines` table with the right `company_id`/
+  `package_id`.
+
+## Sync status indicator wired into the UI
+- New `core/widgets/sync_status_indicator.dart` — the "subtle
+  sync-status indicator... never a blocking spinner" CLAUDE.md's
+  offline-first section calls for. Self-contained: owns its own
+  `BlocProvider.value(value: getIt<SyncBloc>())`/`BlocBuilder`, so every
+  `AppTopBar` call site across the app got the indicator automatically
+  without any of them needing to know `SyncBloc` exists or pass
+  anything new in.
+  - Renders nothing (`SizedBox.shrink()`) when `!Env.isConfigured` —
+    offline/demo mode is *expected* to be offline, so an "offline" badge
+    there would just be noise, not information.
+  - Four states mapped to a small (18px) icon + color, no spinner:
+    `offline` → muted cloud-off, `syncing` → muted cloud-sync,
+    `idle` (synced) → `colors.success` cloud-done, `error` → `colors.danger`
+    cloud-off. Each has a tooltip (`sync.status.*` — new keys in both
+    `en.json`/`ar.json`) and tapping it dispatches `SyncRequested()` for
+    a manual retry.
+  - Placed in `AppTopBar` right before the existing dark/light toggle —
+    every page that already uses `AppTopBar` (Home, Companies,
+    Customers, all the More sub-pages) now shows it with zero per-page
+    changes.
+- Verified: `flutter analyze` clean, `flutter test` unaffected (28/29,
+  same pre-existing flake — the indicator is invisible in the test
+  harness since `Env.isConfigured` is false there without
+  `--dart-define`); `flutter build apk --debug` with real
+  `--dart-define` credentials in progress as of this pass.
+- **Not yet visually confirmed on-device** — the logic is verified by
+  code review and the successful build, but nobody has looked at the
+  actual icon rendering/color/tooltip on a real screen yet.
+
+## LineFormSheet: real company/package picker (closes a tracked gap)
+- User feedback: Customer Detail's "+ Add Line" should pick company from
+  a real dropdown of this seller's own companies — not free text — and
+  should tell the user plainly (and block adding) when they have no
+  companies yet. This was already the exact gap tracked in this file
+  ("LineFormSheet still has its own free-text company field"); closing
+  it also unblocks real persistence for lines added this way, same as
+  New Sale's lines already got.
+- **`LineFormSheet`** now takes `required List<CompanySummary> companies`
+  (the caller passes `getIt<CompanyCatalog>().activeCompanies`, same
+  list New Sale reads). Company is a `DropdownButtonFormField`; picking
+  one populates a second dropdown for its packages; picking a package
+  auto-fills wholesale/retail cost (both still freely editable after,
+  same as New Sale's flow) via its `id`, not by name-matching text.
+  When `companies` is empty, the sheet shows an `EmptyState` ("No
+  companies yet — add one first") instead of the form, with no Save
+  action — exactly the "قله انو فش شركات وما بقدر يضيف خط" behavior
+  asked for.
+- `LineSaveCallback`'s signature gained `companyId`/`packageId?`
+  alongside the existing display strings, matching `Line`'s shape.
+  `customer_detail_page.dart`'s two call sites (`addLine`/`updateLine`)
+  updated to pass them through.
+- **`CustomersCubit.addLine`/`updateLine`/`deleteLine`** now persist for
+  real when `_isReal` — same optimistic-update-then-background-persist
+  shape as `addSaleLine` (new `_persistLineUpdate` helper shared by
+  `updateLine` and `addPayment`, since both just rewrite an existing
+  Line row). This closes the asymmetry from the previous pass, where
+  only New-Sale-created lines could persist — now every way a Line gets
+  created or edited in the app does.
+- Updated `test/widget_test.dart`'s Customers "add a line" test to
+  drive the new dropdowns (`DropdownButtonFormField<String>` — company
+  first, then package) instead of typing free text, picking "Airalo
+  eSIM" / "Regional 3GB" specifically because that combination doesn't
+  collide with any of Mahmoud's other seeded lines (keeps the
+  `findsOneWidget` check meaningful).
+- Verified: `flutter analyze` clean, `flutter test` 28/29 (same
+  pre-existing Profits flake, no regressions — including the updated
+  Customers test); `flutter build apk --debug` with real `--dart-define`
+  credentials in progress as of this pass.
+- **Not yet live-tested**: add a line via this form on the phone,
+  confirm it lands in Supabase's `lines` table.
+
+## Balance check before a sale (New Sale + Add Line)
+- User hit a real gap: added a company, a customer, and a line for it —
+  the line saved fine, but the company's balance stayed at ₪0 on the
+  Companies page, with no warning at any point that the sale was going
+  through against a company with no stock. Root cause: a brand-new real
+  company always starts at `availableToSell: 0` until a **Shipment**
+  (balance top-up) is added for it via Shipments & Operations → "+ New
+  Shipment" — that flow already works today (`ShipmentsOperationsCubit.
+  addShipment` → `CompanyCatalog.addShipment`, in-memory, per the
+  existing "balance/stats not persisted yet" note from the Companies
+  pass) — the user just hadn't added one yet before trying to sell.
+  Explained this directly; separately, added the actual missing
+  guardrail requested: **selling should show the balance and refuse to
+  exceed it**, matching design/APP_CONTEXT.md's own spec ("Selling a
+  line consumes from the balance at wholesale price... selling stops
+  when balance is exhausted").
+- **`NewSaleState`** gained `exceedsCompanyBalance` (`wholesaleCost >
+  selectedCompany.availableToSell`), folded into
+  `canGoNextFromPackageStep` — the "Next" button on the package/price
+  step is now disabled once the entered wholesale cost would overdraw
+  the selected company.
+- **`PackagePriceStep`**: the company dropdown now shows each company's
+  available balance right in the item text ("Jawwal — ₪1,832.00"), plus
+  a balance line under the selected company and a red warning line
+  under the cost fields when `exceedsCompanyBalance` is true.
+- **`LineFormSheet`** (Customer Detail's "+ Add Line") got the same
+  treatment: `_exceedsBalance` folded into `_canSave`, balance shown in
+  the company dropdown + a line under it, red warning when the
+  wholesale cost is too high. **Only checked when adding a new line, not
+  editing one** — an existing line's own wholesale cost was already
+  deducted from the balance when it was first created, so re-checking it
+  against the current balance without adding it back first would
+  wrongly block a same-price edit; documented directly on `_exceedsBalance`.
+- **Bug found and fixed while testing this**: both dropdowns' new
+  "Name — ₪balance" item text overflowed narrow widget-test viewports
+  (`RenderFlex overflowed`), which then made the test's dropdown-item
+  taps silently fail to find anything. Fixed with `isExpanded: true` +
+  `overflow: TextOverflow.ellipsis` on both `DropdownButtonFormField`s —
+  a real fix (long company names would've overflowed on a real narrow
+  phone too), not just a test workaround.
+- Updated `test/new_sale_cubit_test.dart`'s shared fixture company to
+  have `availableToSell: 500` (was defaulting to 0, which would now
+  correctly block every test in that file) and
+  `test/widget_test.dart`'s Add Line test to match dropdown items with
+  `textContaining` instead of exact `text` now that they include the
+  balance.
+- Verified: `flutter analyze` clean, `flutter test` 28/29 (same
+  pre-existing Profits flake, no regressions — all 3 tests broken by
+  this change mid-pass are fixed and passing again); `flutter build apk
+  --debug` with real `--dart-define` credentials in progress as of this
+  pass.
+- **Still not covered** (unchanged from before): the balance itself is
+  still in-memory-only on `CompaniesCubit` (not persisted to
+  `shipments`/`operations`), so this validation is checking a real but
+  not-yet-durable number — it'll reset to whatever's in Drift/Supabase
+  on next app restart until Shipments & Operations migrates for real.
+
+## Bug fix: Add Line (Customer Detail) never updated the company's consumed/operations
+- User caught this live: added a shipment (balance went up, correctly),
+  then added a line for that company — the line saved, but the
+  company's "consumed" and "operations count" stayed at 0.
+- **Root cause**: two different places create a Line, and only one of
+  them was wired to also record the sale against the company.
+  `NewSaleCubit.confirmAndSave` calls both
+  `CustomerCatalog.addSaleLine(...)` *and*
+  `CompanyCatalog.recordSale(...)` itself — it's the orchestrator. But
+  Customer Detail's own "+ Add Line" calls `CustomersCubit.addLine(...)`
+  directly, with nothing else in the call chain ever telling the company
+  a sale happened.
+- **Fix**: `CustomersCubit.addLine` now also calls
+  `getIt<CompanyCatalog>().recordSale(companyId: ..., wholesaleCost:
+  ..., profit: ...)` right after creating the line — same effect
+  `NewSaleCubit` already gets, now for this entry point too. Not added
+  to `addSaleLine` itself (that would double-count for the New Sale
+  path, which already triggers it independently) or to `updateLine`
+  (editing a line's price shouldn't re-record a second sale).
+- Verified: `flutter analyze` clean.
+
+## New: Company Detail page
+- User request: tapping a company card should open a detail page (same
+  pattern as Customer Detail) showing the company's own info and every
+  Line ever bought from it.
+- New `lib/features/companies/presentation/pages/company_detail_page.dart`:
+  header (back, name, notes, edit), the same balance-usage card shape as
+  the Companies list card (usage %, progress bar, consumed/available/
+  owed), and a list of Lines for this company — **read-only** here
+  (editing/deleting a Line stays a Customer Detail action). Reads lines
+  via `CustomerCatalog.allLines` filtered by the new `companyId` field
+  (see below), not by importing the Customers feature's `Line`/`LineCard`
+  directly — cross-feature reads only go through `core/catalog/`
+  DTOs, per CLAUDE.md.
+- **`LineSummary`** (the `core/catalog/` DTO, was missing this) gained a
+  `companyId` field alongside `companyName` — same "real FK + display
+  string" shape as the `Line` entity itself. `CustomersCubit.allLines`
+  updated to populate it. Filtering Company Detail's lines by an exact
+  id instead of matching on `companyName` text is both simpler and more
+  correct (two companies could in principle share a display name).
+- `CompanyCard` gained a required `onTap`, wired in `companies_page.dart`
+  to push `CompanyDetailPage` (same `Navigator.push` +
+  `BlocProvider.value(value: cubit, ...)` pattern `customers_page.dart`
+  already uses for `CustomerDetailPage`). The card's existing 3-dot menu
+  still works independently — Flutter's gesture arena resolves the tap
+  to whichever detector is more specific, so the outer `onTap` doesn't
+  swallow menu-item taps.
+- New `companies.detail.*` translation keys (both `en.json`/`ar.json`).
+- Verified: `flutter analyze` clean, `flutter test` 28/29 (same
+  pre-existing Profits flake, no regressions); `flutter build apk
+  --debug` with real `--dart-define` credentials in progress as of this
+  pass.
+- **Not yet live-tested**: open a company's detail page on the phone,
+  confirm the balance card and line list look right and match what's on
+  the list card.
+
+## Deliberately not attempted this pass: full Shipments & Operations migration
+- User also asked to "finish every feature on Drift+Supabase, both
+  cases" — i.e. keep going and migrate Shipments & Operations for real
+  too, so the balance shown is actually durable (survives a restart)
+  instead of the in-memory-only approximation from the Companies pass.
+  This is a real, correctly-scoped next step, **not done this pass** —
+  explicitly held back rather than rushed, since the user also said
+  "نفذ بدقة بديش مشاكل" (execute precisely, no problems) and this one is
+  large enough that combining it with everything else already done this
+  pass (bug fix + a new page) was the more likely way to actually cause
+  problems. It needs its own dedicated pass:
+  - Migrate `ShipmentsOperationsCubit` off `ShipmentsMockData` onto real
+    Drift `shipments`/`operations` tables (same dual-mode + sync-engine
+    pattern as Companies/Customers/Lines).
+  - **Real architectural change, not just a data-source swap**:
+    `Company.consumed`/`availableToSell`/`owedToCompany`/
+    `profitGenerated`/`operationsCount`/`usagePercent` currently live as
+    incrementally-mutated in-memory fields (`applySale`/`applyShipment`
+    on the `Company` entity, called via `recordSale`/`addShipment`).
+    Once shipments/operations are real, these should become **derived**
+    from summing real `shipments`/`operations` rows for that company
+    instead — otherwise the persisted shipments/operations and the
+    in-memory balance can drift apart. That's a genuine redesign of how
+    `CompaniesCubit` computes those fields, not a small addition.
+
+## Shipments & Operations: full real migration (done)
+- Turned out smaller than scoped, for a good reason: **Operations was
+  already real** — it reads through `CustomerCatalog.allLines`, and
+  Lines migrated to Drift in an earlier pass. Only **Shipments** (the
+  balance top-up log) was still mock, so that's the only side that
+  needed the dual-mode migration.
+- **`Shipment` entity** gained `companyId` (same "real FK + display
+  strings" shape as `Line`) — was missing, `addShipment` already
+  received a real `companyId` from the caller but the entity itself
+  never stored it. Fixed a real latent data bug at the same time: the
+  seeded mock `Shipment`/`Line` company ids didn't actually match
+  `CompaniesMockData`'s real ids (`'jawwal'`/`'ooredoo'`/`'airalo'`) —
+  they'd been set to synthetic `'mock-*'` slugs in an earlier pass that
+  never got cross-checked, which silently broke the new Company Detail
+  page's line list in offline/demo mode (`companyId` never matched, so
+  it always showed empty). Corrected both mock data files to the real ids.
+- **`ShipmentsOperationsCubit`** now follows the same real/mock
+  conditional pattern as Companies/Customers/Lines: real mode loads
+  Shipments from Drift's `shipments` table on creation (after
+  push-then-pull), and `addShipment` writes optimistically (`state`
+  updates immediately, the Drift insert + push happen in the
+  background) — same shape as `CustomersCubit.addSaleLine`.
+- **`SyncEngine`** gained `pushPendingShipments`/`pullShipments`, added
+  to `syncAll` (no ordering dependency beyond the company it references
+  already existing).
+- **The real architectural piece**: `CompaniesCubit._loadFromDrift` no
+  longer treats balance/stats (`consumed`, `availableToSell`,
+  `owedToCompany`, `profitGenerated`, `operationsCount`, `usagePercent`)
+  as an incrementally-mutated running total — it now **derives** them
+  every load by summing this owner's real `lines`/`shipments` rows for
+  that company (`consumed` = Σ line.wholesaleCost, `availableToSell` =
+  Σ shipment.totalAmount − consumed, `owedToCompany` = Σ unpaid portion
+  of shipments, `profitGenerated` = Σ line.profit). `recordSale`/
+  `addShipment` still also apply the old optimistic in-memory mutation
+  for instant same-session feedback (kept deliberately, since the
+  Line/Shipment write they're paired with is fire-and-forget — there's
+  no reliable moment to `await` before triggering a real recompute
+  without a larger, riskier redesign) — but that's now just a
+  same-session approximation; every reload (restart, or the next
+  connectivity-triggered sync) recomputes from what's actually
+  persisted, so it can never drift permanently. This directly fixes the
+  durability half of what the user flagged (numbers surviving a
+  restart), on top of the correctness half fixed in the previous pass
+  (the `recordSale` call that was missing entirely from Add Line).
+- New Drift-level test in `test/app_database_test.dart` asserting the
+  exact derived-balance formula against seeded shipments+lines (2
+  shipments, 1 partially-paid; 1 line) — `consumed`, `availableToSell`,
+  `owedToCompany`, `profitGenerated` all checked against hand-computed
+  expected values.
+- Verified: `flutter analyze` clean, `flutter test` 29/30 (7/7 database
+  tests pass; same pre-existing Profits flake, no regressions);
+  `flutter build apk --debug` with real `--dart-define` credentials in
+  progress as of this pass.
+- **Not yet live-tested**: add a shipment and a line on the phone,
+  confirm the balance shown is correct, then force-close and reopen the
+  app (or reinstall) and confirm the same numbers come back — that's the
+  real proof this survived a restart, not just a session.
+
+## Bug fix: deleting/editing a Line didn't update the company's balance until restart
+- User caught this immediately after the derived-balance pass: deleted a
+  Line, the Line disappeared correctly, but the company's card still
+  showed the old "consumed" amount until a full app restart. Root cause:
+  `recordSale` (the optimistic same-session nudge) only ever gets called
+  when a Line is *added* — nothing told `CompaniesCubit` when a Line was
+  *removed* or *changed*, so its in-memory `state.companies` just never
+  updated; only the next `_loadFromDrift` (which does recompute
+  correctly from real data) would have caught it.
+- **`Company.reverseSale`** (new) — exact inverse of `applySale`: moves
+  wholesale cost back from consumed into available-to-sell, decrements
+  operations count, subtracts profit. Clamped so consumed/
+  operationsCount never go negative.
+- **`CompanyCatalog.reverseSale`** (new interface method) + `CompaniesCubit`
+  implementation. `_FakeCompanyCatalog` in `test/new_sale_cubit_test.dart`
+  updated to implement it (no-op is fine there, that test never deletes
+  a line).
+- **`CustomersCubit.deleteLine`** now calls `reverseSale` with the
+  deleted line's own `companyId`/`wholesaleCost`/`profit` right after
+  removing it. **`updateLine`** now calls `reverseSale` with the *old*
+  line's values, then `recordSale` with the *new* ones — handles both a
+  cost change and the line being reassigned to a different company via
+  the edit form's dropdown, either of which needs the balance moved
+  from the right source to the right destination.
+- Since `CompanyCatalog`/`CompaniesCubit` is a `get_it` singleton shared
+  across the app, and both the Companies list page and the new Company
+  Detail page already use reactive `BlocBuilder`/`context.watch`, this
+  fix alone makes the balance update immediately everywhere the moment a
+  Line is deleted or edited — no page-specific wiring needed beyond the
+  two `CustomersCubit` call sites.
+- New `test/company_entity_test.dart` — round-trips `applySale` then
+  `reverseSale` back to the original balance (proving they're exact
+  inverses, the actual property this bug depended on), plus a
+  clamping test confirming reversing more than what's there never goes
+  negative.
+- Verified: `flutter analyze` clean, `flutter test` 31/32 (2/2 new
+  Company entity tests pass; same pre-existing Profits flake, no
+  regressions); `flutter build apk --debug` with real `--dart-define`
+  credentials in progress as of this pass.
+- **Not yet live-tested**: delete a line on the phone, confirm the
+  company card's consumed/available update immediately without needing
+  a restart — the exact scenario the user reported.
+
+## Bug fix: session never persisted across app launches, and Logout didn't actually log out
+- User complaint: had to sign in again on literally every app launch,
+  even though Supabase already persists sessions locally by default.
+- **Root cause #1**: `main()`/`SimSalesManagerApp` hardcoded
+  `initialRoute: RouteNames.login` unconditionally — there was never a
+  check for an existing session, so the app forced a fresh sign-in every
+  time regardless of whether `Supabase.instance.client.auth.currentSession`
+  was actually still valid. Fixed: after `Supabase.initialize` (which
+  itself already restores/refreshes any persisted session before
+  returning), `main()` now checks `currentSession` and starts at Home
+  instead of Login when one exists. `SimSalesManagerApp` gained an
+  `initialRoute` parameter (defaults to Login, so nothing changes for
+  offline/demo mode where this check is skipped entirely).
+- **Root cause #2, found while fixing #1**: `confirmLogout` (shared by
+  More's Logout row and Settings' Logout button) never actually called
+  Supabase sign-out — it just navigated back to the Login route while
+  the session stayed fully valid and persisted in the background. Left
+  unfixed, root cause #1's new "already signed in? skip Login" check
+  would have made Logout functionally *do nothing* on next launch — the
+  user would land right back in the app. Fixed: `confirmLogout` now
+  calls `AuthService.signOut()` first (when configured), then navigates.
+- **Also fixed while in there**: every feature Cubit is a `get_it` lazy
+  singleton holding the signed-in owner's data in memory — logging out
+  now also calls `getIt.reset()` + `setupServiceLocator()` so a
+  different account signing in afterward on the same device (or just a
+  clean fresh sign-in) doesn't briefly see the previous owner's stale
+  in-memory data before anything happens to reload it.
+- **One more consequence of the reset above**: `LoginCubit.submit()` was
+  dispatching `SyncRequested()` after a successful sign-in — a no-op on
+  a `SyncBloc` still in its initial `offline` state, which is exactly
+  what a *fresh* `SyncBloc` instance (created after the
+  logout-time reset) starts as, since it never got `SyncStarted`
+  dispatched to it. Switched to dispatching `SyncStarted` instead, which
+  handles both the very-first-login-of-the-session case and the
+  fresh-bloc-after-logout case uniformly (it's the same event
+  `main()` already dispatches once at startup).
+- Verified: `flutter analyze` clean, `flutter test` 31/32 (same
+  pre-existing Profits flake, no regressions — this logic is skipped
+  entirely in the test harness since `Env.isConfigured` is false there);
+  `flutter build apk --debug` with real `--dart-define` credentials in
+  progress as of this pass.
+- **Not yet live-tested**: sign in, force-close the app (not just
+  background it) and reopen — should land on Home, not Login. Then log
+  out, force-close, reopen — should land on Login this time. Both halves
+  need checking, since fixing only the first without the second would
+  have made Logout silently broken.
+
 ## Next
-1. **A real Supabase project needs to be created and connected** before
-   any of Phase 2's schema/Edge Function actually does anything — apply
-   `supabase/migrations/0001_init.sql`, deploy
-   `supabase/functions/admin-manage-user`, then run the app with
-   `--dart-define=SUPABASE_URL=...` and `--dart-define=SUPABASE_ANON_KEY=...`
-   (or `SUPABASE_PUBLISHABLE_KEY`, whichever the project uses). This step
-   needs the user's own Supabase account/project — not something this
-   session can do on its own.
-2. **Begin Phase 3**: migrate seller-facing features off mock data one at
-   a time onto the new Drift/Supabase layer, following the pattern
-   `SyncEngine.pullCatalog()` already established (each feature's Cubit
-   reads/writes Drift directly; push/pull methods get added to
-   `SyncEngine` per table as each feature migrates). Companies is the
-   natural first pick — it's the simplest and now directly exercises the
-   catalog tables Phase 2 already wired end-to-end.
-3. Wire `SyncBloc`'s state into an actual UI indicator (small icon in the
-   app bar, per CLAUDE.md) — not done this pass, the Bloc exists but
-   nothing observes it yet.
+1. **Live end-to-end verification** that push/pull sync actually works —
+   now covers Companies, Customers, Lines, Shipments, Home/Profile
+   (read-only-ish), and Settings. Add one of each on the phone (a
+   company, a customer, a line via New Sale, a shipment, a currency
+   symbol change), confirm they show up in Supabase's respective tables
+   (SQL Editor or REST) within a few seconds, not just in the app; try
+   "Import Ready-Made" too (needs at least one row in `company_catalog`
+   first, via SQL Editor); archive/pin/delete; then force-close/reinstall
+   and confirm everything — including the derived company balance, the
+   real Home dashboard, and the currency symbol — comes back correctly
+   via pull. That's the real proof both sync and the new derived-balance
+   computation are correct, not just that local writes work in the
+   moment. In progress on the user's own device.
+2. ✅ Lines migrated too (see below) — New Sale's Lines now persist for
+   real. Live-verify that path specifically: complete a New Sale, confirm
+   a row lands in Supabase's `lines` table with the right `company_id`/
+   `package_id`.
+3. ✅ `SyncBloc`'s state now has a real UI indicator (see below).
 4. **RTL visual verification is still outstanding** — Flutter mirrors
    layout direction automatically for `ar` locales via `Directionality`,
    which *should* just work since this app already avoids hardcoded
@@ -1762,7 +2491,7 @@ everywhere it appears:
    — expect a fresh round of the same kind of overflow/layout bugs found
    earlier this session (Login, Home's charts, Activity Log's header),
    now possibly on every page instead of just a few.
-5. **Pre-existing, unrelated bug found earlier this pass**: the Profits
+5. **Pre-existing, unrelated bug**: the Profits
    test's hand-computed "week profit" assertion (`₪105.00`) is
    date-relative and just went stale — it hardcodes an expected sum
    against `DateTime.now()`'s "this week" bucket, and real calendar time
@@ -1784,11 +2513,8 @@ everywhere it appears:
    not just a plain single-user Drift/Supabase layer.
 8. Company's "Logo (Optional)" upload from the Add Company screenshot is
    still not implemented (needs Supabase Storage).
-9. `LineFormSheet` (Customers' standalone "+ Add Line") still has its own
-   free-text/quick-pick company field rather than reading
-   `CompanyCatalog` like New Sale now does — worth revisiting so both
-   entry points share the same real company/package picker, now backed
-   by `company_catalog`/`package_catalog`.
+9. ✅ `LineFormSheet` now reads `CompanyCatalog.activeCompanies` for a
+   real company/package dropdown, same as New Sale — done, see above.
 10. Export buttons (PDF/CSV/Excel/Print) on Numbers, Reports, and
    Shipments & Operations' Operations tab are UI-only stubs — real
    export needs a package (e.g. `pdf`, `csv`, `excel` or similar); ask
@@ -1802,14 +2528,663 @@ everywhere it appears:
 12. Support & Feedback's `remainingToday`/`previousRequests` are
    session-only (no backend) — once Supabase exists, submissions and the
    daily limit should move server-side.
-13. Shipments & Operations' seeded shipment totals don't fully reconcile
-   with `Company`'s baseline balance fields (same known simplification
-   as `profitGenerated`) — worth a real reconciliation pass once a
-   backend exists to be the actual source of truth for both.
-14. Login/Forgot password still need real Supabase Auth calls (Phase 3),
-   and every mock Cubit/settings source (Home, Companies, Customers,
-   Profile, Settings — all `get_it` singletons now) needs a repository
-   swap to read/write Drift instead of in-memory state; the
-   `CompanyCatalog`/`CustomerCatalog` interfaces should make that swap
-   transparent to New Sale, Numbers, Profits, Reports, and Shipments &
-   Operations.
+13. ✅ Shipments & Operations' balance no longer needs reconciling with a
+   separate baseline — `Company`'s balance fields are now derived
+   straight from real `shipments`/`lines` rows, so there's nothing
+   separate left to drift out of sync. Fully resolved, see above.
+14. ✅ Login/Forgot password now use real Supabase Auth (no public
+   signup — every account is admin-provisioned), and Companies/
+   Customers/Lines/Shipments/Home/Profile/Settings now all read/write
+   real Drift — done across recent passes, see the full audit below.
+   Genuinely still mock, each for a real external-dependency reason (not
+   just "hasn't been gotten to"): Number Update (needs each supplier's
+   real status-check API contract, which we don't have), Activity Log
+   (needs every mutating Cubit across the app wired to append entries —
+   real, but a dedicated cross-cutting pass), Trusted Devices (needs
+   real Auth session/device tracking, which Supabase Auth doesn't give
+   for free), Support & Feedback attachments (needs Supabase Storage,
+   never configured — same blocker as Company logo upload).
+
+## Full app audit: every remaining mock-data spot, and what happened to each
+User asked for a sweep of the whole app to find and remove any
+remaining mock data. Findings, and what got fixed in the same pass:
+
+**Already real before this audit** (found already migrated, no
+work needed): Companies, Customers, Lines, Shipments, Numbers, Profits,
+Reports, Login/Forgot password — all read/write through
+`CompanyCatalog`/`CustomerCatalog`/Drift/Supabase from earlier passes.
+
+**Migrated in this pass:**
+- **Home** — the one the user specifically flagged. `HomeState` no
+  longer holds static fields; `stats`/`companyBalances`/
+  `salesProfitData`/`profitTrendData` are now *getters* derived from
+  real `lines`/`companies` (via `CustomerCatalog`/`CompanyCatalog`),
+  following the exact pattern `ProfitsState`/`ReportsState` already
+  used. `home_mock_data.dart` deleted entirely.
+  - Stat cards are now genuinely period-filtered (operations, distinct
+    companies sold from, sales, uncollected, profit) using the same
+    `matchesPeriod` helper as everywhere else — this also means the
+    "Custom" period, previously a hardcoded all-zero placeholder (an
+    honest limitation documented back in the custom-date-range pass),
+    now shows real filtered numbers for free.
+  - "Your balance with supplier companies" maps straight from
+    `CompanyCatalog.activeCompanies`' real derived balance fields.
+    `CompanyBalance.type` (prepaid vs. credit-limit — cosmetic label
+    only) has no real equivalent on `CompanySummary` since one company
+    can have both kinds of shipments; inferred as
+    `owedToCompany > 0 ? creditLimit : prepaid`, documented as a
+    simplification.
+  - The two 6-month charts use the same zero-filled month-bucketing
+    approach as `ProfitsState.profitOverTime`.
+  - `HomeCubit` gained a `refresh()` method (re-reads both catalogs into
+    `state`) — not wired to a page action yet, available for when Home
+    needs a manual refresh affordance.
+- **Profile** — was hardcoded `Profile(name: 'Ahmed Mq', email:
+  'owner@simmanager.app')`. Real mode now reads the Supabase Auth
+  email + `profiles.display_name` for the signed-in user on load;
+  `update()` now also persists the display name back to
+  `profiles.display_name` (fire-and-forget, same pattern as everywhere
+  else). Editing the *email* itself still just updates local state —
+  actually changing a Supabase Auth email needs its own re-verification
+  flow, out of scope for this simple form. This directly feeds Home's
+  "Welcome back, {name}" greeting, which is why it's grouped with Home
+  here.
+- **Settings** (`currencySymbol`) — persists to Drift's `settings`
+  table (one row per owner — simpler than the others, no per-row loop
+  needed in `SyncEngine.pushPendingSettings`/`pullSettings`, just a
+  single upsert/read since the primary key already *is* `owner_id`).
+- `SyncEngine.syncAll` now also covers `settings`.
+
+**Found and fixed a second bug while wiring Home's greeting**: the test
+string `'Welcome back, Ahmed'` was tied to Home's *own* old mock
+`userName` field (first-name-only), separate from Profile's mock name
+`'Ahmed Mq'` — now that Home reads the real Profile, the greeting
+changed to the full name. Updated the test to match (a real, expected
+behavior change, not a bug in the new code).
+
+**Deliberately still mock — real external-dependency blockers, not
+oversights:**
+- **Number Update**: the real behavior is looking up each supplier's
+  *own* status-check API and parsing whatever format it returns — we
+  have `company_catalog.number_update_url` as a column, but no spec for
+  what's actually behind that URL for any real supplier. Implementing
+  this blind would mean guessing an API contract.
+- **Activity Log**: a real audit trail needs *every* mutating Cubit
+  across the app (Companies, Customers, Lines, Shipments, Settings, ...)
+  to append an entry on every write — a genuine cross-cutting feature
+  addition, not a data-source swap. `activity_log` already exists in
+  the Drift/Supabase schema, ready for this.
+- **Trusted Devices**: needs real device/session tracking tied to
+  Supabase Auth sessions (device fingerprint, IP, login history) —
+  Supabase Auth doesn't provide this out of the box; would need
+  deliberate design (what identifies "a device", where that data is
+  captured) before any implementation.
+- **Support & Feedback attachments** (photo/voice note): needs Supabase
+  Storage, which has never been configured in this project — identical
+  blocker to Company's "Logo (Optional)" upload, already tracked above.
+  The text-only submission itself *could* persist to `support_requests`
+  (already in the schema) independent of attachments, but wasn't done
+  this pass to keep the scope of an already-large pass contained; worth
+  a quick follow-up on its own.
+- Verified: `flutter analyze` clean, `flutter test` 31/32 (same
+  pre-existing Profits flake, no regressions — including the updated
+  Home greeting test); `flutter build apk --debug` with real
+  `--dart-define` credentials in progress as of this pass.
+- **Not yet live-tested**: open Home on the phone, confirm real stats/
+  balance/charts show (not the old mock numbers), confirm the greeting
+  shows your real name, change the currency symbol in Settings and
+  confirm it survives a restart.
+
+## Admin Panel — built end-to-end (new `features/admin/`)
+
+Implements the decision already recorded above (line ~1656): admin
+lives **inside the same app**, gated client-side for UX only, with RLS
+as the real security boundary (`profiles.role = 'admin'` policies on
+`company_catalog`/`package_catalog`/`profiles`, already applied in
+migration 0001).
+
+**Access gate**
+- `core/auth/admin_access_cubit.dart` (new) — `Cubit<bool>`, resolves
+  `AuthService.fetchCurrentRole() == 'admin'` once on construction;
+  always `false` when `!Env.isConfigured` (mock mode has no admin
+  concept). This is pure UX — hiding it doesn't grant access, showing
+  it can't grant access either, since every write still goes through
+  RLS or the edge function's own re-check.
+- `more_page.dart` — wraps in `MultiBlocProvider` (`ProfileCubit` +
+  `AdminAccessCubit`), conditionally renders an "Admin" row (via
+  `BlocBuilder<AdminAccessCubit, bool>`) between Settings and Logout.
+
+**Routes** (`core/navigation/route_names.dart`, wired in `main.dart`)
+- `/admin` → `AdminHubPage` (menu: Company Catalog, Users)
+- `/admin/company-catalog` → `AdminCompanyCatalogPage`
+- `/admin/users` → `AdminUsersPage`
+
+**Company Catalog admin** (`features/admin/`)
+- `domain/entities/catalog_company_admin.dart` — `CatalogStatus`
+  (active/archived), `CatalogPackageAdmin`, `CatalogCompanyAdmin`.
+- `presentation/cubit/admin_company_catalog_cubit.dart` — reads/writes
+  `company_catalog`/`package_catalog` **directly via Supabase, no
+  Drift**. Deliberate: admin screens manage the *shared* catalog, not
+  a seller's own offline-first data — there's nothing to keep working
+  offline here, and going through Drift would mean inventing a fake
+  "owner" for rows that don't have one. `updateCompany` replaces a
+  company's packages wholesale (delete all, reinsert) rather than
+  diffing — catalog packages are few and edited rarely, so this is
+  simpler than tracking per-row dirty state for no real benefit.
+- `presentation/pages/admin_company_catalog_page.dart` +
+  `presentation/widgets/catalog_company_form_sheet.dart` — list/add/
+  edit/archive, mirrors the seller-facing `CompanyFormSheet`'s
+  package-row UI plus the catalog-only "Number Update URL" field.
+
+**Users admin** (`features/admin/`)
+- `domain/entities/admin_user.dart` — `AppRole` (seller/admin),
+  `AdminUser`.
+- `presentation/cubit/admin_users_cubit.dart` — `load()` reads
+  `profiles` directly (readable by an admin per RLS); `createUser`/
+  `setActive`/`setRole` all go through
+  `AuthService.callAdminManageUser(...)` → the `admin-manage-user` edge
+  function, since only the service role can touch `auth.users` (create
+  an account, deactivate one, etc.) — a Flutter client can never do
+  this directly regardless of role.
+- `presentation/pages/admin_users_page.dart` +
+  `presentation/widgets/add_user_sheet.dart` — list with role/active
+  badges, popup menu (activate/deactivate, promote/demote), "+ Add
+  User" sheet (email regex + 6-char minimum password validation, no
+  public self-signup exists in this app — every account is provisioned
+  by an admin and handed to the seller directly).
+- The current signed-in admin's own row hides the popup menu (`isSelf`
+  check by comparing `AuthService.currentOwnerId`) — no self
+  deactivate/demote from this screen, avoids an admin locking
+  themselves out by mistake.
+
+**Translations**: added `more.admin` + a full `admin.*` tree
+(`hub`, `catalog`, `catalogForm`, `addUser`, `users`) to both
+`en.json`/`ar.json`.
+
+**Verified**: `flutter analyze` clean; `flutter test` 31/32 (same
+pre-existing date-relative Profits flake, no new regressions);
+`flutter build apk --debug` with real `--dart-define` credentials run
+in background to confirm the real-mode build compiles.
+
+**Not yet live-tested**: open More → Admin as an account with
+`profiles.role = 'admin'` set manually in Supabase (no UI creates the
+first admin — that has to be a one-time manual `update profiles set
+role='admin'`), confirm the row is hidden for a plain seller account,
+add/edit/archive a catalog company and confirm "Import Ready-Made"
+picks it up, create a new seller account end-to-end and confirm they
+can actually sign in with the password set.
+
+## Activity Log — migrated off mock data (real audit trail)
+
+Previously tracked as a deliberate blocker ("needs every mutating Cubit
+across the app to append an entry on every write — a genuine
+cross-cutting feature addition"). Built that cross-cutting wiring this
+pass.
+
+**New shared infrastructure**
+- `core/activity_log/activity_action_type.dart` — the `ActivityActionType`
+  enum + `.label` extension **moved here** from
+  `features/activity_log/domain/entities/activity_log_entry.dart` (which
+  now just re-exports it) — every feature needs to reference it to log
+  an entry, and cross-feature imports aren't allowed except through
+  `core/`, per CLAUDE.md.
+- `core/activity_log/activity_logger.dart` (new) — `ActivityLogger`,
+  registered as a get_it singleton. `log(type, details)` is
+  fire-and-forget: inserts into Drift's `activity_log` table tagged
+  `synced = false`, then a best-effort push, exactly like every other
+  write in this app. No-op when `!Env.isConfigured` or no signed-in
+  owner (mock/demo mode has nothing to log and no `owner_id` to tag a
+  row with) — so every call site can call it unconditionally without a
+  real/mock branch of its own.
+- `SyncEngine` gained `pushPendingActivityLog`/`pullActivityLog`, folded
+  into `syncAll`. Append-only, so push here is a plain
+  insert-then-mark-synced rather than the upsert-in-place shape every
+  other table uses (there's no local update path for a log row once
+  written).
+
+**Wired into every mutating Cubit**
+- `CompaniesCubit`: add/update/archive/restore/soft-delete/import.
+- `CustomersCubit`: add/update/soft-delete/restore customer;
+  add/update/delete line (both the Customer Detail path and New Sale's
+  `addSaleLine`); `addPayment` logs `fullCollection` when the payment
+  clears the line's remaining balance, `edit` otherwise.
+- `ShipmentsOperationsCubit`: `addShipment`.
+- `SettingsCubit`: `updateCurrencySymbol`.
+- `ProfileCubit`: `update` (display name change).
+- `LoginCubit`: a successful `submit()` logs a `login` entry.
+
+**Activity Log page** (`features/activity_log/`)
+- `ActivityLogCubit` rewritten to the same real/mock dual-mode pattern
+  as every other feature: real mode reads every `activity_log` row for
+  the signed-in owner from Drift (newest first, via the existing
+  `filteredEntries` sort — unchanged), falls back to the static
+  `ActivityLogMockData` list offline/in demo mode. The page itself
+  (`activity_log_page.dart`) needed **no changes** — it already only
+  depended on the Cubit's state shape.
+
+**Verified**: `flutter analyze` clean; `flutter test` 31/32 (same
+pre-existing date-relative Profits flake, no regressions);
+`flutter build apk --debug` with real `--dart-define` credentials run
+in background to confirm the real-mode build compiles.
+
+**Not yet live-tested**: perform a few real actions (add a company, add
+a customer, sell a line, add a shipment, change the currency symbol,
+log out and back in) and confirm they all show up in More → Activity
+Log with the right icon/color and a sensible description, on both a
+fresh sign-in and after a restart (confirming they persisted to Drift,
+not just this session's in-memory state).
+
+**Still deliberately mock** (unchanged from before this pass): Number
+Update (no real supplier API spec), Trusted Devices (needs real
+device/session tracking design), Support & Feedback attachments (needs
+Supabase Storage, never configured).
+
+## Support & Feedback — text submission migrated off mock data
+
+Follow-up on the gap flagged in the Activity Log pass's PROGRESS.md
+entry: the text-only submission *could* persist to `support_requests`
+(already in the Drift/Supabase schema) independent of attachments.
+Done this pass.
+
+- `SyncEngine` gained `pushPendingSupportRequests`/`pullSupportRequests`
+  (same append-only shape as Activity Log — a submitted request is
+  never edited locally afterward), folded into `syncAll`.
+- `SupportFeedbackCubit` — same real/mock dual-mode pattern as
+  everywhere else. Real mode: `submit()` persists `type`/`body` to
+  Drift's `support_requests` table (tagged `synced = false`, best-effort
+  push), and the initial `previousRequests`/`remainingToday` load from
+  Drift instead of starting empty every session.
+- **Attachments (photo/voice note) deliberately still local-file-only**
+  — `photoPath`/`voiceNotePath` never leave the device. Sending them
+  needs Supabase Storage, which has never been configured in this
+  project (same blocker as Company's logo upload) — out of scope here,
+  clearly documented in the Cubit's own doc comment so it isn't mistaken
+  for an oversight later.
+- `remainingToday` (the daily submission limit) stays a client-only
+  session-derived count even in real mode — computed from today's real
+  requests on load, not enforced server-side. Consistent with the rest
+  of the app: nothing else here enforces limits server-side either.
+- Also logs a `create` Activity Log entry on submit (`ActivityLogger`),
+  same as every other mutating action migrated in the previous pass.
+
+**Verified**: `flutter analyze` clean; `flutter test` 31/32 (same
+pre-existing Profits flake, no regressions); `flutter build apk --debug`
+with real `--dart-define` credentials run in background.
+
+**Not yet live-tested**: submit a suggestion/problem/survey request,
+confirm it shows in "Previous Requests" and survives a restart; confirm
+the daily limit (5/day) still counts down correctly after a restart
+(this is the part most likely to have an off-by-one, since it's now
+computed from real timestamps instead of an in-memory counter).
+
+**Still deliberately mock**: Number Update (no real supplier API spec),
+Trusted Devices (needs real device/session tracking design). Support &
+Feedback's attachments remain local-only per above — Storage was never
+configured, and configuring it now would be a new package/service
+decision, not a data-source swap, so it's flagged rather than done
+silently.
+
+## Support & Feedback attachments — Supabase Storage wired up (last mock-data gap that was a pure infra blocker)
+
+Closes the gap flagged at the end of the previous pass: photo/voice-note
+attachments now actually upload to Supabase Storage instead of staying
+local-file-only. No new package needed — `supabase_flutter` already
+exposes a Storage client.
+
+**New migration**: `supabase/migrations/0003_support_attachments_storage.sql`
+— **not applied automatically, run it in the Supabase SQL editor** (same
+as 0001/0002 before it; this session only has the anon/publishable key,
+not service-role/CLI access to the live project). Creates:
+- A private `support-attachments` bucket.
+- 4 RLS policies on `storage.objects` (insert/select/update/delete),
+  each scoped to `bucket_id = 'support-attachments' and
+  (storage.foldername(name))[1] = auth.uid()::text` — the same
+  owner-only shape every table's RLS already uses, just expressed via
+  the object path's first folder segment instead of an `owner_id`
+  column (Storage objects don't have one).
+
+**Flutter side** (`support_feedback_cubit.dart`):
+- `_persistNewRequest` now uploads `photoPath`/`voiceNotePath` (if set)
+  to `support-attachments/{ownerId}/{requestId}/photo.<ext>` and
+  `.../voice.m4a` via `_uploadAttachment` before writing the
+  `support_requests` row — `attachmentUrl`/`voiceNoteUrl` store the
+  *storage object path*, not a public URL (the bucket is private).
+- Deliberately not building a viewer for these paths this pass: the
+  Previous Requests list only ever showed a present/absent icon for
+  each attachment (never rendered the file), so storing the path is
+  enough to make that icon correct after a real reload. A future
+  "view attachment" screen would fetch a signed URL for the stored path
+  on demand (`storage.from(...).createSignedUrl(path, expiresIn)`).
+- Upload failure (offline, transient) is swallowed per-file — an
+  attachment that fails to upload just leaves that field null, same as
+  not attaching one; it never blocks the text submission itself.
+- `SyncEngine`'s support-requests push/pull already carried
+  `attachment_url`/`voice_note_url` from the very first Support &
+  Feedback pass (just always null before now) — no sync-engine changes
+  needed here beyond a stale doc comment.
+
+**Verified**: `flutter analyze` clean; `flutter test` 31/32 (same
+pre-existing Profits flake, no regressions); `flutter build apk --debug`
+with real `--dart-define` credentials run in background.
+
+**Not yet live-tested — needs the migration applied first**: run
+`0003_support_attachments_storage.sql` in the Supabase SQL editor, then
+submit a support request with a photo and/or a voice note attached,
+confirm no error, and check the Supabase dashboard's Storage browser for
+`support-attachments/{your-user-id}/{request-id}/...` to confirm the
+file actually landed.
+
+**Mock-data audit is now fully closed except two explicit, documented
+external-dependency blockers**: Number Update (no real supplier
+status-check API spec to build against) and Trusted Devices (needs a
+real device/session-tracking design decision before implementation —
+Supabase Auth doesn't provide this out of the box).
+
+## Home greeting fix: first name only, and a real reactivity bug
+
+User feedback: the "Welcome back, ..." greeting on Home was showing the
+full email address instead of a name — looked broken.
+
+**Root cause, not just cosmetic**: `HomeCubit.userName` was read *once*,
+synchronously, from `getIt<ProfileCubit>().state.name` at construction
+time. `ProfileCubit`'s real name is fetched asynchronously after
+sign-in (a Supabase query for `profiles.display_name`), and until that
+resolves its `state.name` is the email-fallback value from `_initial()`.
+Whether Home ever saw the real name depended entirely on which finished
+first — a race, and in practice it seems to have consistently lost,
+freezing the greeting on the email forever (Home's `HomeCubit` is a
+get_it singleton built once, so there was no later re-read to correct
+it).
+
+**Fix**: `HomeCubit` now takes the whole `ProfileCubit` (not just a
+`String userName`) and subscribes to its stream, updating `state` on
+every emission — so it picks up the real name the moment
+`ProfileCubit._loadReal()` resolves, not just at construction.
+Subscription is cancelled in `close()`.
+
+**Also**: per explicit request, the greeting now shows the **first name
+only** (`_firstNameOf` splits on whitespace, takes the first word) —
+"Welcome back, Ahmed" instead of "Welcome back, Ahmed Mahmoud Qadadeh"
+(or the email, before this fix). Full name still shows in full
+everywhere else (Profile card in More, Settings) — this trim is
+specific to the Home banner.
+
+`service_locator.dart`'s `HomeCubit` registration updated to pass
+`profileCubit: getIt<ProfileCubit>()` instead of a pre-read name.
+Updated `test/widget_test.dart`'s two "Welcome back, Ahmed Mq" (now
+"Welcome back, Ahmed") assertions accordingly — the other "Ahmed Mq"
+assertions (Profile card, Settings) are unrelated and untouched.
+
+**Verified**: `flutter analyze` clean; `flutter test` 31/32 (same
+pre-existing Profits flake, no regressions); `flutter build apk --debug`
+with real `--dart-define` credentials run in background.
+
+**Not yet live-tested**: sign in as either account (admin or seller),
+confirm Home shows "Welcome back, {first name}" (not the email) within
+a moment of the page loading — this also indirectly confirms the
+reactivity fix, since previously this only ever worked by lucky timing.
+
+## Admin Dashboard — Admin Hub upgraded from a bare 2-row menu to a real landing page
+
+User feedback: the Admin section felt "bolted on" — just two plain menu
+rows, no numbers, didn't feel like an actual control panel. Architecture
+stays exactly as already agreed (same Flutter app/codebase, gated by
+`AdminAccessCubit` + real RLS server-side, no separate app/deployment —
+that part was never the complaint); what changed is the *content* of
+the landing page itself.
+
+**New `AdminDashboardCubit`** (`features/admin/presentation/cubit/`) —
+same "reads Supabase directly, no Drift" pattern as the other two admin
+cubits (this isn't a seller's offline-first data). Loads:
+- Total sellers / active sellers / inactive (derived) from `profiles`.
+- Catalog companies (active vs. archived) and total catalog packages
+  from `company_catalog`/`package_catalog`.
+- Last 5 signups (any role) sorted by `profiles.created_at` desc.
+
+**Deliberately cannot and does not show any seller's own business data**
+(their companies, customers, sales, revenue) — `companies`/`customers`/
+`lines`/`shipments` are owner-only under RLS with no admin override, by
+design (see design/APP_CONTEXT.md's multi-tenant isolation model). This
+is a privacy boundary the dashboard respects, not a gap — documented
+directly in the Cubit's doc comment so it's never mistaken for one later.
+
+**`AdminUser`** (`features/admin/domain/entities/`) gained a
+`createdAt` field (now used for the recent-signups list's date column);
+`AdminUsersCubit.load()` updated to populate it from `profiles.created_at`.
+
+**`admin_hub_page.dart`** rewritten: an "OVERVIEW" stat-card grid (4
+`StatCard`s, reused from `core/widgets/` — sellers, inactive sellers,
+catalog companies, catalog packages), a "RECENT SIGNUPS" list (name/
+role/join-date), then "MANAGE" with the two existing sections
+(Company Catalog, Users) upgraded from plain `ListRow`s to icon+title+
+subtitle cards matching the rest of the app's card language.
+Pull-to-refresh reloads the whole dashboard.
+
+Added `admin.dashboard.*` + two new `admin.hub.*` description keys to
+both `en.json`/`ar.json`.
+
+**Verified**: `flutter analyze` clean; `flutter test` 31/32 (same
+pre-existing Profits flake, no regressions); `flutter build apk --debug`
+with real `--dart-define` credentials run in background.
+
+**Not yet live-tested**: open More → Admin as the admin account, confirm
+the stat cards show real counts (should currently read 1 seller/admin —
+whichever role your one account has — 0 catalog companies until you add
+one, and an empty recent-signups list until a second account exists),
+then create a seller via Admin → Users and confirm the dashboard's
+counts and recent-signups list update on the next visit/pull-to-refresh.
+
+**Next, per the user's own note**: Number Update's per-supplier URLs
+already have a home (`company_catalog.number_update_url`, editable in
+the catalog form built in the Admin Panel pass) — no further "control
+over update links" work is needed on the admin side specifically; the
+remaining gap is entirely on Number Update's own real-logic side (still
+blocked on an actual supplier API spec, see earlier entries).
+
+## Admin and seller are now fully separate app experiences (not "seller app + an Admin row")
+
+Follow-up user feedback on the previous pass: logging in as admin still
+showed the entire seller shell (Home/Companies/Customers/New Sale/More)
+with just an extra menu entry — felt muddled, not like a real control
+panel for the platform. Architecture (single codebase, RLS as the real
+security boundary) stays exactly as agreed; what changed is that role
+now decides **which shell** an account lands on, not just what's visible
+inside one shared shell.
+
+- **`AdminHubPage` is now an admin account's actual home**, not a
+  sub-page reached through More. It's a root page (no back arrow), with
+  its own dark-mode toggle and a logout button directly in the top bar
+  (`AppTopBar` gained a generic `actions: List<Widget>?` slot for this —
+  reusable elsewhere too). An admin never sees Home/Companies/Customers/
+  New Sale/More at all.
+- **Routing decided in exactly the two places an admin can enter the
+  app**: `LoginCubit.submit()` now resolves `profiles.role` right after
+  a successful sign-in (`LoginState` gained `isAdmin`), and `main()`'s
+  session-restore check does the same for a persisted session — both
+  send `role == 'admin'` to `RouteNames.adminHub` instead of
+  `RouteNames.home`. A failed role lookup (offline, transient) falls
+  back to the seller shell rather than blocking sign-in.
+- **`AdminAccessCubit` deleted** — it existed solely to conditionally
+  show/hide the "Admin" row in More; that row (and the whole conditional
+  section) is gone now that an admin never reaches More in the first
+  place. `more_page.dart` simplified back to a single `ProfileCubit`
+  provider.
+- Removed the now-dead `more.admin` translation key from both
+  `en.json`/`ar.json`.
+
+**Verified**: `flutter analyze` clean; `flutter test` 31/32 (same
+pre-existing Profits flake, no regressions — mock/demo-mode login is
+unaffected since `isAdmin` resolution only runs when a real
+`AuthService` exists); `flutter build apk --debug` with real
+`--dart-define` credentials run in background.
+
+**Not yet live-tested**: sign out and back in on the admin account,
+confirm it lands directly on the Admin Dashboard (no seller Home/bottom
+nav visible at all), confirm dark mode and logout both work from its
+top bar, and confirm a seller account still lands on the normal Home
+exactly as before. Also worth confirming a *killed-and-relaunched* app
+(not just a fresh sign-in) restores straight to the Admin Dashboard for
+the admin account, since that path goes through `main()`'s check instead
+of `LoginCubit`.
+
+## Fix: Admin Dashboard stat-card overflow
+
+User hit a real `RenderFlex overflowed by 18 pixels` on `stat_card.dart`
+after the dashboard shipped. Root cause: the "OVERVIEW" grid used
+`GridView.count(..., childAspectRatio: 1.5)`, forcing every cell to a
+fixed height — too short for the two `StatCard`s that also render a
+`caption` line (Sellers, Catalog Companies), since `StatCard`'s `Column`
+sizes to its content (icon + title + value + optional caption) and
+never expected a hard height cap.
+
+Fix: replaced the `GridView` with the same `Row` + `Expanded` pairing
+`_StatsGrid` on Home already uses for its own `StatCard`s — natural
+height, no fixed aspect ratio, so a card with a caption just renders
+taller and nothing overflows. Added `crossAxisAlignment:
+CrossAxisAlignment.stretch` on each `Row` so the two cards in it still
+match height edge-to-edge (stretches the shorter one up to the taller
+one's natural height, never forces either one to shrink below its own
+content).
+
+**Verified**: `flutter analyze` clean; `flutter test` 31/32 (same
+pre-existing Profits flake, no regressions); `flutter build apk --debug`
+with real `--dart-define` credentials run in background.
+
+**Not yet live-tested**: reopen the Admin Dashboard and confirm the
+overflow banner is gone, in both light/dark and both EN/AR (Arabic
+often runs slightly taller due to font metrics — worth a specific check
+since that's exactly the kind of case a fixed aspect ratio breaks on).
+
+## Fix: crash from the stat-card overflow fix itself
+
+The previous fix's `CrossAxisAlignment.stretch` on the dashboard's two
+`Row`s was itself invalid: a `Row`'s cross axis is vertical, and these
+Rows sit directly inside a `ListView` — which gives unbounded vertical
+constraints. `stretch` asks each child to fill that cross-axis space
+exactly, so it tried to give the Row infinite height, crashing with
+"BoxConstraints forces an infinite height" (and cascading "RenderBox
+was not laid out" errors from the same tree).
+
+Fix: removed `crossAxisAlignment: CrossAxisAlignment.stretch` from both
+Rows — reverts to `Row`'s default `center`, exactly matching how Home's
+own `_StatsGrid` already pairs `StatCard`s (no forced-equal-height
+behavior there either; two cards in a row can differ slightly in height
+without issue).
+
+**Verified**: `flutter analyze` clean; `flutter test` 31/32 (same
+pre-existing Profits flake); `flutter build apk --debug` with real
+`--dart-define` credentials run in background.
+
+**Not yet live-tested**: reopen the Admin Dashboard, confirm no
+exceptions in the console at all (not just no visible overflow banner).
+
+## Admin → Support & Feedback — new admin dashboard section
+
+User request: admins need to see every seller's Support & Feedback
+submissions in one organized place, know who sent each one, and be able
+to reply by email.
+
+**New package**: `url_launcher` (`^6.3.2`, was already a transitive
+dependency via other packages but not a direct one — added properly to
+`pubspec.yaml` after asking, per CLAUDE.md's package-approval rule).
+Used for two things: opening a `mailto:` link (reply by email) and
+opening a signed Storage URL externally (view a photo/voice-note
+attachment).
+
+**New migration**: `supabase/migrations/0004_admin_reads_support_requests.sql`
+— **not applied automatically, run it in the Supabase SQL editor** (same
+as 0001-0003 before it). `support_requests`' original RLS (0001) was
+owner-only with no admin override, same as every tenant table — this
+adds one read-only `"support_requests: admin reads all"` policy using
+the existing `is_admin()` helper (mirrors `profiles: admin reads all`).
+Nothing else about the table's RLS changes — an admin still can't write
+to a seller's row.
+
+**Shared type moved to `core/`**: `SupportRequestType` (+ its `.label`
+extension) moved from `features/support_feedback/domain/entities/
+support_request.dart` to `core/support/support_request_type.dart`,
+since `features/admin/` now needs it too and cross-feature imports
+aren't allowed except through `core/`. `support_request.dart` now just
+re-exports it — no call-site changes needed anywhere else.
+
+**New admin-side files** (`features/admin/`):
+- `domain/entities/admin_support_request.dart` — like the seller-facing
+  `SupportRequest`, plus `senderId`/`senderName`/`senderEmail`.
+- `presentation/cubit/admin_support_feedback_cubit.dart` — reads
+  `support_requests` directly via Supabase (no Drift — same reasoning as
+  the other two admin cubits), joins in sender name/email from a second
+  `profiles` query client-side (simpler than a Postgres view for two
+  small tables). `signedAttachmentUrl(path)` mints a 10-minute signed URL
+  for a private `support-attachments` object on demand.
+- `presentation/widgets/admin_support_request_detail_sheet.dart` — full
+  message, sender name + email, "Reply by Email" (`mailto:` with a
+  pre-filled subject — no body pre-fill, since quoting the original
+  message reliably across every email client's `mailto:` parsing isn't
+  worth the complexity for a first pass), and "View Photo"/"Listen to
+  Voice Note" buttons (only shown when that attachment exists) that
+  fetch a signed URL then open it externally.
+- `presentation/pages/admin_support_feedback_page.dart` — list, newest
+  first, sender + type badge + 2-line message preview + date +
+  attachment icons; tap opens the detail sheet.
+
+**Wired into the dashboard**: a new "Support Requests" stat card
+(`AdminDashboardCubit` now also counts `support_requests` rows) and a
+third "MANAGE" card, both on `AdminHubPage`. New route
+`RouteNames.adminSupportFeedback`.
+
+Added `admin.supportFeedback.*` + two new `admin.hub.*`/
+`admin.dashboard.*` keys to both `en.json`/`ar.json`.
+
+**Verified**: `flutter analyze` clean; `flutter test` 31/32 (same
+pre-existing Profits flake, no regressions); `flutter build apk --debug`
+with real `--dart-define` credentials run in background.
+
+**Not yet live-tested — needs migration 0004 applied first**: run it in
+the Supabase SQL editor, then as a seller submit a support request
+(ideally with a photo and a voice note attached), sign in as admin, open
+Support & Feedback, confirm it shows up with the right sender name/
+email, tap "Reply by Email" and confirm it opens the device's email app
+addressed correctly, and tap "View Photo"/"Listen to Voice Note" and
+confirm the attachment actually opens (this also depends on migration
+0003's `support-attachments` bucket already being applied from the
+earlier pass).
+
+## Support & Feedback: voice recording — live level meter + preview playback
+
+User feedback: recorded a voice note, had no idea whether the mic
+actually picked up anything, and there was no stop/preview control
+beyond trusting the running timer.
+
+**New package**: `audioplayers` (`^6.1.0`, added after asking, per
+CLAUDE.md's package-approval rule) — for previewing the just-recorded
+clip before submitting. The live level meter needed no new package: the
+already-installed `record` package exposes `AudioRecorder.
+onAmplitudeChanged(interval)`, previously unused.
+
+- **`SupportFeedbackState`** gained `recordingLevel` (0..1, normalized
+  from the amplitude stream's dBFS reading) and `isPlayingPreview`.
+- **`SupportFeedbackCubit`**: `startRecording` now also subscribes to
+  `onAmplitudeChanged` and updates `recordingLevel` every 200ms;
+  `stopRecording` cancels that subscription. New `playPreview()`/
+  `stopPreview()` play/stop the recorded file in place via an
+  `AudioPlayer`; its `onPlayerComplete` stream resets `isPlayingPreview`
+  to `false` automatically when playback finishes on its own.
+  `removeVoiceNote` now also stops any in-progress preview playback.
+  `close()` disposes both the amplitude subscription and the player.
+- **`support_feedback_page.dart`**: while recording, a new
+  `_RecordingLevelMeter` (4 bars that light up with the live level) sits
+  next to the stop button — visible, real-time proof the mic is picking
+  something up, not just a timer counting seconds. After stopping, the
+  voice-note attachment chip gained a play/pause icon
+  (`_PlayPreviewButton`) to actually listen to the clip before deciding
+  to submit or re-record.
+
+**Verified**: `flutter analyze` clean; `flutter test` 31/32 (same
+pre-existing Profits flake, no regressions); `flutter build apk --debug`
+with real `--dart-define` credentials run in background.
+
+**Not yet live-tested**: record a voice note on a real device, confirm
+the level meter's bars actually move while speaking (and stay flat in
+silence), stop the recording, tap play and confirm you hear the actual
+clip, and confirm the chip's play icon flips to pause during playback
+and back to play automatically when it finishes.

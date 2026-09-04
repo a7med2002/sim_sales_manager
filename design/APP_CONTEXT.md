@@ -33,47 +33,51 @@ Bottom navigation bar (fixed, mobile-first) with 5 items:
 
 ## Authentication
 - Simple login screen: username/email + password, "remember me" checkbox, "forgot password" link.
-- Real signup flow: a new seller creates their own account (Supabase Auth) and lands on an
-  empty dashboard — no customers/companies/lines yet, but the shared company/package
-  catalog is visible immediately since it's admin-managed, not per-seller.
+- **No public self-signup.** Every seller account is provisioned by an admin (Admin → Users,
+  via the `admin-manage-user` Edge Function) and the login/password handed to them directly —
+  there is no "Create account" flow anywhere in the app. A newly-provisioned seller lands on
+  an empty dashboard on first login — no customers, companies, or lines yet; they build up
+  their own data from scratch, same as the original single-user app did.
 - Every authenticated user has a `role` — `seller` (default) or `admin`. After login, a
   `seller` lands on the normal Home dashboard; an `admin` lands on the same app but with an
-  additional Admin section available (see below). Admin accounts are created by another
-  admin (never via public signup) through the Admin → Users screen.
+  additional Admin section available (see below).
 
 ## Data Model (core entities)
 
-> **Multi-tenant note**: `Company` and `Package/Bundle` are now split into a **shared
-> catalog** (one global row per company/package, admin-managed, every seller reads it) and
-> **per-seller state** (each seller's own archive/pin status and shipment/balance history
-> against that company). See "Multi-Tenant & Admin Architecture" below for the full schema,
-> ownership columns, and RLS rules — this section keeps describing the entities at the
-> business-logic level only.
+> **Multi-tenant note**: every entity below is fully owned by one seller (`owner_id`,
+> RLS-isolated) — a `Company` a seller adds or imports is theirs alone to edit, exactly
+> like the original single-user design. The one addition is a separate, admin-only
+> `company_catalog`/`package_catalog` **template library** that "Import Ready-Made" copies
+> *from* once — never a live link. See "Multi-Tenant & Admin Architecture" below, and
+> especially "Import vs. catalog", for the full schema and why an earlier draft of this
+> doc got that distinction wrong (it briefly made companies a shared, admin-only-editable
+> catalog, which contradicted this being "a program each seller manages for themselves").
 
-**Company** (supplier catalog entry — shared across all sellers)
-- name, logo (optional upload), notes, number-update URL (used by the Numbers-update
-  feature — see More → Numbers), status: active / archived (admin-managed)
-- has many: Packages/Bundles (catalog-level)
-- Each seller additionally has their own **per-seller status** for a company (active /
-  archived / deleted / pinned in *their* Companies list) and their own **Shipments**
-  against it — the catalog entry itself is shared, but a given seller's balance/usage with
-  that company is entirely their own.
+**Company** (supplier — fully owned by the seller who added it)
+- name, logo (optional upload), notes, status: active / archived / deleted (soft delete,
+  recoverable), pinned
+- has many: Shipments, Packages/Bundles — all this seller's own
+- Optionally created via "Import Ready-Made" from the shared catalog (see below), which
+  just prefills name + packages once; from that point on it's indistinguishable from a
+  company typed by hand — freely renameable, re-priceable, deletable.
 
 **Shipment** (balance top-up from a company — belongs to one seller)
-- company (ref into the shared catalog), type: "prepaid" or "credit limit"
+- company (ref, this seller's own), type: "prepaid" or "credit limit"
 - total amount, amount paid, amount remaining
 - payment method, reference number, date, notes
-- Each shipment adds to *that seller's own* available balance with the company. Selling a
-  line consumes from the balance at wholesale price. Selling stops when balance is
-  exhausted or credit limit reached. Never visible to or shared with other sellers.
+- Each shipment adds to that company's available balance. Selling a line consumes from
+  the balance at wholesale price. Selling stops when balance is exhausted or credit limit
+  reached.
 
-**Package/Bundle** (catalog entry, sub-entity of Company — shared across all sellers)
+**Package/Bundle** (sub-entity of Company — fully owned alongside it)
 - name (e.g. "Weekly 500MB"), wholesale cost, suggested retail price
-- Admin can add/edit packages for any company; changes appear for every seller
-  immediately (this is the "import ready-made company/package" flow — a seller picks
-  from the existing catalog instead of typing company/package details from scratch).
-  A seller can still type a custom price when selling (the catalog's wholesale/retail
-  values are defaults/suggestions, not hard limits).
+- Freely add/edit/remove, same as the company itself.
+
+**Company catalog** (admin-only template library — see "Import vs. catalog" below)
+- Separate from the entities above: `company_catalog`/`package_catalog` hold admin-curated
+  presets (well-known brands + default packages + each one's number-update URL) that
+  "Import Ready-Made" copies from. Not part of any seller's own data model, and never
+  edited by sellers.
 
 **Customer**
 - name, contact number (unique identifier — accepts formats like 05x, +970, 970)
@@ -105,12 +109,15 @@ admin-curated company/package catalog and one set of per-company number-update U
 ### Two kinds of tables
 
 **1. Tenant-scoped** (private to one seller; RLS: `owner_id = auth.uid()`)
-- `customers`, `lines`, `operations`, `shipments`, `seller_companies` (a seller's own
-  archive/pin/delete state against a catalog company — see below), `activity_log`,
-  `trusted_devices`, `support_requests`, `settings`
+- `customers`, `lines`, `operations`, `shipments`, `companies`, `packages`,
+  `activity_log`, `trusted_devices`, `support_requests`, `settings`
 - Every row carries `owner_id` (the seller's `auth.uid()`), plus the existing offline-first
   `synced` / `updated_at` columns from CLAUDE.md's sync design. A seller can only ever
   read/write their own rows — enforced server-side by RLS, not just hidden in the UI.
+- **`companies`/`packages` are fully owned by their seller** — name, logo, notes, and
+  every package are theirs to add and edit freely, exactly like the original single-user
+  design (corrected from an earlier draft of this doc that made them a shared,
+  admin-only-editable catalog — see "Import vs. catalog" below for why that was wrong).
 
 **2. Global catalog** (shared; every seller reads, only admins write)
 - `company_catalog` — id, name, logo_url, notes, `number_update_url`, status
@@ -123,12 +130,22 @@ admin-curated company/package catalog and one set of per-company number-update U
 - RLS: `SELECT` allowed for any authenticated user; `INSERT`/`UPDATE`/`DELETE` restricted
   to rows where the caller's `profiles.role = 'admin'`.
 
-A seller's "Companies" page is therefore a **join**: `company_catalog` (shared name, logo,
-packages) joined with that seller's own `seller_companies` row (their archive/pin/delete
-status) and their own `shipments`/balance totals against that `company_catalog_id`. Two
-different sellers can both be "using" the same catalog company at once with completely
-different balances, shipment histories, and archive states — the catalog row itself never
-changes because of what one seller does with it.
+#### Import vs. catalog — a one-time copy, not a live link
+
+`company_catalog`/`package_catalog` are **not** what a seller's "Companies" page reads —
+they're purely a template library an admin curates (well-known telecom brands with
+default packages, plus each one's number-update URL) that "Import Ready-Made" copies
+*from*, once. After import, a seller's `companies` row is completely independent: editing
+it (rename, change packages, add notes) never touches the catalog, and an admin editing
+the catalog never touches companies already imported from it. `companies.catalog_company_id`
+(nullable) records only *where* an import came from — used to show "already imported" in
+the import sheet and to look up that catalog entry's `number_update_url` for the
+Numbers-update feature. A seller can just as freely type a brand-new company by hand,
+with no catalog involvement at all — importing is a convenience, never a requirement.
+
+This means two sellers who both "import Zain" end up with two totally separate
+`companies` rows — different ids, immediately independent, each free to diverge (different
+notes, different packages, different prices) from the moment of import onward.
 
 ### Admin-only account management
 
@@ -144,10 +161,10 @@ Gated by `profiles.role == 'admin'` after login — same codebase, same build, r
 mobile and desktop (Windows/macOS/Linux targets already exist in this project) with no
 extra platform work. An admin sees an additional section (e.g. a 6th bottom-nav-equivalent
 entry, or a dedicated admin home) with:
-- **Company Catalog** — list/add/edit/archive companies; per company, manage its packages
-  (add/edit/remove) and its number-update URL. This replaces today's "Import Ready-Made
-  Company" preset list with a real, admin-curated, always-current catalog every seller's
-  "+ Add Company" reads from.
+- **Company Catalog** — list/add/edit/archive the template brands offered in "Import
+  Ready-Made"; per template, manage its default packages and its number-update URL. Purely
+  a convenience library sellers copy from once — never a live source their own companies
+  read from afterward (see "Import vs. catalog").
 - **Number Update URLs** — either folded into the Company Catalog screen (one field per
   company) or its own screen if the mapping grows more complex than one URL per company;
   start with the simpler one-field-per-company version.
@@ -195,19 +212,13 @@ Multi-step modal/sheet:
 4. **Confirm & Save** — this creates a Line under the selected customer, creates an Operation record, and deducts from the company's shipment balance
 
 ### 3. Companies
-- List (tabs: Active / Archived / Deleted) — scoped to this seller's own use of each
-  company (their own shipments/balance/archive state); the company/package data itself
-  (name, logo, packages) comes from the shared admin-curated catalog described in
-  "Multi-Tenant & Admin Architecture" above
+- List (tabs: Active / Archived / Deleted) — fully this seller's own: every company here
+  (however it was created) belongs to them alone, per "Import vs. catalog" above
 - Each company card: logo, name, package count, operations count, total profit generated, balance usage progress bar, amount consumed / available / owed
-- "+ Add Company" now means **picking from the shared catalog** (search/browse
-  `company_catalog`, pick one, it appears in this seller's own list with a zero balance to
-  start) rather than typing a brand new company from scratch — a seller never creates a
-  `company_catalog` row directly, only an admin does (Admin → Company Catalog). If a
-  seller needs a company that genuinely isn't in the catalog yet, that's an admin request,
-  not a self-service action.
-- Actions per card: archive, delete (soft), pin/favorite — all seller-local state, never
-  affects the shared catalog or other sellers
+- "+ Add Company" (name, logo upload, notes, packages) and "Import Ready-Made Company"
+  (pick from the admin-curated catalog to prefill name/packages instead of typing them —
+  a one-time copy, freely editable afterward; re-importing an archived import restores it)
+- Actions per card: archive, delete (soft), pin/favorite — all fully local to this seller
 
 ### 4. Customers
 - List (tabs: Active / Deleted), search by name/number, filter by status and tags

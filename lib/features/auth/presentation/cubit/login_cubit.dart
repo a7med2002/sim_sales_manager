@@ -1,12 +1,27 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../../core/activity_log/activity_action_type.dart';
+import '../../../../core/activity_log/activity_logger.dart';
+import '../../../../core/auth/auth_service.dart';
+import '../../../../core/config/env.dart';
+import '../../../../core/di/service_locator.dart';
+import '../../../../core/sync/bloc/sync_bloc.dart';
+import '../../../../core/sync/bloc/sync_event.dart';
 import 'login_state.dart';
 
-/// Mock authentication only — no Supabase call yet. Per the demo notice on
-/// the login screen: any non-empty username/email + a password of 6+
-/// characters is accepted.
+/// Signs in against real Supabase Auth once a project is configured
+/// (`Env.isConfigured` — see core/config/env.dart); until then, falls
+/// back to the original mock behavior (any non-empty username + a
+/// password of 6+ characters) so the app/demo still works without a
+/// backend. The "Username or email" field is passed to Supabase as an
+/// email — Supabase Auth requires one.
 class LoginCubit extends Cubit<LoginState> {
-  LoginCubit() : super(const LoginState());
+  final AuthService? _authService;
+
+  LoginCubit({AuthService? authService})
+    : _authService = authService ?? (Env.isConfigured ? getIt<AuthService>() : null),
+      super(const LoginState());
 
   void usernameChanged(String value) {
     emit(state.copyWith(username: value, status: LoginStatus.idle, errorMessage: null));
@@ -34,7 +49,42 @@ class LoginCubit extends Cubit<LoginState> {
     }
 
     emit(state.copyWith(status: LoginStatus.submitting, errorMessage: null));
-    await Future.delayed(const Duration(milliseconds: 500));
-    emit(state.copyWith(status: LoginStatus.success));
+
+    final authService = _authService;
+    if (authService == null) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      emit(state.copyWith(status: LoginStatus.success));
+      return;
+    }
+
+    try {
+      await authService.signIn(email: state.username.trim(), password: state.password);
+      // The app-startup sync ran before anyone was signed in, so it only
+      // pulled the shared catalog — kick off a real sync now that a
+      // real owner_id exists, so tenant data (Companies, ...) is fresh
+      // by the time the seller reaches Home. `SyncStarted`, not
+      // `SyncRequested` — this may be a *brand new* `SyncBloc` instance
+      // (get_it gets reset on logout, see `core/navigation/logout.dart`)
+      // that never had `SyncStarted` dispatched to it yet, and
+      // `SyncRequested` is a no-op on a bloc still in its initial
+      // `offline` state.
+      getIt<SyncBloc>().add(const SyncStarted());
+      getIt<ActivityLogger>().log(ActivityActionType.login, 'Signed in.');
+      // Which shell to land on (admin's own home vs. the seller shell) —
+      // resolved here, once, right after sign-in, rather than the page
+      // making its own async call; a failure here just means "not an
+      // admin" rather than blocking a successful sign-in.
+      var isAdmin = false;
+      try {
+        isAdmin = await authService.fetchCurrentRole() == 'admin';
+      } catch (_) {
+        // Offline or transient failure — fall back to the seller shell.
+      }
+      emit(state.copyWith(status: LoginStatus.success, isAdmin: isAdmin));
+    } on AuthException {
+      emit(state.copyWith(status: LoginStatus.failure, errorMessage: 'login.errors.invalidCredentials'));
+    } catch (_) {
+      emit(state.copyWith(status: LoginStatus.failure, errorMessage: 'login.errors.networkError'));
+    }
   }
 }

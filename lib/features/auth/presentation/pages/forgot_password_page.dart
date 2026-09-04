@@ -99,6 +99,8 @@ class _RequestForm extends StatelessWidget {
         AuthTextField(
           label: 'forgotPassword.emailLabel'.tr(),
           placeholder: 'forgotPassword.emailPlaceholder'.tr(),
+          helperText: 'forgotPassword.emailHelper'.tr(),
+          icon: Icons.alternate_email_rounded,
           keyboardType: TextInputType.emailAddress,
           onChanged: context.read<ForgotPasswordCubit>().emailChanged,
         ),

@@ -1,19 +1,22 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../core/catalog/company_summary.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/date_field.dart';
-import '../../data/customers_mock_data.dart';
+import '../../../../core/widgets/empty_state.dart';
 import '../../domain/entities/line.dart';
 
 typedef LineSaveCallback = void Function(
   String simNumber,
+  String companyId,
   String companyName,
   String companyInitials,
+  String? packageId,
   String packageName,
   DateTime purchaseDate,
   DateTime expiryDate,
@@ -27,20 +30,31 @@ typedef LineSaveCallback = void Function(
 /// Add/Edit Line sheet — a scoped-down stand-in for the full "New Sale"
 /// flow (company -> package -> price -> payment) from APP_CONTEXT.md,
 /// reachable here as "+ Add Line" with the customer pre-selected. Company
-/// is a free-text field with quick-pick chips rather than importing the
-/// Companies feature's entities (no cross-feature imports allowed).
+/// and package are picked from [companies] — this seller's own real
+/// companies (same `CompanyCatalog.activeCompanies` New Sale reads) —
+/// rather than free-typed, so the Line this creates has a real
+/// `companyId`/`packageId` and can persist for real (see
+/// `CustomersCubit.addLine`). If [companies] is empty there's nothing
+/// to pick, so the sheet shows an explanatory empty state instead of a
+/// form — a seller has to add at least one company first.
 class LineFormSheet extends StatefulWidget {
   final Line? line;
+  final List<CompanySummary> companies;
   final LineSaveCallback onSave;
 
-  const LineFormSheet({super.key, this.line, required this.onSave});
+  const LineFormSheet({super.key, this.line, required this.companies, required this.onSave});
 
-  static Future<void> show(BuildContext context, {Line? line, required LineSaveCallback onSave}) {
+  static Future<void> show(
+    BuildContext context, {
+    Line? line,
+    required List<CompanySummary> companies,
+    required LineSaveCallback onSave,
+  }) {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => LineFormSheet(line: line, onSave: onSave),
+      builder: (_) => LineFormSheet(line: line, companies: companies, onSave: onSave),
     );
   }
 
@@ -49,23 +63,28 @@ class LineFormSheet extends StatefulWidget {
 }
 
 class _LineFormSheetState extends State<LineFormSheet> {
-  late final TextEditingController _companyController;
-  late final TextEditingController _packageController;
   late final TextEditingController _simController;
   late final TextEditingController _wholesaleController;
   late final TextEditingController _retailController;
   late final TextEditingController _paidController;
   late DateTime _purchaseDate;
   late DateTime _expiryDate;
+  String? _selectedCompanyId;
+  String? _selectedPackageId;
 
   bool get _isEditing => widget.line != null;
+
+  CompanySummary? get _selectedCompany {
+    final id = _selectedCompanyId;
+    if (id == null) return null;
+    final matches = widget.companies.where((c) => c.id == id);
+    return matches.isEmpty ? null : matches.first;
+  }
 
   @override
   void initState() {
     super.initState();
     final line = widget.line;
-    _companyController = TextEditingController(text: line?.companyName ?? '');
-    _packageController = TextEditingController(text: line?.packageName ?? '');
     _simController = TextEditingController(text: line?.simNumber ?? '');
     _wholesaleController = TextEditingController(text: _formatNum(line?.wholesaleCost));
     _retailController = TextEditingController(text: _formatNum(line?.retailPrice));
@@ -73,7 +92,15 @@ class _LineFormSheetState extends State<LineFormSheet> {
     _purchaseDate = line?.purchaseDate ?? DateTime.now();
     _expiryDate = line?.expiryDate ?? DateTime.now().add(const Duration(days: 30));
 
-    for (final c in [_companyController, _packageController, _simController, _wholesaleController, _retailController, _paidController]) {
+    // Prefill from the existing line's ids when editing, only if that
+    // company still exists in the current list (it always should, but
+    // don't crash the sheet if a company was deleted meanwhile).
+    if (line != null && widget.companies.any((c) => c.id == line.companyId)) {
+      _selectedCompanyId = line.companyId;
+      _selectedPackageId = line.packageId;
+    }
+
+    for (final c in [_simController, _wholesaleController, _retailController, _paidController]) {
       c.addListener(() => setState(() {}));
     }
   }
@@ -85,8 +112,6 @@ class _LineFormSheetState extends State<LineFormSheet> {
 
   @override
   void dispose() {
-    _companyController.dispose();
-    _packageController.dispose();
     _simController.dispose();
     _wholesaleController.dispose();
     _retailController.dispose();
@@ -106,11 +131,26 @@ class _LineFormSheetState extends State<LineFormSheet> {
     return PaymentStatus.partial;
   }
 
-  String _initialsFor(String name) {
-    final words = name.trim().split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
-    if (words.isEmpty) return '?';
-    if (words.length == 1) return words.first.substring(0, 1).toUpperCase();
-    return (words.first.substring(0, 1) + words[1].substring(0, 1)).toUpperCase();
+  void _selectCompany(String? companyId) {
+    setState(() {
+      _selectedCompanyId = companyId;
+      _selectedPackageId = null;
+      _wholesaleController.clear();
+      _retailController.clear();
+    });
+  }
+
+  void _selectPackage(String? packageId) {
+    setState(() {
+      _selectedPackageId = packageId;
+      final company = _selectedCompany;
+      if (company == null || packageId == null) return;
+      final matches = company.packages.where((p) => p.id == packageId);
+      if (matches.isEmpty) return;
+      final package = matches.first;
+      _wholesaleController.text = _formatNum(package.wholesaleCost);
+      _retailController.text = _formatNum(package.retailPrice);
+    });
   }
 
   Future<void> _pickDate({required bool isExpiry}) async {
@@ -131,20 +171,34 @@ class _LineFormSheetState extends State<LineFormSheet> {
     });
   }
 
+  /// Selling a line consumes from the company's shipment balance at
+  /// wholesale price (design/APP_CONTEXT.md). Only checked when adding a
+  /// new line, not editing one — an existing line's own wholesale cost
+  /// was already deducted when it was first created, so re-checking it
+  /// against the current balance here (without adding it back first)
+  /// would incorrectly block a same-price edit.
+  bool get _exceedsBalance {
+    if (_isEditing) return false;
+    final company = _selectedCompany;
+    if (company == null) return false;
+    return _wholesale > company.availableToSell;
+  }
+
   bool get _canSave =>
-      _companyController.text.trim().isNotEmpty &&
-      _packageController.text.trim().isNotEmpty &&
-      _simController.text.trim().isNotEmpty &&
-      _retail > 0;
+      _selectedCompany != null && _simController.text.trim().isNotEmpty && _retail > 0 && !_exceedsBalance;
 
   void _save() {
-    if (!_canSave) return;
-    final companyName = _companyController.text.trim();
+    final company = _selectedCompany;
+    if (!_canSave || company == null) return;
+    final matchingPackages = company.packages.where((p) => p.id == _selectedPackageId);
+    final packageName = matchingPackages.isEmpty ? '' : matchingPackages.first.name;
     widget.onSave(
       _simController.text.trim(),
-      companyName,
-      _initialsFor(companyName),
-      _packageController.text.trim(),
+      company.id,
+      company.name,
+      company.initials,
+      _selectedPackageId,
+      packageName,
       _purchaseDate,
       _expiryDate,
       _wholesale,
@@ -184,121 +238,141 @@ class _LineFormSheetState extends State<LineFormSheet> {
                 ],
               ),
               const SizedBox(height: AppSpacing.lg),
-              Text('customers.lineForm.companyLabel'.tr(), style: AppTextStyles.body(colors.textSecondary)),
-              const SizedBox(height: AppSpacing.xs),
-              TextField(controller: _companyController, style: AppTextStyles.cardTitle(colors.textPrimary), decoration: _decoration(colors)),
-              const SizedBox(height: AppSpacing.xs),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: CustomersMockData.commonCompanyNames
-                    .map((name) => GestureDetector(
-                          onTap: () => _companyController.text = name,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: colors.surface,
-                              border: Border.all(color: colors.border),
-                              borderRadius: BorderRadius.circular(AppRadii.pill),
+              if (widget.companies.isEmpty)
+                EmptyState(
+                  icon: Icons.apartment_rounded,
+                  title: 'customers.lineForm.noCompaniesTitle'.tr(),
+                  description: 'customers.lineForm.noCompaniesDescription'.tr(),
+                )
+              else ...[
+                Text('customers.lineForm.companyLabel'.tr(), style: AppTextStyles.body(colors.textSecondary)),
+                const SizedBox(height: AppSpacing.xs),
+                DropdownButtonFormField<String>(
+                  initialValue: _selectedCompanyId,
+                  isExpanded: true,
+                  style: AppTextStyles.cardTitle(colors.textPrimary),
+                  decoration: _decoration(colors, hint: 'customers.lineForm.companyHint'.tr()),
+                  items: widget.companies
+                      .map((c) => DropdownMenuItem(
+                            value: c.id,
+                            child: Text(
+                              '${c.name} — ${formatCurrency(c.availableToSell)}',
+                              style: AppTextStyles.cardTitle(colors.textPrimary),
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            child: Text(name, style: AppTextStyles.badge(colors.textPrimary)),
-                          ),
-                        ))
-                    .toList(),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              Text('customers.lineForm.packageLabel'.tr(), style: AppTextStyles.body(colors.textSecondary)),
-              const SizedBox(height: AppSpacing.xs),
-              TextField(
-                controller: _packageController,
-                style: AppTextStyles.cardTitle(colors.textPrimary),
-                decoration: _decoration(colors, hint: 'customers.lineForm.packageHint'.tr()),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              Text('customers.lineForm.simLabel'.tr(), style: AppTextStyles.body(colors.textSecondary)),
-              const SizedBox(height: AppSpacing.xs),
-              TextField(
-                controller: _simController,
-                keyboardType: TextInputType.phone,
-                style: AppTextStyles.cardTitle(colors.textPrimary),
-                decoration: _decoration(colors, hint: '0599123456'),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              Row(
-                children: [
-                  Expanded(child: DateField(label: 'customers.line.purchaseDate'.tr(), date: _purchaseDate, onTap: () => _pickDate(isExpiry: false))),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(child: DateField(label: 'customers.line.expiryDate'.tr(), date: _expiryDate, onTap: () => _pickDate(isExpiry: true))),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.md),
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('customers.lineForm.wholesaleCostLabel'.tr(), style: AppTextStyles.body(colors.textSecondary)),
-                        const SizedBox(height: AppSpacing.xs),
-                        TextField(
-                          controller: _wholesaleController,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                          style: AppTextStyles.cardTitle(colors.textPrimary),
-                          decoration: _decoration(colors),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('customers.lineForm.retailSalePriceLabel'.tr(), style: AppTextStyles.body(colors.textSecondary)),
-                        const SizedBox(height: AppSpacing.xs),
-                        TextField(
-                          controller: _retailController,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                          style: AppTextStyles.cardTitle(colors.textPrimary),
-                          decoration: _decoration(colors),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Text('customers.lineForm.profitLine'.tr(namedArgs: {'amount': formatCurrency(_profit)}), style: AppTextStyles.body(colors.success)),
-              const SizedBox(height: AppSpacing.md),
-              Text('customers.lineForm.amountPaidNow'.tr(), style: AppTextStyles.body(colors.textSecondary)),
-              const SizedBox(height: AppSpacing.xs),
-              TextField(
-                controller: _paidController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                style: AppTextStyles.cardTitle(colors.textPrimary),
-                decoration: _decoration(colors),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'customers.lineForm.remainingLine'.tr(namedArgs: {'amount': formatCurrency(_remaining), 'status': _paymentStatus.label}),
-                style: AppTextStyles.body(_remaining > 0 ? colors.danger : colors.success),
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: _canSave ? _save : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colors.primaryAction,
-                    foregroundColor: colors.onPrimaryAction,
-                    disabledBackgroundColor: colors.primaryAction.withValues(alpha: 0.4),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.button)),
-                    elevation: 0,
-                  ),
-                  child: Text('customers.lineForm.save'.tr(), style: AppTextStyles.cardTitle(colors.onPrimaryAction)),
+                          ))
+                      .toList(),
+                  onChanged: _selectCompany,
                 ),
-              ),
+                if (!_isEditing && _selectedCompany != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    'customers.lineForm.availableBalance'.tr(namedArgs: {'amount': formatCurrency(_selectedCompany!.availableToSell)}),
+                    style: AppTextStyles.body(colors.textSecondary),
+                  ),
+                ],
+                const SizedBox(height: AppSpacing.md),
+                Text('customers.lineForm.packageLabel'.tr(), style: AppTextStyles.body(colors.textSecondary)),
+                const SizedBox(height: AppSpacing.xs),
+                DropdownButtonFormField<String>(
+                  initialValue: _selectedPackageId,
+                  style: AppTextStyles.cardTitle(colors.textPrimary),
+                  decoration: _decoration(colors, hint: 'customers.lineForm.packageHint'.tr()),
+                  items: (_selectedCompany?.packages ?? const [])
+                      .map((p) => DropdownMenuItem(value: p.id, child: Text(p.name, style: AppTextStyles.cardTitle(colors.textPrimary))))
+                      .toList(),
+                  onChanged: _selectedCompany == null ? null : _selectPackage,
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Text('customers.lineForm.simLabel'.tr(), style: AppTextStyles.body(colors.textSecondary)),
+                const SizedBox(height: AppSpacing.xs),
+                TextField(
+                  controller: _simController,
+                  keyboardType: TextInputType.phone,
+                  style: AppTextStyles.cardTitle(colors.textPrimary),
+                  decoration: _decoration(colors, hint: '0599123456'),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Row(
+                  children: [
+                    Expanded(child: DateField(label: 'customers.line.purchaseDate'.tr(), date: _purchaseDate, onTap: () => _pickDate(isExpiry: false))),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(child: DateField(label: 'customers.line.expiryDate'.tr(), date: _expiryDate, onTap: () => _pickDate(isExpiry: true))),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('customers.lineForm.wholesaleCostLabel'.tr(), style: AppTextStyles.body(colors.textSecondary)),
+                          const SizedBox(height: AppSpacing.xs),
+                          TextField(
+                            controller: _wholesaleController,
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            style: AppTextStyles.cardTitle(colors.textPrimary),
+                            decoration: _decoration(colors),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('customers.lineForm.retailSalePriceLabel'.tr(), style: AppTextStyles.body(colors.textSecondary)),
+                          const SizedBox(height: AppSpacing.xs),
+                          TextField(
+                            controller: _retailController,
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            style: AppTextStyles.cardTitle(colors.textPrimary),
+                            decoration: _decoration(colors),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                if (_exceedsBalance) ...[
+                  const SizedBox(height: 4),
+                  Text('customers.lineForm.insufficientBalance'.tr(), style: AppTextStyles.body(colors.danger)),
+                ],
+                const SizedBox(height: 4),
+                Text('customers.lineForm.profitLine'.tr(namedArgs: {'amount': formatCurrency(_profit)}), style: AppTextStyles.body(colors.success)),
+                const SizedBox(height: AppSpacing.md),
+                Text('customers.lineForm.amountPaidNow'.tr(), style: AppTextStyles.body(colors.textSecondary)),
+                const SizedBox(height: AppSpacing.xs),
+                TextField(
+                  controller: _paidController,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  style: AppTextStyles.cardTitle(colors.textPrimary),
+                  decoration: _decoration(colors),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'customers.lineForm.remainingLine'.tr(namedArgs: {'amount': formatCurrency(_remaining), 'status': _paymentStatus.label}),
+                  style: AppTextStyles.body(_remaining > 0 ? colors.danger : colors.success),
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: ElevatedButton(
+                    onPressed: _canSave ? _save : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: colors.primaryAction,
+                      foregroundColor: colors.onPrimaryAction,
+                      disabledBackgroundColor: colors.primaryAction.withValues(alpha: 0.4),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.button)),
+                      elevation: 0,
+                    ),
+                    child: Text('customers.lineForm.save'.tr(), style: AppTextStyles.cardTitle(colors.onPrimaryAction)),
+                  ),
+                ),
+              ],
             ],
           ),
         ),

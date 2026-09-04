@@ -115,8 +115,21 @@ class NewSaleState extends Equatable {
     return selectedCustomerId != null;
   }
 
+  /// Selling a line consumes from the company's shipment balance at
+  /// wholesale price (design/APP_CONTEXT.md) — never let a sale go
+  /// through for more than what's actually available.
+  bool get exceedsCompanyBalance {
+    final company = selectedCompany;
+    if (company == null) return false;
+    return wholesaleCost > company.availableToSell;
+  }
+
   bool get canGoNextFromPackageStep {
-    return selectedCompanyId != null && selectedPackageId != null && simNumber.trim().isNotEmpty && retailPrice > 0;
+    return selectedCompanyId != null &&
+        selectedPackageId != null &&
+        simNumber.trim().isNotEmpty &&
+        retailPrice > 0 &&
+        !exceedsCompanyBalance;
   }
 
   NewSaleState copyWith({

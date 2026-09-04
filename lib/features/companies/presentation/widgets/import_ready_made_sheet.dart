@@ -5,26 +5,35 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/status_badge.dart';
-import '../../data/companies_mock_data.dart';
 import '../../domain/entities/company.dart';
 import '../../domain/entities/preset_company.dart';
 
-/// "Import Ready-Made" sheet: pick a preset brand. Already-active brands
-/// show an "Active" badge and can't be re-imported; already-archived ones
-/// show "Archived" and can be tapped to re-import (restores to active).
+/// "Import Ready-Made" sheet: pick a brand from [presets] — either the
+/// static offline/demo list, or (in real multi-tenant mode) the live,
+/// admin-managed `company_catalog`, fetched by the caller before opening
+/// this sheet. Already-active brands show an "Active" badge and can't be
+/// re-imported; already-archived ones show "Archived" and can be tapped
+/// to re-import (restores to active).
 class ImportReadyMadeSheet extends StatelessWidget {
+  final List<PresetCompany> presets;
   final List<Company> currentCompanies;
   final void Function(PresetCompany preset) onImport;
 
-  const ImportReadyMadeSheet({super.key, required this.currentCompanies, required this.onImport});
+  const ImportReadyMadeSheet({super.key, required this.presets, required this.currentCompanies, required this.onImport});
 
-  static Future<void> show(BuildContext context, {required List<Company> currentCompanies, required void Function(PresetCompany) onImport}) {
+  static Future<void> show(
+    BuildContext context, {
+    required List<PresetCompany> presets,
+    required List<Company> currentCompanies,
+    required void Function(PresetCompany) onImport,
+  }) {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => ImportReadyMadeSheet(currentCompanies: currentCompanies, onImport: onImport),
+      builder: (_) => ImportReadyMadeSheet(presets: presets, currentCompanies: currentCompanies, onImport: onImport),
     );
   }
 
@@ -59,32 +68,42 @@ class ImportReadyMadeSheet extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(AppSpacing.lg, 4, AppSpacing.lg, AppSpacing.md),
             child: Text('companies.import.subtitle'.tr(), style: AppTextStyles.body(colors.textSecondary)),
           ),
-          Flexible(
-            child: ListView.separated(
-              shrinkWrap: true,
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.xs),
-              itemCount: CompaniesMockData.presetCompanies.length,
-              separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
-              itemBuilder: (context, index) {
-                final preset = CompaniesMockData.presetCompanies[index];
-                final existing = currentCompanies.where((c) => c.name == preset.name).toList();
-                final match = existing.isEmpty ? null : existing.first;
-                final isActive = match?.status == CompanyStatus.active;
+          if (presets.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              child: EmptyState(
+                icon: Icons.apartment_rounded,
+                title: 'companies.import.emptyCatalogTitle'.tr(),
+                description: 'companies.import.emptyCatalogDescription'.tr(),
+              ),
+            )
+          else
+            Flexible(
+              child: ListView.separated(
+                shrinkWrap: true,
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.xs),
+                itemCount: presets.length,
+                separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
+                itemBuilder: (context, index) {
+                  final preset = presets[index];
+                  final existing = currentCompanies.where((c) => c.id == preset.id).toList();
+                  final match = existing.isEmpty ? null : existing.first;
+                  final isActive = match?.status == CompanyStatus.active;
 
-                return _PresetTile(
-                  preset: preset,
-                  isActive: isActive,
-                  isArchived: match?.status == CompanyStatus.archived,
-                  onTap: isActive
-                      ? null
-                      : () {
-                          onImport(preset);
-                          Navigator.of(context).pop();
-                        },
-                );
-              },
+                  return _PresetTile(
+                    preset: preset,
+                    isActive: isActive,
+                    isArchived: match?.status == CompanyStatus.archived,
+                    onTap: isActive
+                        ? null
+                        : () {
+                            onImport(preset);
+                            Navigator.of(context).pop();
+                          },
+                  );
+                },
+              ),
             ),
-          ),
           const SizedBox(height: AppSpacing.lg),
         ],
       ),

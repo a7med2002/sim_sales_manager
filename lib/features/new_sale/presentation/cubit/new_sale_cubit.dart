@@ -133,8 +133,10 @@ class NewSaleCubit extends Cubit<NewSaleState> {
     _customerCatalog.addSaleLine(
       customerId: customerId,
       simNumber: state.simNumber.trim(),
+      companyId: company.id,
       companyName: company.name,
       companyInitials: company.initials,
+      packageId: package.id,
       packageName: package.name,
       purchaseDate: state.purchaseDate,
       expiryDate: state.expiryDate,

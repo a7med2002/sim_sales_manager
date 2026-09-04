@@ -1,4 +1,12 @@
 {
+  "sync": {
+    "status": {
+      "offline": "Offline — changes will sync when you're back online",
+      "syncing": "Syncing…",
+      "idle": "Synced",
+      "error": "Sync error — tap to retry"
+    }
+  },
   "common": {
     "cancel": "Cancel",
     "save": "Save",
@@ -72,9 +80,13 @@
     "signIn": "Sign in",
     "demoNotice": "Demo: any username with password 6+ characters.",
     "credentialsErrorTitle": "Enter your credentials to continue.",
+    "usernameHelper": "Use the email your admin gave you.",
+    "passwordHelper": "At least 6 characters.",
     "errors": {
       "usernameRequired": "Enter a username or email.",
-      "passwordTooShort": "Password must be at least 6 characters."
+      "passwordTooShort": "Password must be at least 6 characters.",
+      "invalidCredentials": "Incorrect email or password.",
+      "networkError": "Couldn't reach the server. Check your connection and try again."
     }
   },
   "forgotPassword": {
@@ -82,6 +94,7 @@
     "description": "Enter the email on your account and we'll send you a link to reset your password.",
     "emailLabel": "Email",
     "emailPlaceholder": "owner@simmanager.app",
+    "emailHelper": "We'll email a reset link to this address.",
     "sendResetLink": "Send reset link",
     "checkEmailTitle": "Check your email",
     "checkEmailDescription": "We've sent a password reset link to {email}.",
@@ -119,6 +132,92 @@
     "activityLog": "Activity Log",
     "settings": "Settings",
     "logout": "Logout"
+  },
+  "admin": {
+    "hub": {
+      "title": "Admin",
+      "subtitle": "Manage the shared catalog and seller accounts",
+      "companyCatalog": "Company Catalog",
+      "companyCatalogDescription": "Shared templates for \"Import Ready-Made\"",
+      "users": "Users",
+      "usersDescription": "Create, activate, and manage seller accounts",
+      "supportFeedback": "Support & Feedback",
+      "supportFeedbackDescription": "See what sellers have submitted and reply"
+    },
+    "dashboard": {
+      "overviewSection": "OVERVIEW",
+      "totalSellers": "Sellers",
+      "activeCaption": "{count} active",
+      "inactiveSellers": "Inactive Sellers",
+      "catalogCompanies": "Catalog Companies",
+      "archivedCaption": "{count} archived",
+      "catalogPackages": "Catalog Packages",
+      "supportRequests": "Support Requests",
+      "recentSignupsSection": "RECENT SIGNUPS",
+      "noSignups": "No signups yet.",
+      "manageSection": "MANAGE"
+    },
+    "supportFeedback": {
+      "title": "Support & Feedback",
+      "subtitle": "{count} requests from sellers",
+      "emptyTitle": "No requests yet",
+      "emptyDescription": "Requests sellers submit will show up here.",
+      "messageLabel": "MESSAGE",
+      "attachmentsLabel": "ATTACHMENTS",
+      "viewPhoto": "View Photo",
+      "listenVoiceNote": "Listen to Voice Note",
+      "attachmentError": "Couldn't open this attachment. Try again.",
+      "loadingAttachment": "Loading…",
+      "replyByEmail": "Reply by Email",
+      "replySubject": "Re: your Support & Feedback request"
+    },
+    "catalog": {
+      "title": "Company Catalog",
+      "subtitle": "Shared templates for \"Import Ready-Made\"",
+      "addCompany": "Add Company",
+      "emptyTitle": "No catalog companies yet",
+      "emptyDescription": "Add a company template so sellers can import it in one tap.",
+      "archived": "Archived",
+      "packagesCount": "{count} packages",
+      "edit": "Edit",
+      "restore": "Restore",
+      "archive": "Archive"
+    },
+    "catalogForm": {
+      "editTitle": "Edit Company",
+      "addTitle": "Add Company",
+      "nameLabel": "Company Name",
+      "numberUpdateUrlLabel": "Number Update URL",
+      "notesLabel": "Notes",
+      "packagesSection": "PACKAGES",
+      "addPackage": "Add Package",
+      "packageNamePlaceholder": "Package name",
+      "wholesaleCostPlaceholder": "Wholesale cost",
+      "retailPricePlaceholder": "Retail price",
+      "save": "Save"
+    },
+    "addUser": {
+      "title": "New User",
+      "description": "Create a seller account. Share the email and password with them directly.",
+      "nameLabel": "Display Name",
+      "emailLabel": "Email",
+      "passwordLabel": "Password",
+      "save": "Create Account"
+    },
+    "users": {
+      "title": "Users",
+      "subtitle": "Seller and admin accounts",
+      "addUser": "Add User",
+      "emptyTitle": "No users yet",
+      "emptyDescription": "Add a user to give them access to the app.",
+      "roleSeller": "Seller",
+      "roleAdmin": "Admin",
+      "inactive": "Inactive",
+      "activate": "Activate",
+      "deactivate": "Deactivate",
+      "promote": "Promote to Admin",
+      "demote": "Demote to Seller"
+    }
   },
   "logout": {
     "title": "Log out?",
@@ -183,6 +282,11 @@
       "deletedTitle": "No deleted companies",
       "deletedDescription": "Companies you delete will show up here and can be restored."
     },
+    "detail": {
+      "linesSection": "LINES BOUGHT FROM THIS COMPANY ({count})",
+      "emptyLinesTitle": "No lines yet",
+      "emptyLinesDescription": "Lines sold using this company will show up here."
+    },
     "card": {
       "packagesOperations": "{packages} packages · {operations} operations",
       "profitGenerated": "PROFIT GENERATED",
@@ -229,7 +333,9 @@
       "subtitle": "Pick a preset brand with default packages.",
       "packagesCount": "{count} packages",
       "active": "Active",
-      "archivedTapToReimport": "Archived · tap to re-import"
+      "archivedTapToReimport": "Archived · tap to re-import",
+      "emptyCatalogTitle": "No companies in the catalog yet",
+      "emptyCatalogDescription": "Ask an admin to add a company before you can pick one here."
     }
   },
   "customers": {
@@ -326,8 +432,13 @@
       "editTitle": "Edit Line",
       "addTitle": "Add Line",
       "companyLabel": "Company",
+      "companyHint": "Select a company",
       "packageLabel": "Package / bundle",
-      "packageHint": "e.g. Weekly 1GB",
+      "packageHint": "Select a package",
+      "noCompaniesTitle": "No companies yet",
+      "noCompaniesDescription": "Add a company first (from the Companies tab) before you can add a line.",
+      "availableBalance": "Available balance: {amount}",
+      "insufficientBalance": "Wholesale cost exceeds this company's available balance — add a shipment first.",
       "simLabel": "SIM / phone number",
       "wholesaleCostLabel": "Wholesale cost",
       "retailSalePriceLabel": "Retail sale price",
@@ -371,7 +482,9 @@
       "profitLabel": "Profit",
       "simLabel": "SIM / phone number",
       "purchaseDateLabel": "Purchase date",
-      "expiryDateLabel": "Expiry date"
+      "expiryDateLabel": "Expiry date",
+      "availableBalance": "Available balance: {amount}",
+      "insufficientBalance": "Wholesale cost exceeds this company's available balance — add a shipment first."
     },
     "paymentStep": {
       "amountPaidNowLabel": "Amount paid now",
@@ -494,7 +607,8 @@
       "cameraAccess": "Couldn't access the camera/gallery on this device.",
       "micPermission": "Microphone permission is required to record a voice note.",
       "startRecording": "Couldn't start recording on this device.",
-      "saveRecording": "Couldn't save the recording."
+      "saveRecording": "Couldn't save the recording.",
+      "playPreview": "Couldn't play back the recording."
     }
   },
   "profits": {

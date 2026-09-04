@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
+import 'sync_status_indicator.dart';
 
 /// Page header: title (+ optional subtitle) on the leading side, an optional
 /// dark/light mode toggle on the trailing side. Main nav pages have no back
@@ -13,6 +14,7 @@ class AppTopBar extends StatelessWidget {
   final VoidCallback? onBack;
   final bool isDarkMode;
   final VoidCallback? onThemeToggle;
+  final List<Widget>? actions;
 
   const AppTopBar({
     super.key,
@@ -22,6 +24,7 @@ class AppTopBar extends StatelessWidget {
     this.onBack,
     this.isDarkMode = false,
     this.onThemeToggle,
+    this.actions,
   });
 
   @override
@@ -52,7 +55,12 @@ class AppTopBar extends StatelessWidget {
             ],
           ),
         ),
-        if (onThemeToggle != null) _ThemeToggleButton(isDark: isDarkMode, onTap: onThemeToggle!),
+        const SyncStatusIndicator(),
+        if (onThemeToggle != null) ...[
+          const SizedBox(width: 4),
+          _ThemeToggleButton(isDark: isDarkMode, onTap: onThemeToggle!),
+        ],
+        if (actions != null) ...actions!,
       ],
     );
   }

@@ -186,19 +186,34 @@ void main() {
     await tester.element(find.byType(Scaffold).first).setLocale(const Locale('en'));
     await tester.pumpAndSettle();
 
-    // Add a line.
+    // Add a line — company/package now come from real dropdowns (backed
+    // by CompanyCatalog.activeCompanies) instead of free-typed text.
+    // "Airalo eSIM" / "Regional 3GB" isn't used by any of Mahmoud's
+    // seeded lines, so it stays a unique package name for the
+    // `findsOneWidget` check below.
     await tester.tap(find.text('Add Line'));
     await tester.pumpAndSettle();
+
+    // Company/package dropdown items now show "Name — ₪balance", not just
+    // the bare name, so match with textContaining rather than text.
+    await tester.tap(find.byType(DropdownButtonFormField<String>).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.textContaining('Airalo eSIM').last);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(DropdownButtonFormField<String>).at(1));
+    await tester.pumpAndSettle();
+    await tester.tap(find.textContaining('Regional 3GB').last);
+    await tester.pumpAndSettle();
+
     final lineFields = find.byType(TextField);
-    await tester.enterText(lineFields.at(0), 'Orange'); // company
-    await tester.enterText(lineFields.at(1), 'Test Package'); // package
-    await tester.enterText(lineFields.at(2), '0500000000'); // sim number
-    await tester.enterText(lineFields.at(4), '50'); // retail price
+    await tester.enterText(lineFields.at(0), '0500000000'); // sim number
+    await tester.enterText(lineFields.at(2), '50'); // retail price (overrides the package's default)
     await tester.pump();
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Test Package'), findsOneWidget);
+    expect(find.text('Regional 3GB'), findsOneWidget);
     expect(find.text('5'), findsWidgets); // lines count is now 5
 
     // Soft-delete the customer from the detail header, then confirm it

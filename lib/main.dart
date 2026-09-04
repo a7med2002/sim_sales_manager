@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'core/auth/auth_service.dart';
 import 'core/config/env.dart';
 import 'core/di/service_locator.dart';
 import 'core/navigation/new_sale_launcher.dart';
@@ -12,6 +13,10 @@ import 'core/sync/bloc/sync_event.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/cubit/theme_cubit.dart';
 import 'features/activity_log/presentation/pages/activity_log_page.dart';
+import 'features/admin/presentation/pages/admin_company_catalog_page.dart';
+import 'features/admin/presentation/pages/admin_hub_page.dart';
+import 'features/admin/presentation/pages/admin_support_feedback_page.dart';
+import 'features/admin/presentation/pages/admin_users_page.dart';
 import 'features/auth/presentation/pages/login_page.dart';
 import 'features/companies/presentation/pages/companies_page.dart';
 import 'features/customers/presentation/pages/customers_page.dart';
@@ -35,18 +40,45 @@ void main() async {
   // `--dart-define` (see core/config/env.dart) — otherwise the app runs
   // fully offline against the local Drift database, per CLAUDE.md's
   // offline-first rule.
+  var startRoute = RouteNames.login;
   if (Env.isConfigured) {
-    await Supabase.initialize(url: Env.supabaseUrl, publishableKey: Env.supabaseAnonKey);
+    await Supabase.initialize(
+      url: Env.supabaseUrl,
+      publishableKey: Env.supabaseAnonKey,
+    );
+    // `Supabase.initialize` already restores and refreshes any
+    // previously-persisted session (supabase_flutter stores it locally
+    // by default) before this line runs — so a non-null `currentSession`
+    // here means the user is genuinely still signed in, not just that a
+    // stale session object happens to exist in memory. Skip Login
+    // straight to Home in that case, instead of always forcing a fresh
+    // sign-in on every app launch regardless of session state.
+    if (Supabase.instance.client.auth.currentSession != null) {
+      startRoute = RouteNames.home;
+      // An admin account never sees the seller shell — same routing
+      // decision `LoginCubit.submit()` makes right after a fresh sign-in,
+      // made again here for a session restored from a previous launch.
+      try {
+        final role = await AuthService(
+          Supabase.instance.client,
+        ).fetchCurrentRole();
+        if (role == 'admin') startRoute = RouteNames.adminHub;
+      } catch (_) {
+        // Offline or transient failure — fall back to the seller shell.
+      }
+    }
   }
 
   setupServiceLocator();
   getIt<SyncBloc>().add(const SyncStarted());
   NewSaleLauncher.register((context) => NewSaleSheet.show(context));
-  runApp(const SimSalesManagerApp());
+  runApp(SimSalesManagerApp(initialRoute: startRoute));
 }
 
 class SimSalesManagerApp extends StatelessWidget {
-  const SimSalesManagerApp({super.key});
+  final String initialRoute;
+
+  const SimSalesManagerApp({super.key, this.initialRoute = RouteNames.login});
 
   @override
   Widget build(BuildContext context) {
@@ -68,7 +100,7 @@ class SimSalesManagerApp extends StatelessWidget {
               localizationsDelegates: context.localizationDelegates,
               supportedLocales: context.supportedLocales,
               locale: context.locale,
-              initialRoute: RouteNames.login,
+              initialRoute: initialRoute,
               routes: {
                 RouteNames.login: (_) => const LoginPage(),
                 RouteNames.home: (_) => const HomePage(),
@@ -82,8 +114,14 @@ class SimSalesManagerApp extends StatelessWidget {
                 RouteNames.supportFeedback: (_) => const SupportFeedbackPage(),
                 RouteNames.profits: (_) => const ProfitsPage(),
                 RouteNames.reports: (_) => const ReportsPage(),
-                RouteNames.shipmentsOperations: (_) => const ShipmentsOperationsPage(),
+                RouteNames.shipmentsOperations: (_) =>
+                    const ShipmentsOperationsPage(),
                 RouteNames.numberUpdate: (_) => const NumberUpdatePage(),
+                RouteNames.adminHub: (_) => const AdminHubPage(),
+                RouteNames.adminCompanyCatalog: (_) =>
+                    const AdminCompanyCatalogPage(),
+                RouteNames.adminUsers: (_) => const AdminUsersPage(),
+                RouteNames.adminSupportFeedback: (_) => const AdminSupportFeedbackPage(),
               },
             );
           },

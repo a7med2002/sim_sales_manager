@@ -5,6 +5,8 @@ import '../../features/companies/presentation/cubit/companies_cubit.dart';
 import '../../features/customers/presentation/cubit/customers_cubit.dart';
 import '../../features/home/presentation/cubit/home_cubit.dart';
 import '../../features/profile/presentation/cubit/profile_cubit.dart';
+import '../activity_log/activity_logger.dart';
+import '../auth/auth_service.dart';
 import '../catalog/company_catalog.dart';
 import '../catalog/customer_catalog.dart';
 import '../config/env.dart';
@@ -31,15 +33,18 @@ void setupServiceLocator() {
   // and `SyncBloc` just reports `offline` forever, never null-checking.
   if (Env.isConfigured) {
     getIt.registerLazySingleton<SyncEngine>(() => SyncEngine(Supabase.instance.client, getIt<AppDatabase>()));
+    getIt.registerLazySingleton<AuthService>(() => AuthService(Supabase.instance.client));
   }
   getIt.registerLazySingleton<SyncBloc>(
     () => SyncBloc(
       connectivity: getIt<ConnectivityService>(),
       engine: Env.isConfigured ? getIt<SyncEngine>() : null,
+      auth: Env.isConfigured ? getIt<AuthService>() : null,
     ),
   );
 
-  getIt.registerLazySingleton<HomeCubit>(() => HomeCubit());
+  getIt.registerLazySingleton<ActivityLogger>(() => ActivityLogger());
+
   getIt.registerLazySingleton<CompaniesCubit>(() => CompaniesCubit());
   getIt.registerLazySingleton<CustomersCubit>(() => CustomersCubit());
   getIt.registerLazySingleton<ProfileCubit>(() => ProfileCubit());
@@ -47,4 +52,15 @@ void setupServiceLocator() {
 
   getIt.registerLazySingleton<CompanyCatalog>(() => getIt<CompaniesCubit>());
   getIt.registerLazySingleton<CustomerCatalog>(() => getIt<CustomersCubit>());
+
+  // Reads through the catalog interfaces above, same as Profits/Reports —
+  // registered after them so `getIt<CompanyCatalog>()`/`getIt<CustomerCatalog>()`
+  // resolve to the same instances those pages already share.
+  getIt.registerLazySingleton<HomeCubit>(
+    () => HomeCubit(
+      customerCatalog: getIt<CustomerCatalog>(),
+      companyCatalog: getIt<CompanyCatalog>(),
+      profileCubit: getIt<ProfileCubit>(),
+    ),
+  );
 }

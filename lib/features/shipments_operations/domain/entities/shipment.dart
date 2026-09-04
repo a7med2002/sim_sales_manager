@@ -12,6 +12,12 @@ extension ShipmentTypeLabel on ShipmentType {
 /// balance; selling a line consumes from that balance at wholesale price.
 class Shipment extends Equatable {
   final String id;
+
+  /// Real FK into the seller's own `companies` — same "real id +
+  /// display strings" shape as `Line`/`LineSummary`, for the same
+  /// reason: persistence needs a real reference, widgets want the name
+  /// without a lookup.
+  final String companyId;
   final String companyName;
   final String companyInitials;
   final ShipmentType type;
@@ -24,6 +30,7 @@ class Shipment extends Equatable {
 
   const Shipment({
     required this.id,
+    required this.companyId,
     required this.companyName,
     required this.companyInitials,
     required this.type,
@@ -39,5 +46,5 @@ class Shipment extends Equatable {
 
   @override
   List<Object?> get props =>
-      [id, companyName, companyInitials, type, totalAmount, amountPaid, paymentMethod, date, referenceNumber, notes];
+      [id, companyId, companyName, companyInitials, type, totalAmount, amountPaid, paymentMethod, date, referenceNumber, notes];
 }

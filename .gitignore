@@ -23,6 +23,14 @@ migrate_working_dir/
 # is commented out by default.
 #.vscode/
 
+# Local dev-run scripts/launch config carrying this developer's own
+# Supabase project credentials (URL + anon/publishable key) via
+# --dart-define. Not secret in the service_role sense (RLS is the real
+# boundary), but kept local rather than committed by default.
+run_dev.sh
+run_dev.ps1
+.vscode/launch.json
+
 # Flutter/Dart/Pub related
 **/doc/api/
 **/ios/Flutter/.last_build_id

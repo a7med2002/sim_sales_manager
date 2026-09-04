@@ -21,6 +21,7 @@ import '../cubit/companies_state.dart';
 import '../widgets/company_card.dart';
 import '../widgets/company_form_sheet.dart';
 import '../widgets/import_ready_made_sheet.dart';
+import 'company_detail_page.dart';
 
 class CompaniesPage extends StatelessWidget {
   const CompaniesPage({super.key});
@@ -67,6 +68,11 @@ class _CompaniesView extends StatelessWidget {
                 const SizedBox(height: AppSpacing.md),
                 Row(
                   children: [
+                    // A seller can always freely add/edit their own
+                    // companies — "Import Ready-Made" (below) is just a
+                    // convenience that copies from the shared catalog
+                    // instead of typing everything by hand, not the only
+                    // way to add one. See CompaniesCubit's doc comment.
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: () => CompanyFormSheet.show(
@@ -86,11 +92,16 @@ class _CompaniesView extends StatelessWidget {
                     const SizedBox(width: AppSpacing.sm),
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: () => ImportReadyMadeSheet.show(
-                          context,
-                          currentCompanies: state.companies,
-                          onImport: cubit.importPreset,
-                        ),
+                        onPressed: () async {
+                          final presets = await cubit.loadCatalogOptions();
+                          if (!context.mounted) return;
+                          ImportReadyMadeSheet.show(
+                            context,
+                            presets: presets,
+                            currentCompanies: state.companies,
+                            onImport: cubit.importPreset,
+                          );
+                        },
                         icon: Icon(Icons.auto_awesome_outlined, color: colors.textPrimary, size: 18),
                         label: Text('companies.importReadyMade'.tr(), style: AppTextStyles.body(colors.textPrimary).copyWith(fontWeight: FontWeight.w600)),
                         style: OutlinedButton.styleFrom(
@@ -125,6 +136,14 @@ class _CompaniesView extends StatelessWidget {
                       padding: const EdgeInsets.only(bottom: AppSpacing.cardGap),
                       child: CompanyCard(
                         company: company,
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => BlocProvider.value(
+                              value: cubit,
+                              child: CompanyDetailPage(companyId: company.id),
+                            ),
+                          ),
+                        ),
                         onEdit: () => CompanyFormSheet.show(
                           context,
                           company: company,

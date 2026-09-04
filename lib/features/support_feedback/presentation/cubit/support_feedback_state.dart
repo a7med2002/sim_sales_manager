@@ -12,8 +12,14 @@ class SupportFeedbackState extends Equatable {
   final String? photoPath;
   final bool isRecording;
   final int recordingSeconds;
+  /// Live mic input level while recording, normalized to 0..1 — driven
+  /// by `AudioRecorder.onAmplitudeChanged` (see `SupportFeedbackCubit`).
+  /// Purely a "yes, the mic is actually picking something up" indicator;
+  /// not persisted or submitted anywhere.
+  final double recordingLevel;
   final String? voiceNotePath;
   final int? voiceNoteSeconds;
+  final bool isPlayingPreview;
   final int remainingToday;
   final List<SupportRequest> previousRequests;
   final String? errorMessage;
@@ -25,8 +31,10 @@ class SupportFeedbackState extends Equatable {
     this.photoPath,
     this.isRecording = false,
     this.recordingSeconds = 0,
+    this.recordingLevel = 0,
     this.voiceNotePath,
     this.voiceNoteSeconds,
+    this.isPlayingPreview = false,
     this.remainingToday = supportDailyRequestLimit,
     this.previousRequests = const [],
     this.errorMessage,
@@ -42,9 +50,11 @@ class SupportFeedbackState extends Equatable {
     String? photoPath,
     bool? isRecording,
     int? recordingSeconds,
+    double? recordingLevel,
     bool clearVoiceNote = false,
     String? voiceNotePath,
     int? voiceNoteSeconds,
+    bool? isPlayingPreview,
     int? remainingToday,
     List<SupportRequest>? previousRequests,
     String? errorMessage,
@@ -56,8 +66,10 @@ class SupportFeedbackState extends Equatable {
       photoPath: clearPhoto ? null : (photoPath ?? this.photoPath),
       isRecording: isRecording ?? this.isRecording,
       recordingSeconds: recordingSeconds ?? this.recordingSeconds,
+      recordingLevel: recordingLevel ?? this.recordingLevel,
       voiceNotePath: clearVoiceNote ? null : (voiceNotePath ?? this.voiceNotePath),
       voiceNoteSeconds: clearVoiceNote ? null : (voiceNoteSeconds ?? this.voiceNoteSeconds),
+      isPlayingPreview: clearVoiceNote ? false : (isPlayingPreview ?? this.isPlayingPreview),
       remainingToday: remainingToday ?? this.remainingToday,
       previousRequests: previousRequests ?? this.previousRequests,
       errorMessage: errorMessage,
@@ -72,8 +84,10 @@ class SupportFeedbackState extends Equatable {
         photoPath,
         isRecording,
         recordingSeconds,
+        recordingLevel,
         voiceNotePath,
         voiceNoteSeconds,
+        isPlayingPreview,
         remainingToday,
         previousRequests,
         errorMessage,

@@ -42,6 +42,12 @@ class LineSummary extends Equatable {
   final String customerName;
   final String customerContact;
   final String simNumber;
+
+  /// Real FK into the seller's own `companies` — see `Line`'s doc
+  /// comment for why this and `companyName` both exist. Defaults to ''
+  /// only so old call sites that predate this field don't need touching;
+  /// the one real implementer (`CustomersCubit.allLines`) always sets it.
+  final String companyId;
   final String companyName;
   final String companyInitials;
   final String packageName;
@@ -56,6 +62,7 @@ class LineSummary extends Equatable {
   const LineSummary({
     required this.id,
     required this.simNumber,
+    this.companyId = '',
     required this.companyName,
     required this.companyInitials,
     required this.packageName,
@@ -84,6 +91,7 @@ class LineSummary extends Equatable {
         customerName,
         customerContact,
         simNumber,
+        companyId,
         companyName,
         companyInitials,
         packageName,

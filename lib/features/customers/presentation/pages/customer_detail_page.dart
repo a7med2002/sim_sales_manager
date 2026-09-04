@@ -2,6 +2,8 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/catalog/company_catalog.dart';
+import '../../../../core/di/service_locator.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -38,6 +40,7 @@ class CustomerDetailPage extends StatelessWidget {
             final cubit = context.read<CustomersCubit>();
             final customer = state.customers.firstWhere((c) => c.id == customerId);
             final lines = state.linesFor(customerId);
+            final companies = getIt<CompanyCatalog>().activeCompanies;
             final totalSpent = state.totalSpentFor(customerId);
             final totalOwed = state.totalOwedFor(customerId);
 
@@ -73,12 +76,15 @@ class CustomerDetailPage extends StatelessWidget {
                   child: ElevatedButton.icon(
                     onPressed: () => LineFormSheet.show(
                       context,
-                      onSave: (sim, company, initials, package, purchase, expiry, wholesale, retail, status, paid, remaining) =>
+                      companies: companies,
+                      onSave: (sim, companyId, company, initials, packageId, package, purchase, expiry, wholesale, retail, status, paid, remaining) =>
                           cubit.addLine(
                         customerId,
                         simNumber: sim,
+                        companyId: companyId,
                         companyName: company,
                         companyInitials: initials,
+                        packageId: packageId,
                         packageName: package,
                         purchaseDate: purchase,
                         expiryDate: expiry,
@@ -116,12 +122,15 @@ class CustomerDetailPage extends StatelessWidget {
                         onEdit: () => LineFormSheet.show(
                           context,
                           line: line,
-                          onSave: (sim, company, initials, package, purchase, expiry, wholesale, retail, status, paid, remaining) =>
+                          companies: companies,
+                          onSave: (sim, companyId, company, initials, packageId, package, purchase, expiry, wholesale, retail, status, paid, remaining) =>
                               cubit.updateLine(
                             line.id,
                             simNumber: sim,
+                            companyId: companyId,
                             companyName: company,
                             companyInitials: initials,
+                            packageId: packageId,
                             packageName: package,
                             purchaseDate: purchase,
                             expiryDate: expiry,

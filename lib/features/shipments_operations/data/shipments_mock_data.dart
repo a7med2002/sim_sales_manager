@@ -14,6 +14,7 @@ class ShipmentsMockData {
   static List<Shipment> initialShipments() => [
         Shipment(
           id: 'shipment-1',
+          companyId: 'jawwal',
           companyName: 'Jawwal',
           companyInitials: 'J',
           type: ShipmentType.prepaid,
@@ -25,6 +26,7 @@ class ShipmentsMockData {
         ),
         Shipment(
           id: 'shipment-2',
+          companyId: 'ooredoo',
           companyName: 'Ooredoo',
           companyInitials: 'O',
           type: ShipmentType.creditLimit,
@@ -36,6 +38,7 @@ class ShipmentsMockData {
         ),
         Shipment(
           id: 'shipment-3',
+          companyId: 'airalo',
           companyName: 'Airalo eSIM',
           companyInitials: 'AE',
           type: ShipmentType.prepaid,
@@ -46,6 +49,7 @@ class ShipmentsMockData {
         ),
         Shipment(
           id: 'shipment-4',
+          companyId: 'jawwal',
           companyName: 'Jawwal',
           companyInitials: 'J',
           type: ShipmentType.prepaid,

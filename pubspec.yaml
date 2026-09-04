@@ -43,9 +43,11 @@ dependencies:
   get_it: ^9.2.1
   image_picker: ^1.2.3
   record: ^6.2.1
+  audioplayers: ^6.1.0
   path_provider: ^2.1.6
   fl_chart: ^1.2.0
   easy_localization: ^3.0.8
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:

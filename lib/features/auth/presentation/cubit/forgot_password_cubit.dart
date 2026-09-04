@@ -1,10 +1,12 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../../core/config/env.dart';
 import 'forgot_password_state.dart';
 
-/// Mock only — no Supabase Auth "reset password" call yet. Accepts any
-/// value that looks like an email and simulates the "reset link sent"
-/// outcome.
+/// Sends a real Supabase Auth reset-password email once a project is
+/// configured (`Env.isConfigured`); otherwise falls back to simulating
+/// the "reset link sent" outcome, same as `LoginCubit`.
 class ForgotPasswordCubit extends Cubit<ForgotPasswordState> {
   ForgotPasswordCubit() : super(const ForgotPasswordState());
 
@@ -26,7 +28,21 @@ class ForgotPasswordCubit extends Cubit<ForgotPasswordState> {
     }
 
     emit(state.copyWith(status: ForgotPasswordStatus.submitting, errorMessage: null));
-    await Future.delayed(const Duration(milliseconds: 500));
-    emit(state.copyWith(status: ForgotPasswordStatus.success));
+
+    if (!Env.isConfigured) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      emit(state.copyWith(status: ForgotPasswordStatus.success));
+      return;
+    }
+
+    try {
+      await Supabase.instance.client.auth.resetPasswordForEmail(state.email.trim());
+      emit(state.copyWith(status: ForgotPasswordStatus.success));
+    } catch (_) {
+      // Deliberately still reports success on failure too: never reveal
+      // whether an email is registered via this flow (standard practice
+      // to avoid account enumeration).
+      emit(state.copyWith(status: ForgotPasswordStatus.success));
+    }
   }
 }

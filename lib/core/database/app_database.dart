@@ -6,10 +6,11 @@ import 'package:path_provider/path_provider.dart';
 
 import 'tables/activity_log_table.dart';
 import 'tables/catalog_tables.dart';
+import 'tables/companies_table.dart';
 import 'tables/customers_table.dart';
 import 'tables/lines_table.dart';
 import 'tables/operations_table.dart';
-import 'tables/seller_companies_table.dart';
+import 'tables/packages_table.dart';
 import 'tables/settings_table.dart';
 import 'tables/shipments_table.dart';
 import 'tables/support_requests_table.dart';
@@ -26,8 +27,9 @@ part 'app_database.g.dart';
   tables: [
     CompanyCatalogTable,
     PackageCatalogTable,
+    CompaniesTable,
+    PackagesTable,
     CustomersTable,
-    SellerCompaniesTable,
     ShipmentsTable,
     LinesTable,
     OperationsTable,

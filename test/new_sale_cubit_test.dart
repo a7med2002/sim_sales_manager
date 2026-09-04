@@ -26,6 +26,9 @@ class _FakeCompanyCatalog implements CompanyCatalog {
   }
 
   @override
+  void reverseSale({required String companyId, required double wholesaleCost, required double profit}) {}
+
+  @override
   void addShipment({required String companyId, required double totalAmount, required double amountPaid}) {}
 }
 
@@ -76,8 +79,10 @@ class _FakeCustomerCatalog implements CustomerCatalog {
   void addSaleLine({
     required String customerId,
     required String simNumber,
+    required String companyId,
     required String companyName,
     required String companyInitials,
+    String? packageId,
     required String packageName,
     required DateTime purchaseDate,
     required DateTime expiryDate,
@@ -99,7 +104,7 @@ class _FakeCustomerCatalog implements CustomerCatalog {
 
 void main() {
   const package = PackageSummary(id: 'pkg-1', name: 'Global 5GB', wholesaleCost: 30, retailPrice: 45);
-  const company = CompanySummary(id: 'company-1', name: 'Airalo eSIM', initials: 'AE', packages: [package]);
+  const company = CompanySummary(id: 'company-1', name: 'Airalo eSIM', initials: 'AE', packages: [package], availableToSell: 500);
   const customer = CustomerSummary(id: 'cust-1', name: 'Karim Odeh', contactNumber: '0569884412', status: CustomerStatusSummary.troubled);
 
   test('full flow with an existing customer: records the line and deducts the company balance', () {

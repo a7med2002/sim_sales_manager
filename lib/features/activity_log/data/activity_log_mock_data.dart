@@ -1,10 +1,9 @@
 import '../domain/entities/activity_log_entry.dart';
 
-/// Static mock/dummy data — no real event-sourcing/audit trail exists yet
-/// (no cubit in the app currently writes to a shared activity log). This
-/// stands in so the page looks and feels alive; wiring every feature's
-/// Cubit to actually append entries here is a larger cross-cutting change
-/// left for later (see PROGRESS.md).
+/// Static mock/dummy data — used only offline/in demo mode (no configured
+/// Supabase project or no signed-in owner yet). In real mode, entries
+/// come from Drift's `activity_log` table instead, written by
+/// `core/activity_log/activity_logger.dart` (see `ActivityLogCubit`).
 class ActivityLogMockData {
   ActivityLogMockData._();
 

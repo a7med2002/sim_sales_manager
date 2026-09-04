@@ -36,9 +36,20 @@ class Line extends Equatable {
   final String id;
   final String customerId;
   final String simNumber;
+
+  /// Real FK once Lines persist to Drift's `lines` table — the seller's
+  /// own `companies.id`, not a catalog id. `companyName`/`companyInitials`
+  /// stay alongside it purely for display (existing widgets read them
+  /// directly rather than looking the company back up).
+  final String companyId;
   final String companyName;
   final String companyInitials;
+
+  /// Real FK (nullable — a free-typed price during New Sale has no
+  /// matching `packages` row). `packageName` stays for display.
+  final String? packageId;
   final String packageName;
+
   final DateTime purchaseDate;
   final DateTime expiryDate;
   final double wholesaleCost;
@@ -51,8 +62,10 @@ class Line extends Equatable {
     required this.id,
     required this.customerId,
     required this.simNumber,
+    required this.companyId,
     required this.companyName,
     required this.companyInitials,
+    this.packageId,
     required this.packageName,
     required this.purchaseDate,
     required this.expiryDate,
@@ -90,8 +103,10 @@ class Line extends Equatable {
 
   Line copyWith({
     String? simNumber,
+    String? companyId,
     String? companyName,
     String? companyInitials,
+    String? packageId,
     String? packageName,
     DateTime? purchaseDate,
     DateTime? expiryDate,
@@ -105,8 +120,10 @@ class Line extends Equatable {
       id: id,
       customerId: customerId,
       simNumber: simNumber ?? this.simNumber,
+      companyId: companyId ?? this.companyId,
       companyName: companyName ?? this.companyName,
       companyInitials: companyInitials ?? this.companyInitials,
+      packageId: packageId ?? this.packageId,
       packageName: packageName ?? this.packageName,
       purchaseDate: purchaseDate ?? this.purchaseDate,
       expiryDate: expiryDate ?? this.expiryDate,
@@ -123,8 +140,10 @@ class Line extends Equatable {
         id,
         customerId,
         simNumber,
+        companyId,
         companyName,
         companyInitials,
+        packageId,
         packageName,
         purchaseDate,
         expiryDate,

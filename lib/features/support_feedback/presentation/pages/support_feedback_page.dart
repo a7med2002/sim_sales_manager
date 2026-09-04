@@ -233,6 +233,7 @@ class _SupportFeedbackViewState extends State<_SupportFeedbackView> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.button)),
                       ),
                     ),
+                    if (state.isRecording) _RecordingLevelMeter(level: state.recordingLevel),
                   ],
                 ),
                 if (state.photoPath != null) ...[
@@ -252,6 +253,10 @@ class _SupportFeedbackViewState extends State<_SupportFeedbackView> {
                     leading: Icon(Icons.graphic_eq_rounded, color: colors.textPrimary),
                     label: 'supportFeedback.voiceNoteAttached'.tr(namedArgs: {'time': _formatSeconds(state.voiceNoteSeconds ?? 0)}),
                     onRemove: cubit.removeVoiceNote,
+                    trailing: _PlayPreviewButton(
+                      isPlaying: state.isPlayingPreview,
+                      onTap: state.isPlayingPreview ? cubit.stopPreview : cubit.playPreview,
+                    ),
                   ),
                 ],
                 const SizedBox(height: AppSpacing.md),
@@ -365,8 +370,9 @@ class _AttachmentPreview extends StatelessWidget {
   final Widget leading;
   final String label;
   final VoidCallback onRemove;
+  final Widget? trailing;
 
-  const _AttachmentPreview({required this.leading, required this.label, required this.onRemove});
+  const _AttachmentPreview({required this.leading, required this.label, required this.onRemove, this.trailing});
 
   @override
   Widget build(BuildContext context) {
@@ -384,11 +390,66 @@ class _AttachmentPreview extends StatelessWidget {
           leading,
           const SizedBox(width: AppSpacing.sm),
           Expanded(child: Text(label, style: AppTextStyles.body(colors.textPrimary))),
+          if (trailing != null) ...[trailing!, const SizedBox(width: AppSpacing.sm)],
           GestureDetector(
             onTap: onRemove,
             child: Icon(Icons.close_rounded, size: 18, color: colors.textSecondary),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Small level meter shown next to the record button while recording —
+/// bars light up with the live mic input level (`state.recordingLevel`)
+/// so it's visually obvious the mic is actually picking something up,
+/// instead of just trusting a running timer.
+class _RecordingLevelMeter extends StatelessWidget {
+  final double level;
+
+  const _RecordingLevelMeter({required this.level});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    const barCount = 4;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(barCount, (i) {
+        final threshold = (i + 1) / barCount;
+        final isLit = level >= threshold - (1 / barCount);
+        return Container(
+          margin: const EdgeInsets.only(left: 2),
+          width: 3,
+          height: 6.0 + i * 3,
+          decoration: BoxDecoration(
+            color: isLit ? colors.danger : colors.border,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        );
+      }),
+    );
+  }
+}
+
+class _PlayPreviewButton extends StatelessWidget {
+  final bool isPlaying;
+  final VoidCallback onTap;
+
+  const _PlayPreviewButton({required this.isPlaying, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Icon(
+        isPlaying ? Icons.pause_circle_outline_rounded : Icons.play_circle_outline_rounded,
+        size: 22,
+        color: colors.textPrimary,
       ),
     );
   }

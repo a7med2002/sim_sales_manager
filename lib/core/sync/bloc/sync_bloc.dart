@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../auth/auth_service.dart';
 import '../connectivity_service.dart';
 import '../sync_engine.dart';
 import 'sync_event.dart';
@@ -14,14 +15,18 @@ import 'sync_state.dart';
 class SyncBloc extends Bloc<SyncEvent, SyncState> {
   final ConnectivityService _connectivity;
   final SyncEngine? _engine;
+  final AuthService? _auth;
   StreamSubscription<bool>? _connectivitySubscription;
 
-  /// [engine] is nullable so the bloc still works (reporting `offline`
-  /// forever) when Supabase isn't configured yet — see `Env.isConfigured`
-  /// and `service_locator.dart`.
-  SyncBloc({required ConnectivityService connectivity, SyncEngine? engine})
+  /// [engine]/[auth] are nullable so the bloc still works (reporting
+  /// `offline` forever) when Supabase isn't configured yet — see
+  /// `Env.isConfigured` and `service_locator.dart`. Without a signed-in
+  /// owner (before login, or offline demo mode) only the shared catalog
+  /// syncs — tenant tables need a real `owner_id` to scope to.
+  SyncBloc({required ConnectivityService connectivity, SyncEngine? engine, AuthService? auth})
     : _connectivity = connectivity,
       _engine = engine,
+      _auth = auth,
       super(const SyncState.initial()) {
     on<SyncStarted>(_onStarted);
     on<ConnectivityChanged>(_onConnectivityChanged);
@@ -56,7 +61,12 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
     }
     emit(state.copyWith(status: SyncStatus.syncing));
     try {
-      await engine.pullCatalog();
+      final ownerId = _auth?.currentOwnerId;
+      if (ownerId != null) {
+        await engine.syncAll(ownerId);
+      } else {
+        await engine.pullCatalog();
+      }
       emit(state.copyWith(status: SyncStatus.idle, lastSyncedAt: DateTime.now()));
     } catch (e) {
       emit(state.copyWith(status: SyncStatus.error, errorMessage: e.toString()));
