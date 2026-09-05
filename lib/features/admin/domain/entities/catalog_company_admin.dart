@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../../core/number_update/number_update_provider.dart';
+
 enum CatalogStatus { active, archived }
 
 class CatalogPackageAdmin extends Equatable {
@@ -28,6 +30,7 @@ class CatalogCompanyAdmin extends Equatable {
   final String name;
   final String notes;
   final String numberUpdateUrl;
+  final NumberUpdateProviderKey? numberUpdateProvider;
   final CatalogStatus status;
   final List<CatalogPackageAdmin> packages;
 
@@ -36,10 +39,11 @@ class CatalogCompanyAdmin extends Equatable {
     required this.name,
     this.notes = '',
     this.numberUpdateUrl = '',
+    this.numberUpdateProvider,
     this.status = CatalogStatus.active,
     this.packages = const [],
   });
 
   @override
-  List<Object?> get props => [id, name, notes, numberUpdateUrl, status, packages];
+  List<Object?> get props => [id, name, notes, numberUpdateUrl, numberUpdateProvider, status, packages];
 }

@@ -47,10 +47,12 @@ class SyncEngine {
     await pullLines(ownerId);
     await pushPendingActivityLog(ownerId);
     await pushPendingSupportRequests(ownerId);
+    await pushPendingNumberUpdateLog(ownerId);
     await pullShipments(ownerId);
     await pullSettings(ownerId);
     await pullActivityLog(ownerId);
     await pullSupportRequests(ownerId);
+    await pullNumberUpdateLog(ownerId);
   }
 
   /// Pulls the full company/package catalog. Small, shared, admin-edited
@@ -114,6 +116,7 @@ class SyncEngine {
         'status': c.status,
         'pinned': c.pinned,
         'catalog_company_id': c.catalogCompanyId,
+        'number_update_provider': c.numberUpdateProvider,
         'updated_at': c.updatedAt.toIso8601String(),
       };
 
@@ -127,6 +130,7 @@ class SyncEngine {
       status: Value(row['status'] as String? ?? 'active'),
       pinned: Value(row['pinned'] as bool? ?? false),
       catalogCompanyId: Value(row['catalog_company_id'] as String?),
+      numberUpdateProvider: Value(row['number_update_provider'] as String?),
       updatedAt: DateTime.parse(row['updated_at'] as String),
     );
   }
@@ -495,6 +499,54 @@ class SyncEngine {
     );
   }
 
+  // ── number update log ────────────────────────────────────────────────
+  // Append-only, same shape as activity log — one row per Number Update
+  // attempt (see `NumberUpdateCubit`), never edited locally afterward.
+
+  Future<void> pushPendingNumberUpdateLog(String ownerId) async {
+    final pending = await (_db.select(_db.numberUpdateLogTable)
+          ..where((t) => t.ownerId.equals(ownerId) & t.synced.equals(false)))
+        .get();
+    if (pending.isEmpty) return;
+
+    await _client.from('number_update_log').upsert(pending.map(_numberUpdateLogToRow).toList());
+
+    for (final row in pending) {
+      await (_db.update(_db.numberUpdateLogTable)..where((t) => t.id.equals(row.id)))
+          .write(const NumberUpdateLogTableCompanion(synced: Value(true)));
+    }
+  }
+
+  Future<void> pullNumberUpdateLog(String ownerId) async {
+    final rows = await _client.from('number_update_log').select().eq('owner_id', ownerId);
+    if (rows.isEmpty) return;
+    await _db.batch((batch) {
+      batch.insertAllOnConflictUpdate(_db.numberUpdateLogTable, rows.map(_numberUpdateLogFromRow).toList());
+    });
+  }
+
+  Map<String, dynamic> _numberUpdateLogToRow(NumberUpdateLogTableData n) => {
+        'id': n.id,
+        'owner_id': n.ownerId,
+        'phone_number': n.phoneNumber,
+        'status': n.status,
+        'message': n.message,
+        'created_at': n.createdAt.toIso8601String(),
+        'updated_at': n.updatedAt.toIso8601String(),
+      };
+
+  NumberUpdateLogTableCompanion _numberUpdateLogFromRow(Map<String, dynamic> row) {
+    return NumberUpdateLogTableCompanion.insert(
+      id: row['id'] as String,
+      ownerId: row['owner_id'] as String,
+      phoneNumber: row['phone_number'] as String,
+      status: row['status'] as String,
+      message: row['message'] as String,
+      createdAt: DateTime.parse(row['created_at'] as String),
+      updatedAt: DateTime.parse(row['updated_at'] as String),
+    );
+  }
+
   // ── catalog row mapping ──────────────────────────────────────────────
 
   CompanyCatalogTableCompanion _catalogCompanyFromRow(Map<String, dynamic> row) {
@@ -504,6 +556,7 @@ class SyncEngine {
       logoUrl: Value(row['logo_url'] as String?),
       notes: Value(row['notes'] as String?),
       numberUpdateUrl: Value(row['number_update_url'] as String?),
+      numberUpdateProvider: Value(row['number_update_provider'] as String?),
       status: Value(row['status'] as String? ?? 'active'),
       createdAt: DateTime.parse(row['created_at'] as String),
       updatedAt: DateTime.parse(row['updated_at'] as String),

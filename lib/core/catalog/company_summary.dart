@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import '../number_update/number_update_provider.dart';
+
 /// Read-only package snapshot exposed to other features through
 /// [CompanyCatalog] — deliberately a plain DTO, not the Companies
 /// feature's own `CompanyPackage` entity, so features stay decoupled.
@@ -35,6 +37,7 @@ class CompanySummary extends Equatable {
   final double consumed;
   final double availableToSell;
   final double owedToCompany;
+  final NumberUpdateProviderKey? numberUpdateProvider;
 
   const CompanySummary({
     required this.id,
@@ -47,9 +50,21 @@ class CompanySummary extends Equatable {
     this.consumed = 0,
     this.availableToSell = 0,
     this.owedToCompany = 0,
+    this.numberUpdateProvider,
   });
 
   @override
-  List<Object?> get props =>
-      [id, name, initials, packages, profitGenerated, operationsCount, usagePercent, consumed, availableToSell, owedToCompany];
+  List<Object?> get props => [
+        id,
+        name,
+        initials,
+        packages,
+        profitGenerated,
+        operationsCount,
+        usagePercent,
+        consumed,
+        availableToSell,
+        owedToCompany,
+        numberUpdateProvider,
+      ];
 }

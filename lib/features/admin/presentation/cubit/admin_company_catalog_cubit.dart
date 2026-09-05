@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../../core/number_update/number_update_provider.dart';
 import '../../../../core/utils/uuid.dart';
 import '../../domain/entities/catalog_company_admin.dart';
 
@@ -61,6 +62,7 @@ class AdminCompanyCatalogCubit extends Cubit<AdminCompanyCatalogState> {
           name: c['name'] as String,
           notes: (c['notes'] as String?) ?? '',
           numberUpdateUrl: (c['number_update_url'] as String?) ?? '',
+          numberUpdateProvider: numberUpdateProviderFromRow(c['number_update_provider'] as String?),
           status: c['status'] == 'archived' ? CatalogStatus.archived : CatalogStatus.active,
           packages: packages,
         );
@@ -76,6 +78,7 @@ class AdminCompanyCatalogCubit extends Cubit<AdminCompanyCatalogState> {
     required String name,
     required String notes,
     required String numberUpdateUrl,
+    NumberUpdateProviderKey? numberUpdateProvider,
     required List<CatalogPackageAdmin> packages,
   }) async {
     final id = generateUuidV4();
@@ -87,6 +90,7 @@ class AdminCompanyCatalogCubit extends Cubit<AdminCompanyCatalogState> {
       'name': name,
       'notes': notes.isEmpty ? null : notes,
       'number_update_url': numberUpdateUrl.isEmpty ? null : numberUpdateUrl,
+      'number_update_provider': numberUpdateProvider == null ? null : numberUpdateProviderToRow(numberUpdateProvider),
       'created_by': createdBy,
       'created_at': now,
       'updated_at': now,
@@ -112,6 +116,7 @@ class AdminCompanyCatalogCubit extends Cubit<AdminCompanyCatalogState> {
     required String name,
     required String notes,
     required String numberUpdateUrl,
+    NumberUpdateProviderKey? numberUpdateProvider,
     required List<CatalogPackageAdmin> packages,
   }) async {
     final now = DateTime.now().toIso8601String();
@@ -119,6 +124,7 @@ class AdminCompanyCatalogCubit extends Cubit<AdminCompanyCatalogState> {
       'name': name,
       'notes': notes.isEmpty ? null : notes,
       'number_update_url': numberUpdateUrl.isEmpty ? null : numberUpdateUrl,
+      'number_update_provider': numberUpdateProvider == null ? null : numberUpdateProviderToRow(numberUpdateProvider),
       'updated_at': now,
     }).eq('id', id);
 

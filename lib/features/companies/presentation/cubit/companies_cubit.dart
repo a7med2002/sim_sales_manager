@@ -11,6 +11,7 @@ import '../../../../core/catalog/company_summary.dart';
 import '../../../../core/config/env.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/di/service_locator.dart';
+import '../../../../core/number_update/number_update_provider.dart';
 import '../../../../core/sync/sync_engine.dart';
 import '../../../../core/utils/uuid.dart';
 import '../../data/companies_mock_data.dart';
@@ -170,6 +171,7 @@ class CompaniesCubit extends Cubit<CompaniesState> implements CompanyCatalog {
         status: _statusFrom(row.status),
         packages: packages,
         catalogCompanyId: row.catalogCompanyId,
+        numberUpdateProvider: numberUpdateProviderFromRow(row.numberUpdateProvider),
         consumed: consumed,
         availableToSell: availableToSell,
         owedToCompany: owedToCompany,
@@ -199,6 +201,7 @@ class CompaniesCubit extends Cubit<CompaniesState> implements CompanyCatalog {
                   .where((p) => p.companyCatalogId == c.id)
                   .map((p) => CompanyPackage(id: p.id, name: p.name, wholesaleCost: p.wholesaleCost, retailPrice: p.suggestedRetailPrice))
                   .toList(),
+              numberUpdateProvider: numberUpdateProviderFromRow(c.numberUpdateProvider),
             ))
         .toList();
   }
@@ -207,10 +210,15 @@ class CompaniesCubit extends Cubit<CompaniesState> implements CompanyCatalog {
     emit(state.copyWith(selectedTab: tab));
   }
 
-  void addCompany({required String name, required String notes, required List<CompanyPackage> packages}) {
+  void addCompany({
+    required String name,
+    required String notes,
+    required List<CompanyPackage> packages,
+    NumberUpdateProviderKey? numberUpdateProvider,
+  }) {
     getIt<ActivityLogger>().log(ActivityActionType.create, 'Added new company $name.');
     if (_isReal) {
-      _insertCompany(name: name, notes: notes, packages: packages, catalogCompanyId: null);
+      _insertCompany(name: name, notes: notes, packages: packages, catalogCompanyId: null, numberUpdateProvider: numberUpdateProvider);
       return;
     }
     final company = Company(
@@ -220,6 +228,7 @@ class CompaniesCubit extends Cubit<CompaniesState> implements CompanyCatalog {
       notes: notes,
       packages: packages,
       status: CompanyStatus.active,
+      numberUpdateProvider: numberUpdateProvider,
     );
     emit(state.copyWith(companies: [...state.companies, company]));
   }
@@ -229,13 +238,24 @@ class CompaniesCubit extends Cubit<CompaniesState> implements CompanyCatalog {
     required String name,
     required String notes,
     required List<CompanyPackage> packages,
+    NumberUpdateProviderKey? numberUpdateProvider,
   }) {
     getIt<ActivityLogger>().log(ActivityActionType.edit, 'Updated company $name.');
     if (_isReal) {
-      _updateCompanyAndPackages(id, name: name, notes: notes, packages: packages);
+      _updateCompanyAndPackages(id, name: name, notes: notes, packages: packages, numberUpdateProvider: numberUpdateProvider);
       return;
     }
-    _replace(id, (c) => c.copyWith(name: name, initials: _initialsFor(name), notes: notes, packages: packages));
+    _replace(
+      id,
+      (c) => c.copyWith(
+        name: name,
+        initials: _initialsFor(name),
+        notes: notes,
+        packages: packages,
+        clearNumberUpdateProvider: numberUpdateProvider == null,
+        numberUpdateProvider: numberUpdateProvider,
+      ),
+    );
   }
 
   void togglePin(String id) {
@@ -311,7 +331,13 @@ class CompaniesCubit extends Cubit<CompaniesState> implements CompanyCatalog {
     }
 
     if (_isReal) {
-      _insertCompany(name: preset.name, notes: '', packages: preset.defaultPackages, catalogCompanyId: preset.id);
+      _insertCompany(
+        name: preset.name,
+        notes: '',
+        packages: preset.defaultPackages,
+        catalogCompanyId: preset.id,
+        numberUpdateProvider: preset.numberUpdateProvider,
+      );
       return;
     }
 
@@ -322,6 +348,7 @@ class CompaniesCubit extends Cubit<CompaniesState> implements CompanyCatalog {
       packages: preset.defaultPackages,
       status: CompanyStatus.active,
       catalogCompanyId: preset.id,
+      numberUpdateProvider: preset.numberUpdateProvider,
     );
     emit(state.copyWith(companies: [...state.companies, company]));
   }
@@ -344,6 +371,7 @@ class CompaniesCubit extends Cubit<CompaniesState> implements CompanyCatalog {
             consumed: c.consumed,
             availableToSell: c.availableToSell,
             owedToCompany: c.owedToCompany,
+            numberUpdateProvider: c.numberUpdateProvider,
           ))
       .toList();
 
@@ -378,6 +406,7 @@ class CompaniesCubit extends Cubit<CompaniesState> implements CompanyCatalog {
     required String notes,
     required List<CompanyPackage> packages,
     required String? catalogCompanyId,
+    NumberUpdateProviderKey? numberUpdateProvider,
   }) async {
     final db = _db!;
     final ownerId = _auth!.currentOwnerId!;
@@ -390,6 +419,7 @@ class CompaniesCubit extends Cubit<CompaniesState> implements CompanyCatalog {
           name: name,
           notes: Value(notes.isEmpty ? null : notes),
           catalogCompanyId: Value(catalogCompanyId),
+          numberUpdateProvider: Value(numberUpdateProvider == null ? null : numberUpdateProviderToRow(numberUpdateProvider)),
           synced: const Value(false),
           updatedAt: now,
         ));
@@ -419,6 +449,7 @@ class CompaniesCubit extends Cubit<CompaniesState> implements CompanyCatalog {
     required String name,
     required String notes,
     required List<CompanyPackage> packages,
+    NumberUpdateProviderKey? numberUpdateProvider,
   }) async {
     final db = _db!;
     final ownerId = _auth!.currentOwnerId!;
@@ -428,6 +459,7 @@ class CompaniesCubit extends Cubit<CompaniesState> implements CompanyCatalog {
       CompaniesTableCompanion(
         name: Value(name),
         notes: Value(notes.isEmpty ? null : notes),
+        numberUpdateProvider: Value(numberUpdateProvider == null ? null : numberUpdateProviderToRow(numberUpdateProvider)),
         synced: const Value(false),
         updatedAt: Value(now),
       ),

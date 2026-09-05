@@ -58,6 +58,17 @@ class $CompanyCatalogTableTable extends CompanyCatalogTable
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _numberUpdateProviderMeta =
+      const VerificationMeta('numberUpdateProvider');
+  @override
+  late final GeneratedColumn<String> numberUpdateProvider =
+      GeneratedColumn<String>(
+        'number_update_provider',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
   static const VerificationMeta _statusMeta = const VerificationMeta('status');
   @override
   late final GeneratedColumn<String> status = GeneratedColumn<String>(
@@ -97,6 +108,7 @@ class $CompanyCatalogTableTable extends CompanyCatalogTable
     logoUrl,
     notes,
     numberUpdateUrl,
+    numberUpdateProvider,
     status,
     createdAt,
     updatedAt,
@@ -144,6 +156,15 @@ class $CompanyCatalogTableTable extends CompanyCatalogTable
         numberUpdateUrl.isAcceptableOrUnknown(
           data['number_update_url']!,
           _numberUpdateUrlMeta,
+        ),
+      );
+    }
+    if (data.containsKey('number_update_provider')) {
+      context.handle(
+        _numberUpdateProviderMeta,
+        numberUpdateProvider.isAcceptableOrUnknown(
+          data['number_update_provider']!,
+          _numberUpdateProviderMeta,
         ),
       );
     }
@@ -201,6 +222,10 @@ class $CompanyCatalogTableTable extends CompanyCatalogTable
         DriftSqlType.string,
         data['${effectivePrefix}number_update_url'],
       ),
+      numberUpdateProvider: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}number_update_provider'],
+      ),
       status: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}status'],
@@ -229,6 +254,7 @@ class CompanyCatalogTableData extends DataClass
   final String? logoUrl;
   final String? notes;
   final String? numberUpdateUrl;
+  final String? numberUpdateProvider;
   final String status;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -238,6 +264,7 @@ class CompanyCatalogTableData extends DataClass
     this.logoUrl,
     this.notes,
     this.numberUpdateUrl,
+    this.numberUpdateProvider,
     required this.status,
     required this.createdAt,
     required this.updatedAt,
@@ -255,6 +282,9 @@ class CompanyCatalogTableData extends DataClass
     }
     if (!nullToAbsent || numberUpdateUrl != null) {
       map['number_update_url'] = Variable<String>(numberUpdateUrl);
+    }
+    if (!nullToAbsent || numberUpdateProvider != null) {
+      map['number_update_provider'] = Variable<String>(numberUpdateProvider);
     }
     map['status'] = Variable<String>(status);
     map['created_at'] = Variable<DateTime>(createdAt);
@@ -275,6 +305,9 @@ class CompanyCatalogTableData extends DataClass
       numberUpdateUrl: numberUpdateUrl == null && nullToAbsent
           ? const Value.absent()
           : Value(numberUpdateUrl),
+      numberUpdateProvider: numberUpdateProvider == null && nullToAbsent
+          ? const Value.absent()
+          : Value(numberUpdateProvider),
       status: Value(status),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
@@ -292,6 +325,9 @@ class CompanyCatalogTableData extends DataClass
       logoUrl: serializer.fromJson<String?>(json['logoUrl']),
       notes: serializer.fromJson<String?>(json['notes']),
       numberUpdateUrl: serializer.fromJson<String?>(json['numberUpdateUrl']),
+      numberUpdateProvider: serializer.fromJson<String?>(
+        json['numberUpdateProvider'],
+      ),
       status: serializer.fromJson<String>(json['status']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
@@ -306,6 +342,7 @@ class CompanyCatalogTableData extends DataClass
       'logoUrl': serializer.toJson<String?>(logoUrl),
       'notes': serializer.toJson<String?>(notes),
       'numberUpdateUrl': serializer.toJson<String?>(numberUpdateUrl),
+      'numberUpdateProvider': serializer.toJson<String?>(numberUpdateProvider),
       'status': serializer.toJson<String>(status),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
@@ -318,6 +355,7 @@ class CompanyCatalogTableData extends DataClass
     Value<String?> logoUrl = const Value.absent(),
     Value<String?> notes = const Value.absent(),
     Value<String?> numberUpdateUrl = const Value.absent(),
+    Value<String?> numberUpdateProvider = const Value.absent(),
     String? status,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -329,6 +367,9 @@ class CompanyCatalogTableData extends DataClass
     numberUpdateUrl: numberUpdateUrl.present
         ? numberUpdateUrl.value
         : this.numberUpdateUrl,
+    numberUpdateProvider: numberUpdateProvider.present
+        ? numberUpdateProvider.value
+        : this.numberUpdateProvider,
     status: status ?? this.status,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -342,6 +383,9 @@ class CompanyCatalogTableData extends DataClass
       numberUpdateUrl: data.numberUpdateUrl.present
           ? data.numberUpdateUrl.value
           : this.numberUpdateUrl,
+      numberUpdateProvider: data.numberUpdateProvider.present
+          ? data.numberUpdateProvider.value
+          : this.numberUpdateProvider,
       status: data.status.present ? data.status.value : this.status,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
@@ -356,6 +400,7 @@ class CompanyCatalogTableData extends DataClass
           ..write('logoUrl: $logoUrl, ')
           ..write('notes: $notes, ')
           ..write('numberUpdateUrl: $numberUpdateUrl, ')
+          ..write('numberUpdateProvider: $numberUpdateProvider, ')
           ..write('status: $status, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
@@ -370,6 +415,7 @@ class CompanyCatalogTableData extends DataClass
     logoUrl,
     notes,
     numberUpdateUrl,
+    numberUpdateProvider,
     status,
     createdAt,
     updatedAt,
@@ -383,6 +429,7 @@ class CompanyCatalogTableData extends DataClass
           other.logoUrl == this.logoUrl &&
           other.notes == this.notes &&
           other.numberUpdateUrl == this.numberUpdateUrl &&
+          other.numberUpdateProvider == this.numberUpdateProvider &&
           other.status == this.status &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
@@ -395,6 +442,7 @@ class CompanyCatalogTableCompanion
   final Value<String?> logoUrl;
   final Value<String?> notes;
   final Value<String?> numberUpdateUrl;
+  final Value<String?> numberUpdateProvider;
   final Value<String> status;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
@@ -405,6 +453,7 @@ class CompanyCatalogTableCompanion
     this.logoUrl = const Value.absent(),
     this.notes = const Value.absent(),
     this.numberUpdateUrl = const Value.absent(),
+    this.numberUpdateProvider = const Value.absent(),
     this.status = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -416,6 +465,7 @@ class CompanyCatalogTableCompanion
     this.logoUrl = const Value.absent(),
     this.notes = const Value.absent(),
     this.numberUpdateUrl = const Value.absent(),
+    this.numberUpdateProvider = const Value.absent(),
     this.status = const Value.absent(),
     required DateTime createdAt,
     required DateTime updatedAt,
@@ -430,6 +480,7 @@ class CompanyCatalogTableCompanion
     Expression<String>? logoUrl,
     Expression<String>? notes,
     Expression<String>? numberUpdateUrl,
+    Expression<String>? numberUpdateProvider,
     Expression<String>? status,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
@@ -441,6 +492,8 @@ class CompanyCatalogTableCompanion
       if (logoUrl != null) 'logo_url': logoUrl,
       if (notes != null) 'notes': notes,
       if (numberUpdateUrl != null) 'number_update_url': numberUpdateUrl,
+      if (numberUpdateProvider != null)
+        'number_update_provider': numberUpdateProvider,
       if (status != null) 'status': status,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -454,6 +507,7 @@ class CompanyCatalogTableCompanion
     Value<String?>? logoUrl,
     Value<String?>? notes,
     Value<String?>? numberUpdateUrl,
+    Value<String?>? numberUpdateProvider,
     Value<String>? status,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
@@ -465,6 +519,7 @@ class CompanyCatalogTableCompanion
       logoUrl: logoUrl ?? this.logoUrl,
       notes: notes ?? this.notes,
       numberUpdateUrl: numberUpdateUrl ?? this.numberUpdateUrl,
+      numberUpdateProvider: numberUpdateProvider ?? this.numberUpdateProvider,
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -490,6 +545,11 @@ class CompanyCatalogTableCompanion
     if (numberUpdateUrl.present) {
       map['number_update_url'] = Variable<String>(numberUpdateUrl.value);
     }
+    if (numberUpdateProvider.present) {
+      map['number_update_provider'] = Variable<String>(
+        numberUpdateProvider.value,
+      );
+    }
     if (status.present) {
       map['status'] = Variable<String>(status.value);
     }
@@ -513,6 +573,7 @@ class CompanyCatalogTableCompanion
           ..write('logoUrl: $logoUrl, ')
           ..write('notes: $notes, ')
           ..write('numberUpdateUrl: $numberUpdateUrl, ')
+          ..write('numberUpdateProvider: $numberUpdateProvider, ')
           ..write('status: $status, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -1168,6 +1229,17 @@ class $CompaniesTableTable extends CompaniesTable
       'REFERENCES company_catalog (id)',
     ),
   );
+  static const VerificationMeta _numberUpdateProviderMeta =
+      const VerificationMeta('numberUpdateProvider');
+  @override
+  late final GeneratedColumn<String> numberUpdateProvider =
+      GeneratedColumn<String>(
+        'number_update_provider',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
   @override
   List<GeneratedColumn> get $columns => [
     ownerId,
@@ -1180,6 +1252,7 @@ class $CompaniesTableTable extends CompaniesTable
     status,
     pinned,
     catalogCompanyId,
+    numberUpdateProvider,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1261,6 +1334,15 @@ class $CompaniesTableTable extends CompaniesTable
         ),
       );
     }
+    if (data.containsKey('number_update_provider')) {
+      context.handle(
+        _numberUpdateProviderMeta,
+        numberUpdateProvider.isAcceptableOrUnknown(
+          data['number_update_provider']!,
+          _numberUpdateProviderMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -1310,6 +1392,10 @@ class $CompaniesTableTable extends CompaniesTable
         DriftSqlType.string,
         data['${effectivePrefix}catalog_company_id'],
       ),
+      numberUpdateProvider: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}number_update_provider'],
+      ),
     );
   }
 
@@ -1331,6 +1417,7 @@ class CompaniesTableData extends DataClass
   final String status;
   final bool pinned;
   final String? catalogCompanyId;
+  final String? numberUpdateProvider;
   const CompaniesTableData({
     required this.ownerId,
     required this.synced,
@@ -1342,6 +1429,7 @@ class CompaniesTableData extends DataClass
     required this.status,
     required this.pinned,
     this.catalogCompanyId,
+    this.numberUpdateProvider,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1361,6 +1449,9 @@ class CompaniesTableData extends DataClass
     map['pinned'] = Variable<bool>(pinned);
     if (!nullToAbsent || catalogCompanyId != null) {
       map['catalog_company_id'] = Variable<String>(catalogCompanyId);
+    }
+    if (!nullToAbsent || numberUpdateProvider != null) {
+      map['number_update_provider'] = Variable<String>(numberUpdateProvider);
     }
     return map;
   }
@@ -1383,6 +1474,9 @@ class CompaniesTableData extends DataClass
       catalogCompanyId: catalogCompanyId == null && nullToAbsent
           ? const Value.absent()
           : Value(catalogCompanyId),
+      numberUpdateProvider: numberUpdateProvider == null && nullToAbsent
+          ? const Value.absent()
+          : Value(numberUpdateProvider),
     );
   }
 
@@ -1402,6 +1496,9 @@ class CompaniesTableData extends DataClass
       status: serializer.fromJson<String>(json['status']),
       pinned: serializer.fromJson<bool>(json['pinned']),
       catalogCompanyId: serializer.fromJson<String?>(json['catalogCompanyId']),
+      numberUpdateProvider: serializer.fromJson<String?>(
+        json['numberUpdateProvider'],
+      ),
     );
   }
   @override
@@ -1418,6 +1515,7 @@ class CompaniesTableData extends DataClass
       'status': serializer.toJson<String>(status),
       'pinned': serializer.toJson<bool>(pinned),
       'catalogCompanyId': serializer.toJson<String?>(catalogCompanyId),
+      'numberUpdateProvider': serializer.toJson<String?>(numberUpdateProvider),
     };
   }
 
@@ -1432,6 +1530,7 @@ class CompaniesTableData extends DataClass
     String? status,
     bool? pinned,
     Value<String?> catalogCompanyId = const Value.absent(),
+    Value<String?> numberUpdateProvider = const Value.absent(),
   }) => CompaniesTableData(
     ownerId: ownerId ?? this.ownerId,
     synced: synced ?? this.synced,
@@ -1445,6 +1544,9 @@ class CompaniesTableData extends DataClass
     catalogCompanyId: catalogCompanyId.present
         ? catalogCompanyId.value
         : this.catalogCompanyId,
+    numberUpdateProvider: numberUpdateProvider.present
+        ? numberUpdateProvider.value
+        : this.numberUpdateProvider,
   );
   CompaniesTableData copyWithCompanion(CompaniesTableCompanion data) {
     return CompaniesTableData(
@@ -1460,6 +1562,9 @@ class CompaniesTableData extends DataClass
       catalogCompanyId: data.catalogCompanyId.present
           ? data.catalogCompanyId.value
           : this.catalogCompanyId,
+      numberUpdateProvider: data.numberUpdateProvider.present
+          ? data.numberUpdateProvider.value
+          : this.numberUpdateProvider,
     );
   }
 
@@ -1475,7 +1580,8 @@ class CompaniesTableData extends DataClass
           ..write('notes: $notes, ')
           ..write('status: $status, ')
           ..write('pinned: $pinned, ')
-          ..write('catalogCompanyId: $catalogCompanyId')
+          ..write('catalogCompanyId: $catalogCompanyId, ')
+          ..write('numberUpdateProvider: $numberUpdateProvider')
           ..write(')'))
         .toString();
   }
@@ -1492,6 +1598,7 @@ class CompaniesTableData extends DataClass
     status,
     pinned,
     catalogCompanyId,
+    numberUpdateProvider,
   );
   @override
   bool operator ==(Object other) =>
@@ -1506,7 +1613,8 @@ class CompaniesTableData extends DataClass
           other.notes == this.notes &&
           other.status == this.status &&
           other.pinned == this.pinned &&
-          other.catalogCompanyId == this.catalogCompanyId);
+          other.catalogCompanyId == this.catalogCompanyId &&
+          other.numberUpdateProvider == this.numberUpdateProvider);
 }
 
 class CompaniesTableCompanion extends UpdateCompanion<CompaniesTableData> {
@@ -1520,6 +1628,7 @@ class CompaniesTableCompanion extends UpdateCompanion<CompaniesTableData> {
   final Value<String> status;
   final Value<bool> pinned;
   final Value<String?> catalogCompanyId;
+  final Value<String?> numberUpdateProvider;
   final Value<int> rowid;
   const CompaniesTableCompanion({
     this.ownerId = const Value.absent(),
@@ -1532,6 +1641,7 @@ class CompaniesTableCompanion extends UpdateCompanion<CompaniesTableData> {
     this.status = const Value.absent(),
     this.pinned = const Value.absent(),
     this.catalogCompanyId = const Value.absent(),
+    this.numberUpdateProvider = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   CompaniesTableCompanion.insert({
@@ -1545,6 +1655,7 @@ class CompaniesTableCompanion extends UpdateCompanion<CompaniesTableData> {
     this.status = const Value.absent(),
     this.pinned = const Value.absent(),
     this.catalogCompanyId = const Value.absent(),
+    this.numberUpdateProvider = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : ownerId = Value(ownerId),
        updatedAt = Value(updatedAt),
@@ -1561,6 +1672,7 @@ class CompaniesTableCompanion extends UpdateCompanion<CompaniesTableData> {
     Expression<String>? status,
     Expression<bool>? pinned,
     Expression<String>? catalogCompanyId,
+    Expression<String>? numberUpdateProvider,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1574,6 +1686,8 @@ class CompaniesTableCompanion extends UpdateCompanion<CompaniesTableData> {
       if (status != null) 'status': status,
       if (pinned != null) 'pinned': pinned,
       if (catalogCompanyId != null) 'catalog_company_id': catalogCompanyId,
+      if (numberUpdateProvider != null)
+        'number_update_provider': numberUpdateProvider,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1589,6 +1703,7 @@ class CompaniesTableCompanion extends UpdateCompanion<CompaniesTableData> {
     Value<String>? status,
     Value<bool>? pinned,
     Value<String?>? catalogCompanyId,
+    Value<String?>? numberUpdateProvider,
     Value<int>? rowid,
   }) {
     return CompaniesTableCompanion(
@@ -1602,6 +1717,7 @@ class CompaniesTableCompanion extends UpdateCompanion<CompaniesTableData> {
       status: status ?? this.status,
       pinned: pinned ?? this.pinned,
       catalogCompanyId: catalogCompanyId ?? this.catalogCompanyId,
+      numberUpdateProvider: numberUpdateProvider ?? this.numberUpdateProvider,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1639,6 +1755,11 @@ class CompaniesTableCompanion extends UpdateCompanion<CompaniesTableData> {
     if (catalogCompanyId.present) {
       map['catalog_company_id'] = Variable<String>(catalogCompanyId.value);
     }
+    if (numberUpdateProvider.present) {
+      map['number_update_provider'] = Variable<String>(
+        numberUpdateProvider.value,
+      );
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1658,6 +1779,7 @@ class CompaniesTableCompanion extends UpdateCompanion<CompaniesTableData> {
           ..write('status: $status, ')
           ..write('pinned: $pinned, ')
           ..write('catalogCompanyId: $catalogCompanyId, ')
+          ..write('numberUpdateProvider: $numberUpdateProvider, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -7344,6 +7466,527 @@ class SettingsTableCompanion extends UpdateCompanion<SettingsTableData> {
   }
 }
 
+class $NumberUpdateLogTableTable extends NumberUpdateLogTable
+    with TableInfo<$NumberUpdateLogTableTable, NumberUpdateLogTableData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $NumberUpdateLogTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _ownerIdMeta = const VerificationMeta(
+    'ownerId',
+  );
+  @override
+  late final GeneratedColumn<String> ownerId = GeneratedColumn<String>(
+    'owner_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _syncedMeta = const VerificationMeta('synced');
+  @override
+  late final GeneratedColumn<bool> synced = GeneratedColumn<bool>(
+    'synced',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("synced" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _phoneNumberMeta = const VerificationMeta(
+    'phoneNumber',
+  );
+  @override
+  late final GeneratedColumn<String> phoneNumber = GeneratedColumn<String>(
+    'phone_number',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _messageMeta = const VerificationMeta(
+    'message',
+  );
+  @override
+  late final GeneratedColumn<String> message = GeneratedColumn<String>(
+    'message',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    ownerId,
+    synced,
+    updatedAt,
+    id,
+    phoneNumber,
+    status,
+    message,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'number_update_log';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<NumberUpdateLogTableData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('owner_id')) {
+      context.handle(
+        _ownerIdMeta,
+        ownerId.isAcceptableOrUnknown(data['owner_id']!, _ownerIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_ownerIdMeta);
+    }
+    if (data.containsKey('synced')) {
+      context.handle(
+        _syncedMeta,
+        synced.isAcceptableOrUnknown(data['synced']!, _syncedMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('phone_number')) {
+      context.handle(
+        _phoneNumberMeta,
+        phoneNumber.isAcceptableOrUnknown(
+          data['phone_number']!,
+          _phoneNumberMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_phoneNumberMeta);
+    }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_statusMeta);
+    }
+    if (data.containsKey('message')) {
+      context.handle(
+        _messageMeta,
+        message.isAcceptableOrUnknown(data['message']!, _messageMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_messageMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  NumberUpdateLogTableData map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return NumberUpdateLogTableData(
+      ownerId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}owner_id'],
+      )!,
+      synced: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}synced'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      phoneNumber: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}phone_number'],
+      )!,
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      )!,
+      message: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}message'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $NumberUpdateLogTableTable createAlias(String alias) {
+    return $NumberUpdateLogTableTable(attachedDatabase, alias);
+  }
+}
+
+class NumberUpdateLogTableData extends DataClass
+    implements Insertable<NumberUpdateLogTableData> {
+  final String ownerId;
+  final bool synced;
+  final DateTime updatedAt;
+  final String id;
+  final String phoneNumber;
+  final String status;
+  final String message;
+  final DateTime createdAt;
+  const NumberUpdateLogTableData({
+    required this.ownerId,
+    required this.synced,
+    required this.updatedAt,
+    required this.id,
+    required this.phoneNumber,
+    required this.status,
+    required this.message,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['owner_id'] = Variable<String>(ownerId);
+    map['synced'] = Variable<bool>(synced);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['id'] = Variable<String>(id);
+    map['phone_number'] = Variable<String>(phoneNumber);
+    map['status'] = Variable<String>(status);
+    map['message'] = Variable<String>(message);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  NumberUpdateLogTableCompanion toCompanion(bool nullToAbsent) {
+    return NumberUpdateLogTableCompanion(
+      ownerId: Value(ownerId),
+      synced: Value(synced),
+      updatedAt: Value(updatedAt),
+      id: Value(id),
+      phoneNumber: Value(phoneNumber),
+      status: Value(status),
+      message: Value(message),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory NumberUpdateLogTableData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return NumberUpdateLogTableData(
+      ownerId: serializer.fromJson<String>(json['ownerId']),
+      synced: serializer.fromJson<bool>(json['synced']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      id: serializer.fromJson<String>(json['id']),
+      phoneNumber: serializer.fromJson<String>(json['phoneNumber']),
+      status: serializer.fromJson<String>(json['status']),
+      message: serializer.fromJson<String>(json['message']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'ownerId': serializer.toJson<String>(ownerId),
+      'synced': serializer.toJson<bool>(synced),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'id': serializer.toJson<String>(id),
+      'phoneNumber': serializer.toJson<String>(phoneNumber),
+      'status': serializer.toJson<String>(status),
+      'message': serializer.toJson<String>(message),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  NumberUpdateLogTableData copyWith({
+    String? ownerId,
+    bool? synced,
+    DateTime? updatedAt,
+    String? id,
+    String? phoneNumber,
+    String? status,
+    String? message,
+    DateTime? createdAt,
+  }) => NumberUpdateLogTableData(
+    ownerId: ownerId ?? this.ownerId,
+    synced: synced ?? this.synced,
+    updatedAt: updatedAt ?? this.updatedAt,
+    id: id ?? this.id,
+    phoneNumber: phoneNumber ?? this.phoneNumber,
+    status: status ?? this.status,
+    message: message ?? this.message,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  NumberUpdateLogTableData copyWithCompanion(
+    NumberUpdateLogTableCompanion data,
+  ) {
+    return NumberUpdateLogTableData(
+      ownerId: data.ownerId.present ? data.ownerId.value : this.ownerId,
+      synced: data.synced.present ? data.synced.value : this.synced,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      id: data.id.present ? data.id.value : this.id,
+      phoneNumber: data.phoneNumber.present
+          ? data.phoneNumber.value
+          : this.phoneNumber,
+      status: data.status.present ? data.status.value : this.status,
+      message: data.message.present ? data.message.value : this.message,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('NumberUpdateLogTableData(')
+          ..write('ownerId: $ownerId, ')
+          ..write('synced: $synced, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('id: $id, ')
+          ..write('phoneNumber: $phoneNumber, ')
+          ..write('status: $status, ')
+          ..write('message: $message, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    ownerId,
+    synced,
+    updatedAt,
+    id,
+    phoneNumber,
+    status,
+    message,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is NumberUpdateLogTableData &&
+          other.ownerId == this.ownerId &&
+          other.synced == this.synced &&
+          other.updatedAt == this.updatedAt &&
+          other.id == this.id &&
+          other.phoneNumber == this.phoneNumber &&
+          other.status == this.status &&
+          other.message == this.message &&
+          other.createdAt == this.createdAt);
+}
+
+class NumberUpdateLogTableCompanion
+    extends UpdateCompanion<NumberUpdateLogTableData> {
+  final Value<String> ownerId;
+  final Value<bool> synced;
+  final Value<DateTime> updatedAt;
+  final Value<String> id;
+  final Value<String> phoneNumber;
+  final Value<String> status;
+  final Value<String> message;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const NumberUpdateLogTableCompanion({
+    this.ownerId = const Value.absent(),
+    this.synced = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.id = const Value.absent(),
+    this.phoneNumber = const Value.absent(),
+    this.status = const Value.absent(),
+    this.message = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  NumberUpdateLogTableCompanion.insert({
+    required String ownerId,
+    this.synced = const Value.absent(),
+    required DateTime updatedAt,
+    required String id,
+    required String phoneNumber,
+    required String status,
+    required String message,
+    required DateTime createdAt,
+    this.rowid = const Value.absent(),
+  }) : ownerId = Value(ownerId),
+       updatedAt = Value(updatedAt),
+       id = Value(id),
+       phoneNumber = Value(phoneNumber),
+       status = Value(status),
+       message = Value(message),
+       createdAt = Value(createdAt);
+  static Insertable<NumberUpdateLogTableData> custom({
+    Expression<String>? ownerId,
+    Expression<bool>? synced,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? id,
+    Expression<String>? phoneNumber,
+    Expression<String>? status,
+    Expression<String>? message,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (ownerId != null) 'owner_id': ownerId,
+      if (synced != null) 'synced': synced,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (id != null) 'id': id,
+      if (phoneNumber != null) 'phone_number': phoneNumber,
+      if (status != null) 'status': status,
+      if (message != null) 'message': message,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  NumberUpdateLogTableCompanion copyWith({
+    Value<String>? ownerId,
+    Value<bool>? synced,
+    Value<DateTime>? updatedAt,
+    Value<String>? id,
+    Value<String>? phoneNumber,
+    Value<String>? status,
+    Value<String>? message,
+    Value<DateTime>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return NumberUpdateLogTableCompanion(
+      ownerId: ownerId ?? this.ownerId,
+      synced: synced ?? this.synced,
+      updatedAt: updatedAt ?? this.updatedAt,
+      id: id ?? this.id,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
+      status: status ?? this.status,
+      message: message ?? this.message,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (ownerId.present) {
+      map['owner_id'] = Variable<String>(ownerId.value);
+    }
+    if (synced.present) {
+      map['synced'] = Variable<bool>(synced.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (phoneNumber.present) {
+      map['phone_number'] = Variable<String>(phoneNumber.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (message.present) {
+      map['message'] = Variable<String>(message.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('NumberUpdateLogTableCompanion(')
+          ..write('ownerId: $ownerId, ')
+          ..write('synced: $synced, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('id: $id, ')
+          ..write('phoneNumber: $phoneNumber, ')
+          ..write('status: $status, ')
+          ..write('message: $message, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -7367,6 +8010,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $SupportRequestsTableTable supportRequestsTable =
       $SupportRequestsTableTable(this);
   late final $SettingsTableTable settingsTable = $SettingsTableTable(this);
+  late final $NumberUpdateLogTableTable numberUpdateLogTable =
+      $NumberUpdateLogTableTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -7384,6 +8029,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     trustedDevicesTable,
     supportRequestsTable,
     settingsTable,
+    numberUpdateLogTable,
   ];
 }
 
@@ -7394,6 +8040,7 @@ typedef $$CompanyCatalogTableTableCreateCompanionBuilder =
       Value<String?> logoUrl,
       Value<String?> notes,
       Value<String?> numberUpdateUrl,
+      Value<String?> numberUpdateProvider,
       Value<String> status,
       required DateTime createdAt,
       required DateTime updatedAt,
@@ -7406,6 +8053,7 @@ typedef $$CompanyCatalogTableTableUpdateCompanionBuilder =
       Value<String?> logoUrl,
       Value<String?> notes,
       Value<String?> numberUpdateUrl,
+      Value<String?> numberUpdateProvider,
       Value<String> status,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
@@ -7502,6 +8150,11 @@ class $$CompanyCatalogTableTableFilterComposer
 
   ColumnFilters<String> get numberUpdateUrl => $composableBuilder(
     column: $table.numberUpdateUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get numberUpdateProvider => $composableBuilder(
+    column: $table.numberUpdateProvider,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -7605,6 +8258,11 @@ class $$CompanyCatalogTableTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get numberUpdateProvider => $composableBuilder(
+    column: $table.numberUpdateProvider,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get status => $composableBuilder(
     column: $table.status,
     builder: (column) => ColumnOrderings(column),
@@ -7644,6 +8302,11 @@ class $$CompanyCatalogTableTableAnnotationComposer
 
   GeneratedColumn<String> get numberUpdateUrl => $composableBuilder(
     column: $table.numberUpdateUrl,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get numberUpdateProvider => $composableBuilder(
+    column: $table.numberUpdateProvider,
     builder: (column) => column,
   );
 
@@ -7752,6 +8415,7 @@ class $$CompanyCatalogTableTableTableManager
                 Value<String?> logoUrl = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 Value<String?> numberUpdateUrl = const Value.absent(),
+                Value<String?> numberUpdateProvider = const Value.absent(),
                 Value<String> status = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
@@ -7762,6 +8426,7 @@ class $$CompanyCatalogTableTableTableManager
                 logoUrl: logoUrl,
                 notes: notes,
                 numberUpdateUrl: numberUpdateUrl,
+                numberUpdateProvider: numberUpdateProvider,
                 status: status,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -7774,6 +8439,7 @@ class $$CompanyCatalogTableTableTableManager
                 Value<String?> logoUrl = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 Value<String?> numberUpdateUrl = const Value.absent(),
+                Value<String?> numberUpdateProvider = const Value.absent(),
                 Value<String> status = const Value.absent(),
                 required DateTime createdAt,
                 required DateTime updatedAt,
@@ -7784,6 +8450,7 @@ class $$CompanyCatalogTableTableTableManager
                 logoUrl: logoUrl,
                 notes: notes,
                 numberUpdateUrl: numberUpdateUrl,
+                numberUpdateProvider: numberUpdateProvider,
                 status: status,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -8288,6 +8955,7 @@ typedef $$CompaniesTableTableCreateCompanionBuilder =
       Value<String> status,
       Value<bool> pinned,
       Value<String?> catalogCompanyId,
+      Value<String?> numberUpdateProvider,
       Value<int> rowid,
     });
 typedef $$CompaniesTableTableUpdateCompanionBuilder =
@@ -8302,6 +8970,7 @@ typedef $$CompaniesTableTableUpdateCompanionBuilder =
       Value<String> status,
       Value<bool> pinned,
       Value<String?> catalogCompanyId,
+      Value<String?> numberUpdateProvider,
       Value<int> rowid,
     });
 
@@ -8463,6 +9132,11 @@ class $$CompaniesTableTableFilterComposer
 
   ColumnFilters<bool> get pinned => $composableBuilder(
     column: $table.pinned,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get numberUpdateProvider => $composableBuilder(
+    column: $table.numberUpdateProvider,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -8644,6 +9318,11 @@ class $$CompaniesTableTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get numberUpdateProvider => $composableBuilder(
+    column: $table.numberUpdateProvider,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$CompanyCatalogTableTableOrderingComposer get catalogCompanyId {
     final $$CompanyCatalogTableTableOrderingComposer composer =
         $composerBuilder(
@@ -8704,6 +9383,11 @@ class $$CompaniesTableTableAnnotationComposer
 
   GeneratedColumn<bool> get pinned =>
       $composableBuilder(column: $table.pinned, builder: (column) => column);
+
+  GeneratedColumn<String> get numberUpdateProvider => $composableBuilder(
+    column: $table.numberUpdateProvider,
+    builder: (column) => column,
+  );
 
   $$CompanyCatalogTableTableAnnotationComposer get catalogCompanyId {
     final $$CompanyCatalogTableTableAnnotationComposer composer =
@@ -8876,6 +9560,7 @@ class $$CompaniesTableTableTableManager
                 Value<String> status = const Value.absent(),
                 Value<bool> pinned = const Value.absent(),
                 Value<String?> catalogCompanyId = const Value.absent(),
+                Value<String?> numberUpdateProvider = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => CompaniesTableCompanion(
                 ownerId: ownerId,
@@ -8888,6 +9573,7 @@ class $$CompaniesTableTableTableManager
                 status: status,
                 pinned: pinned,
                 catalogCompanyId: catalogCompanyId,
+                numberUpdateProvider: numberUpdateProvider,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -8902,6 +9588,7 @@ class $$CompaniesTableTableTableManager
                 Value<String> status = const Value.absent(),
                 Value<bool> pinned = const Value.absent(),
                 Value<String?> catalogCompanyId = const Value.absent(),
+                Value<String?> numberUpdateProvider = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => CompaniesTableCompanion.insert(
                 ownerId: ownerId,
@@ -8914,6 +9601,7 @@ class $$CompaniesTableTableTableManager
                 status: status,
                 pinned: pinned,
                 catalogCompanyId: catalogCompanyId,
+                numberUpdateProvider: numberUpdateProvider,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -13141,6 +13829,281 @@ typedef $$SettingsTableTableProcessedTableManager =
       SettingsTableData,
       PrefetchHooks Function()
     >;
+typedef $$NumberUpdateLogTableTableCreateCompanionBuilder =
+    NumberUpdateLogTableCompanion Function({
+      required String ownerId,
+      Value<bool> synced,
+      required DateTime updatedAt,
+      required String id,
+      required String phoneNumber,
+      required String status,
+      required String message,
+      required DateTime createdAt,
+      Value<int> rowid,
+    });
+typedef $$NumberUpdateLogTableTableUpdateCompanionBuilder =
+    NumberUpdateLogTableCompanion Function({
+      Value<String> ownerId,
+      Value<bool> synced,
+      Value<DateTime> updatedAt,
+      Value<String> id,
+      Value<String> phoneNumber,
+      Value<String> status,
+      Value<String> message,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+
+class $$NumberUpdateLogTableTableFilterComposer
+    extends Composer<_$AppDatabase, $NumberUpdateLogTableTable> {
+  $$NumberUpdateLogTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get ownerId => $composableBuilder(
+    column: $table.ownerId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get synced => $composableBuilder(
+    column: $table.synced,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get phoneNumber => $composableBuilder(
+    column: $table.phoneNumber,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get message => $composableBuilder(
+    column: $table.message,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$NumberUpdateLogTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $NumberUpdateLogTableTable> {
+  $$NumberUpdateLogTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get ownerId => $composableBuilder(
+    column: $table.ownerId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get synced => $composableBuilder(
+    column: $table.synced,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get phoneNumber => $composableBuilder(
+    column: $table.phoneNumber,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get message => $composableBuilder(
+    column: $table.message,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$NumberUpdateLogTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $NumberUpdateLogTableTable> {
+  $$NumberUpdateLogTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get ownerId =>
+      $composableBuilder(column: $table.ownerId, builder: (column) => column);
+
+  GeneratedColumn<bool> get synced =>
+      $composableBuilder(column: $table.synced, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get phoneNumber => $composableBuilder(
+    column: $table.phoneNumber,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<String> get message =>
+      $composableBuilder(column: $table.message, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$NumberUpdateLogTableTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $NumberUpdateLogTableTable,
+          NumberUpdateLogTableData,
+          $$NumberUpdateLogTableTableFilterComposer,
+          $$NumberUpdateLogTableTableOrderingComposer,
+          $$NumberUpdateLogTableTableAnnotationComposer,
+          $$NumberUpdateLogTableTableCreateCompanionBuilder,
+          $$NumberUpdateLogTableTableUpdateCompanionBuilder,
+          (
+            NumberUpdateLogTableData,
+            BaseReferences<
+              _$AppDatabase,
+              $NumberUpdateLogTableTable,
+              NumberUpdateLogTableData
+            >,
+          ),
+          NumberUpdateLogTableData,
+          PrefetchHooks Function()
+        > {
+  $$NumberUpdateLogTableTableTableManager(
+    _$AppDatabase db,
+    $NumberUpdateLogTableTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$NumberUpdateLogTableTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$NumberUpdateLogTableTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$NumberUpdateLogTableTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> ownerId = const Value.absent(),
+                Value<bool> synced = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<String> id = const Value.absent(),
+                Value<String> phoneNumber = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<String> message = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => NumberUpdateLogTableCompanion(
+                ownerId: ownerId,
+                synced: synced,
+                updatedAt: updatedAt,
+                id: id,
+                phoneNumber: phoneNumber,
+                status: status,
+                message: message,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String ownerId,
+                Value<bool> synced = const Value.absent(),
+                required DateTime updatedAt,
+                required String id,
+                required String phoneNumber,
+                required String status,
+                required String message,
+                required DateTime createdAt,
+                Value<int> rowid = const Value.absent(),
+              }) => NumberUpdateLogTableCompanion.insert(
+                ownerId: ownerId,
+                synced: synced,
+                updatedAt: updatedAt,
+                id: id,
+                phoneNumber: phoneNumber,
+                status: status,
+                message: message,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$NumberUpdateLogTableTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $NumberUpdateLogTableTable,
+      NumberUpdateLogTableData,
+      $$NumberUpdateLogTableTableFilterComposer,
+      $$NumberUpdateLogTableTableOrderingComposer,
+      $$NumberUpdateLogTableTableAnnotationComposer,
+      $$NumberUpdateLogTableTableCreateCompanionBuilder,
+      $$NumberUpdateLogTableTableUpdateCompanionBuilder,
+      (
+        NumberUpdateLogTableData,
+        BaseReferences<
+          _$AppDatabase,
+          $NumberUpdateLogTableTable,
+          NumberUpdateLogTableData
+        >,
+      ),
+      NumberUpdateLogTableData,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -13169,4 +14132,6 @@ class $AppDatabaseManager {
       $$SupportRequestsTableTableTableManager(_db, _db.supportRequestsTable);
   $$SettingsTableTableTableManager get settingsTable =>
       $$SettingsTableTableTableManager(_db, _db.settingsTable);
+  $$NumberUpdateLogTableTableTableManager get numberUpdateLogTable =>
+      $$NumberUpdateLogTableTableTableManager(_db, _db.numberUpdateLogTable);
 }

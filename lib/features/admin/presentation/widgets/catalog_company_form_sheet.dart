@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../core/number_update/number_update_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -11,6 +12,7 @@ typedef CatalogCompanySaveCallback = void Function(
   String name,
   String notes,
   String numberUpdateUrl,
+  NumberUpdateProviderKey? numberUpdateProvider,
   List<CatalogPackageAdmin> packages,
 );
 
@@ -55,6 +57,7 @@ class _CatalogCompanyFormSheetState extends State<CatalogCompanyFormSheet> {
   late final TextEditingController _notesController;
   late final TextEditingController _urlController;
   late final List<_PackageRow> _packageRows;
+  NumberUpdateProviderKey? _numberUpdateProvider;
 
   bool get _isEditing => widget.company != null;
 
@@ -65,6 +68,7 @@ class _CatalogCompanyFormSheetState extends State<CatalogCompanyFormSheet> {
     _nameController = TextEditingController(text: company?.name ?? '');
     _notesController = TextEditingController(text: company?.notes ?? '');
     _urlController = TextEditingController(text: company?.numberUpdateUrl ?? '');
+    _numberUpdateProvider = company?.numberUpdateProvider;
     _packageRows = company?.packages
             .map((p) => _PackageRow(
                   id: p.id,
@@ -110,7 +114,7 @@ class _CatalogCompanyFormSheetState extends State<CatalogCompanyFormSheet> {
             ))
         .toList();
 
-    widget.onSave(_nameController.text.trim(), _notesController.text.trim(), _urlController.text.trim(), packages);
+    widget.onSave(_nameController.text.trim(), _notesController.text.trim(), _urlController.text.trim(), _numberUpdateProvider, packages);
     Navigator.of(context).pop();
   }
 
@@ -150,6 +154,22 @@ class _CatalogCompanyFormSheetState extends State<CatalogCompanyFormSheet> {
                 keyboardType: TextInputType.url,
                 style: AppTextStyles.cardTitle(colors.textPrimary),
                 decoration: _decoration(colors, hint: 'https://...'),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Text('admin.catalogForm.numberUpdateProviderLabel'.tr(), style: AppTextStyles.body(colors.textSecondary)),
+              const SizedBox(height: AppSpacing.xs),
+              DropdownButtonFormField<NumberUpdateProviderKey?>(
+                initialValue: _numberUpdateProvider,
+                isExpanded: true,
+                style: AppTextStyles.cardTitle(colors.textPrimary),
+                decoration: _decoration(colors),
+                items: [
+                  DropdownMenuItem(value: null, child: Text('numberUpdateProvider.none'.tr(), overflow: TextOverflow.ellipsis)),
+                  ...NumberUpdateProviderKey.values.map(
+                    (key) => DropdownMenuItem(value: key, child: Text(key.label, overflow: TextOverflow.ellipsis)),
+                  ),
+                ],
+                onChanged: (value) => setState(() => _numberUpdateProvider = value),
               ),
               const SizedBox(height: AppSpacing.md),
               Text('admin.catalogForm.notesLabel'.tr(), style: AppTextStyles.body(colors.textSecondary)),

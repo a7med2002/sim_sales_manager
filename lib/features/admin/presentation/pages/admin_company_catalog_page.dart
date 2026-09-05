@@ -58,7 +58,8 @@ class _AdminCompanyCatalogView extends StatelessWidget {
                     child: ElevatedButton.icon(
                       onPressed: () => CatalogCompanyFormSheet.show(
                         context,
-                        onSave: (name, notes, url, packages) => cubit.addCompany(name: name, notes: notes, numberUpdateUrl: url, packages: packages),
+                        onSave: (name, notes, url, provider, packages) =>
+                            cubit.addCompany(name: name, notes: notes, numberUpdateUrl: url, numberUpdateProvider: provider, packages: packages),
                       ),
                       icon: Icon(Icons.add_rounded, color: colors.onPrimaryAction, size: 18),
                       label: Text('admin.catalog.addCompany'.tr(), style: AppTextStyles.cardTitle(colors.onPrimaryAction)),
@@ -155,8 +156,14 @@ class _CatalogCompanyCard extends StatelessWidget {
                     value: () => CatalogCompanyFormSheet.show(
                       context,
                       company: company,
-                      onSave: (name, notes, url, packages) =>
-                          cubit.updateCompany(company.id, name: name, notes: notes, numberUpdateUrl: url, packages: packages),
+                      onSave: (name, notes, url, provider, packages) => cubit.updateCompany(
+                        company.id,
+                        name: name,
+                        notes: notes,
+                        numberUpdateUrl: url,
+                        numberUpdateProvider: provider,
+                        packages: packages,
+                      ),
                     ),
                     child: Row(children: [
                       Icon(Icons.edit_outlined, size: 18, color: colors.textPrimary),

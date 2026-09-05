@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../core/number_update/number_update_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -8,18 +9,28 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../domain/entities/company.dart';
 import '../../domain/entities/company_package.dart';
 
+typedef CompanySaveCallback = void Function(
+  String name,
+  String notes,
+  List<CompanyPackage> packages,
+  NumberUpdateProviderKey? numberUpdateProvider,
+);
+
 /// Add/Edit Company bottom sheet. Pass [company] to prefill for editing —
-/// omit it to add a new company. Every field — name, notes, packages —
-/// is freely editable: a seller owns their companies completely, whether
-/// typed from scratch or started from "Import Ready-Made" (see
-/// `CompaniesCubit`'s doc comment).
+/// omit it to add a new company. Every field — name, notes, packages,
+/// Number Update provider — is freely editable: a seller owns their
+/// companies completely, whether typed from scratch or started from
+/// "Import Ready-Made" (see `CompaniesCubit`'s doc comment). The Number
+/// Update provider is optional and only meaningful for a handful of
+/// known suppliers (see `features/number_update/`); leave it unset for
+/// any company Number Update has nothing automated for.
 class CompanyFormSheet extends StatefulWidget {
   final Company? company;
-  final void Function(String name, String notes, List<CompanyPackage> packages) onSave;
+  final CompanySaveCallback onSave;
 
   const CompanyFormSheet({super.key, this.company, required this.onSave});
 
-  static Future<void> show(BuildContext context, {Company? company, required void Function(String, String, List<CompanyPackage>) onSave}) {
+  static Future<void> show(BuildContext context, {Company? company, required CompanySaveCallback onSave}) {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -49,6 +60,7 @@ class _CompanyFormSheetState extends State<CompanyFormSheet> {
   late final TextEditingController _nameController;
   late final TextEditingController _notesController;
   late final List<_PackageRow> _packageRows;
+  NumberUpdateProviderKey? _numberUpdateProvider;
 
   bool get _isEditing => widget.company != null;
 
@@ -58,6 +70,7 @@ class _CompanyFormSheetState extends State<CompanyFormSheet> {
     final company = widget.company;
     _nameController = TextEditingController(text: company?.name ?? '');
     _notesController = TextEditingController(text: company?.notes ?? '');
+    _numberUpdateProvider = company?.numberUpdateProvider;
     _packageRows = company?.packages
             .map((p) => _PackageRow(
                   id: p.id,
@@ -103,7 +116,7 @@ class _CompanyFormSheetState extends State<CompanyFormSheet> {
             ))
         .toList();
 
-    widget.onSave(name, _notesController.text.trim(), packages);
+    widget.onSave(name, _notesController.text.trim(), packages, _numberUpdateProvider);
     Navigator.of(context).pop();
   }
 
@@ -158,6 +171,22 @@ class _CompanyFormSheetState extends State<CompanyFormSheet> {
                 minLines: 3,
                 maxLines: 5,
                 decoration: _inputDecoration(colors),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Text('companies.form.numberUpdateProviderLabel'.tr(), style: AppTextStyles.body(colors.textSecondary)),
+              const SizedBox(height: AppSpacing.xs),
+              DropdownButtonFormField<NumberUpdateProviderKey?>(
+                initialValue: _numberUpdateProvider,
+                isExpanded: true,
+                style: AppTextStyles.cardTitle(colors.textPrimary),
+                decoration: _inputDecoration(colors),
+                items: [
+                  DropdownMenuItem(value: null, child: Text('numberUpdateProvider.none'.tr(), overflow: TextOverflow.ellipsis)),
+                  ...NumberUpdateProviderKey.values.map(
+                    (key) => DropdownMenuItem(value: key, child: Text(key.label, overflow: TextOverflow.ellipsis)),
+                  ),
+                ],
+                onChanged: (value) => setState(() => _numberUpdateProvider = value),
               ),
               const SizedBox(height: AppSpacing.lg),
               Text('companies.form.packagesSection'.tr(), style: AppTextStyles.overline(colors.textSecondary)),

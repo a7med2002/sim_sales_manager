@@ -9,6 +9,7 @@ import 'tables/catalog_tables.dart';
 import 'tables/companies_table.dart';
 import 'tables/customers_table.dart';
 import 'tables/lines_table.dart';
+import 'tables/number_update_log_table.dart';
 import 'tables/operations_table.dart';
 import 'tables/packages_table.dart';
 import 'tables/settings_table.dart';
@@ -37,6 +38,7 @@ part 'app_database.g.dart';
     TrustedDevicesTable,
     SupportRequestsTable,
     SettingsTable,
+    NumberUpdateLogTable,
   ],
 )
 class AppDatabase extends _$AppDatabase {

@@ -13,6 +13,7 @@ class CompanyCatalogTable extends Table {
   TextColumn get logoUrl => text().nullable()();
   TextColumn get notes => text().nullable()();
   TextColumn get numberUpdateUrl => text().nullable()();
+  TextColumn get numberUpdateProvider => text().nullable()();
   TextColumn get status => text().withDefault(const Constant('active'))();
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();

@@ -20,6 +20,7 @@ class CompaniesTable extends Table with TenantColumns {
   TextColumn get status => text().withDefault(const Constant('active'))();
   BoolColumn get pinned => boolean().withDefault(const Constant(false))();
   TextColumn get catalogCompanyId => text().references(CompanyCatalogTable, #id).nullable()();
+  TextColumn get numberUpdateProvider => text().nullable()();
 
   @override
   Set<Column> get primaryKey => {id};

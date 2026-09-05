@@ -3188,3 +3188,139 @@ the level meter's bars actually move while speaking (and stay flat in
 silence), stop the recording, tap play and confirm you hear the actual
 clip, and confirm the chip's play icon flips to pause during playback
 and back to play automatically when it finishes.
+
+## Number Update — real, automated per-company refresh (3 suppliers wired up)
+
+Closes the last real gap in the mock-data audit: Number Update now
+actually calls each supported supplier's own refresh endpoint instead
+of always simulating success. No official API exists for any of
+these — each was reverse-engineered by inspecting the supplier's own
+public web page (view-source + its own JavaScript), then verified with
+a real test call using an obviously-fake number to confirm the
+error-response shape without touching a real customer's line:
+
+| Supplier | Endpoint | Shape | Auth/CAPTCHA |
+|---|---|---|---|
+| Liyan | `POST api.layan-t.net/api/Subscribtions/CustomersRefreshNumber` | `{number}` → plain-text body, HTTP status signals success/fail | none |
+| QuickLine | `POST api.quicklinecrm.com/api/Subscriptions/CustomersRefreshNumber/New` | `{phoneNumber}` → same plain-text shape as Liyan (same underlying CRM platform) | none |
+| Areen | `POST api.areen.net/api/common/RefreshMobileNumber` | `{MobNumber}` → JSON `{StatusCode, Message}`, 23 = success | none |
+| Sky (refreshsims.net) | `POST /api/public/refresh` + async polling | reCAPTCHA v3 required | **not implemented** — needs a real browser context (WebView) to solve, out of scope this pass |
+
+**No new package needed** — the 3 working integrations are plain JSON
+POSTs done with `dart:io`'s `HttpClient` directly
+(`features/number_update/data/number_update_providers.dart`).
+
+**How a company maps to a provider**: a new nullable
+`numberUpdateProvider` field (`core/number_update/number_update_provider.dart`'s
+`NumberUpdateProviderKey` enum: `liyan`/`areen`/`quickline`) was added to
+**both** the seller's own `companies` table (a seller picks it directly
+on `CompanyFormSheet`, since a company like "Liyan" is often something a
+seller adds by hand, not imported) **and** `company_catalog` (an admin
+can pre-set it on `CatalogCompanyFormSheet` so it carries over
+automatically on "Import Ready-Made" — see `CompaniesCubit.importPreset`).
+
+**The actual flow** (`NumberUpdateCubit`, fully rewritten): a typed
+number is matched against every real Line (`CustomerCatalog.allLines`,
+by `simNumber`) to find which company sold it, that company's
+`numberUpdateProvider` decides which endpoint to call, and the result
+(success/not-found/failed + the supplier's own message) becomes a real
+history entry — persisted to a new append-only `number_update_log`
+table (Drift + Supabase, same shape as `activity_log`/
+`support_requests`) when signed in, an in-memory mock log otherwise.
+Two validation failures surface as an inline message instead of a log
+entry, since no provider was ever actually called: the number isn't
+registered to any Line at all, or it is but that company has no
+provider configured (shown via `state.errorMessage` — a translation key
++ optional `namedArgs`, not resolved text, same convention as
+`LoginState`).
+
+**New migration**: `supabase/migrations/0006_number_update.sql` —
+**not applied automatically, run it in the Supabase SQL editor**
+(same as 0001-0005 before it). Adds `number_update_provider` to
+`companies`/`company_catalog`, creates `number_update_log` with
+owner-only RLS.
+
+**Deliberately not done this pass**: Sky/refreshsims.net (needs a real
+WebView to complete reCAPTCHA v3 — a bigger, separate piece of work);
+any "open the supplier's page manually" fallback link for unsupported
+companies (would reuse the already-existing but never-wired-up
+`company_catalog.number_update_url` field — a reasonable small
+follow-up, not done here to keep this pass's scope to what was asked).
+
+**Verified**: `flutter analyze` clean; `flutter build apk --debug` with
+real `--dart-define` credentials run in background.
+`flutter test` — one test needed updating: the seeded Number Update
+history test used a number belonging to "Ooredoo" (a real seeded
+company with no provider configured), which now correctly shows the
+"provider not configured" message instead of always simulating success;
+updated the test to assert that instead of a fake success. 31/32 passing
+(same pre-existing Profits date-flake, unrelated).
+
+**Not yet live-tested — needs migration 0006 applied first**: run it,
+then on a company you add/edit, pick "Liyan"/"Areen"/"QuickLine" as its
+Number Update Provider, make sure that company has a Line with a real
+phone number for that supplier, open Number Update, type that number,
+and confirm it actually calls out and shows a real result (not a
+canned message) — ideally test with a number you know is genuinely
+registered with that supplier, since a wrong/unregistered number will
+correctly show a "not found" style response from the supplier itself.
+
+## Number Update: Sky (refreshsims.net) — the 4th and final planned provider, via a real WebView
+
+Closes the one gap flagged in the previous Number Update pass: Sky
+requires a Google reCAPTCHA v3 token, which only a genuine page load on
+its own registered domain can produce — no plain HTTP call can fake
+this. Solved by driving Sky's real public page inside an actual
+`WebView`, so reCAPTCHA runs exactly as it would for a person.
+
+**New package**: `webview_flutter` (`^4.10.0`, the official Flutter-team
+plugin, added after asking per CLAUDE.md's package-approval rule).
+
+**How it works** (`features/number_update/presentation/widgets/sky_webview_updater.dart`):
+`SkyWebViewUpdater.run(context, phoneNumber)` shows a modal dialog
+containing a small live `WebView` pointed at `https://www.refreshsims.net/`.
+Once the page finishes loading, injected JavaScript sets the `#ph` input
+to the number and invokes the page's own `onsubmit` handler directly —
+this is deliberately *not* a reimplementation of Sky's flow: their own
+JS still does the reCAPTCHA token fetch, the POST, and the multi-minute
+status polling exactly as it would for a real user. This side just
+polls the *same page's own result element* (`#r`'s CSS class — `s` for
+success, `e` for error, set by their own `show()` function) every 2
+seconds via `runJavaScriptReturningResult` until it reaches a final
+state or a ~3.5-minute timeout, then reads the result message
+(`#rm`'s text) and resolves a `NumberUpdateResult`, matching the same
+type the 3 plain-HTTP providers return. A visible "Cancel" button lets
+a seller abort early (resolves as `failed`, no log entry weirdness).
+
+**Wiring**: `NumberUpdateProviderKey` gained a `sky` case.
+`NumberUpdateCubit` gained an optional `runSkyFlow` callback
+(`Future<NumberUpdateResult> Function(String)?`) — `submitUpdate()`
+routes to it instead of `callNumberUpdateProvider` when the matched
+company's provider is `sky`. `NumberUpdatePage` supplies it via
+`SkyWebViewUpdater.run(context, ...)`, using the `BlocProvider.create`
+callback's own `context` (no new context-plumbing pattern needed, since
+the Cubit is only ever created here). `callNumberUpdateProvider`'s
+switch keeps a `sky` case that throws `UnsupportedError` purely to stay
+exhaustive — it can never actually be reached, since the Cubit
+intercepts `sky` before calling it.
+
+Sky now selectable in both company provider dropdowns (seller's
+`CompanyFormSheet` and admin's `CatalogCompanyFormSheet`) — no dropdown
+code changes needed, both already iterate `NumberUpdateProviderKey.values`.
+
+**Verified**: `flutter analyze` clean; `flutter test` 31/32 (same
+pre-existing Profits flake, no regressions); `flutter build apk --debug`
+with real `--dart-define` credentials run in background.
+
+**Not yet live-tested**: set a company's provider to "Sky", give it a
+Line with a real number registered with Sky, open Number Update, submit
+it, and confirm the dialog's embedded WebView actually completes the
+flow and returns a real result (success or Sky's own rejection message)
+rather than timing out — this is the one integration that depends on a
+real webpage's exact DOM/JS staying stable, so it's also the most likely
+of the four to need a fix if Sky ever changes their page.
+
+**All 4 companies from this conversation are now wired up**: Liyan,
+Areen, QuickLine (plain HTTP) and Sky (WebView) — Number Update's
+"real logic" gap from the original mock-data audit is now fully closed
+for every supplier the user asked about.

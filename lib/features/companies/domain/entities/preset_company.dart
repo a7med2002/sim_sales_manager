@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../../core/number_update/number_update_provider.dart';
 import 'company_package.dart';
 
 /// A ready-made supplier brand offered in the "Import Ready-Made" sheet,
@@ -13,14 +14,16 @@ class PresetCompany extends Equatable {
   final String name;
   final String initials;
   final List<CompanyPackage> defaultPackages;
+  final NumberUpdateProviderKey? numberUpdateProvider;
 
   const PresetCompany({
     required this.id,
     required this.name,
     required this.initials,
     required this.defaultPackages,
+    this.numberUpdateProvider,
   });
 
   @override
-  List<Object?> get props => [id, name, initials, defaultPackages];
+  List<Object?> get props => [id, name, initials, defaultPackages, numberUpdateProvider];
 }

@@ -188,6 +188,7 @@
       "addTitle": "إضافة شركة",
       "nameLabel": "اسم الشركة",
       "numberUpdateUrlLabel": "رابط تحديث الأرقام",
+      "numberUpdateProviderLabel": "مزوّد تحديث الأرقام",
       "notesLabel": "ملاحظات",
       "packagesSection": "الباقات",
       "addPackage": "إضافة باقة",
@@ -321,6 +322,7 @@
       "addSubtitle": "اختر علامة تجارية جاهزة بباقات افتراضية، أو أضف باقاتك الخاصة.",
       "nameLabel": "اسم الشركة",
       "notesLabel": "ملاحظات (اختياري)",
+      "numberUpdateProviderLabel": "مزوّد تحديث الأرقام (اختياري)",
       "packagesSection": "الباقات (اختياري)",
       "addPackage": "إضافة باقة",
       "packageNamePlaceholder": "اسم الباقة، مثال: شهري 3 جيجابايت",
@@ -770,6 +772,25 @@
       "success": "تم التحديث",
       "notFound": "غير موجود",
       "failed": "فشل"
+    },
+    "errors": {
+      "numberNotRegistered": "هذا الرقم مش مسجّل على أي خط زبون بالتطبيق بعد.",
+      "companyNotSupported": "{company} ما إلها مزوّد تحديث أرقام آلي مفعّل.",
+      "providerRejected": "الشركة رفضت هذا الرقم.",
+      "providerUnreachable": "تعذر الوصول لمنصة الشركة. حاول لاحقًا.",
+      "skyUnavailable": "خاصية تحديث سكاي مش متاحة من هالشاشة هلأ."
+    },
+    "skyDialog": {
+      "title": "جارٍ التحديث عبر سكاي…",
+      "subtitle": "ممكن ياخذ لعدة دقائق. لا تقفل هالنافذة.",
+      "timeout": "سكاي ما ردّت بالوقت المحدد. حاول لاحقًا."
     }
+  },
+  "numberUpdateProvider": {
+    "none": "لا يوجد",
+    "liyan": "ليان",
+    "areen": "عرين",
+    "quickline": "كويك لاين",
+    "sky": "سكاي"
   }
 }

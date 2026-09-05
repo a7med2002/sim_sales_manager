@@ -108,7 +108,13 @@ class _DetailHeader extends StatelessWidget {
           onTap: () => CompanyFormSheet.show(
             context,
             company: company,
-            onSave: (name, notes, packages) => cubit.updateCompany(company.id, name: name, notes: notes, packages: packages),
+            onSave: (name, notes, packages, numberUpdateProvider) => cubit.updateCompany(
+              company.id,
+              name: name,
+              notes: notes,
+              packages: packages,
+              numberUpdateProvider: numberUpdateProvider,
+            ),
           ),
           child: Container(
             width: 36,

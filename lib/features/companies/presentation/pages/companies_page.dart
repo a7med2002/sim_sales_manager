@@ -77,7 +77,8 @@ class _CompaniesView extends StatelessWidget {
                       child: ElevatedButton.icon(
                         onPressed: () => CompanyFormSheet.show(
                           context,
-                          onSave: (name, notes, packages) => cubit.addCompany(name: name, notes: notes, packages: packages),
+                          onSave: (name, notes, packages, numberUpdateProvider) =>
+                              cubit.addCompany(name: name, notes: notes, packages: packages, numberUpdateProvider: numberUpdateProvider),
                         ),
                         icon: Icon(Icons.add_rounded, color: colors.onPrimaryAction, size: 18),
                         label: Text('companies.addCompany'.tr(), style: AppTextStyles.body(colors.onPrimaryAction).copyWith(fontWeight: FontWeight.w600)),
@@ -147,8 +148,13 @@ class _CompaniesView extends StatelessWidget {
                         onEdit: () => CompanyFormSheet.show(
                           context,
                           company: company,
-                          onSave: (name, notes, packages) =>
-                              cubit.updateCompany(company.id, name: name, notes: notes, packages: packages),
+                          onSave: (name, notes, packages, numberUpdateProvider) => cubit.updateCompany(
+                            company.id,
+                            name: name,
+                            notes: notes,
+                            packages: packages,
+                            numberUpdateProvider: numberUpdateProvider,
+                          ),
                         ),
                         onTogglePin: () => cubit.togglePin(company.id),
                         onArchive: () => cubit.archive(company.id),

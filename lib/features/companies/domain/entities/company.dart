@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../../core/number_update/number_update_provider.dart';
 import 'company_package.dart';
 
 enum CompanyStatus { active, archived, deleted }
@@ -28,6 +29,12 @@ class Company extends Equatable {
   /// and to look up the catalog's number-update URL, if any.
   final String? catalogCompanyId;
 
+  /// Which supplier refresh integration (if any) this company maps to —
+  /// see `features/number_update/`. Null means Number Update has nothing
+  /// automated for this company (unsupported supplier, or a seller
+  /// hasn't picked one).
+  final NumberUpdateProviderKey? numberUpdateProvider;
+
   const Company({
     required this.id,
     required this.name,
@@ -43,6 +50,7 @@ class Company extends Equatable {
     this.availableToSell = 0,
     this.owedToCompany = 0,
     this.catalogCompanyId,
+    this.numberUpdateProvider,
   });
 
   Company copyWith({
@@ -52,6 +60,8 @@ class Company extends Equatable {
     bool? pinned,
     CompanyStatus? status,
     List<CompanyPackage>? packages,
+    bool clearNumberUpdateProvider = false,
+    NumberUpdateProviderKey? numberUpdateProvider,
   }) {
     return Company(
       id: id,
@@ -68,6 +78,7 @@ class Company extends Equatable {
       availableToSell: availableToSell,
       owedToCompany: owedToCompany,
       catalogCompanyId: catalogCompanyId,
+      numberUpdateProvider: clearNumberUpdateProvider ? null : (numberUpdateProvider ?? this.numberUpdateProvider),
     );
   }
 
@@ -95,6 +106,7 @@ class Company extends Equatable {
       availableToSell: newAvailable,
       owedToCompany: owedToCompany,
       catalogCompanyId: catalogCompanyId,
+      numberUpdateProvider: numberUpdateProvider,
     );
   }
 
@@ -123,6 +135,7 @@ class Company extends Equatable {
       availableToSell: newAvailable,
       owedToCompany: owedToCompany,
       catalogCompanyId: catalogCompanyId,
+      numberUpdateProvider: numberUpdateProvider,
     );
   }
 
@@ -150,6 +163,7 @@ class Company extends Equatable {
       availableToSell: newAvailable,
       owedToCompany: owedToCompany + unpaid,
       catalogCompanyId: catalogCompanyId,
+      numberUpdateProvider: numberUpdateProvider,
     );
   }
 
@@ -169,5 +183,6 @@ class Company extends Equatable {
         availableToSell,
         catalogCompanyId,
         owedToCompany,
+        numberUpdateProvider,
       ];
 }

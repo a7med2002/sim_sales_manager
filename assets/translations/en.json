@@ -188,6 +188,7 @@
       "addTitle": "Add Company",
       "nameLabel": "Company Name",
       "numberUpdateUrlLabel": "Number Update URL",
+      "numberUpdateProviderLabel": "Number Update Provider",
       "notesLabel": "Notes",
       "packagesSection": "PACKAGES",
       "addPackage": "Add Package",
@@ -321,6 +322,7 @@
       "addSubtitle": "Pick a preset brand with default packages, or add your own.",
       "nameLabel": "Company name",
       "notesLabel": "Notes (Optional)",
+      "numberUpdateProviderLabel": "Number Update Provider (Optional)",
       "packagesSection": "PACKAGES (OPTIONAL)",
       "addPackage": "Add package",
       "packageNamePlaceholder": "Package name, e.g. Monthly 3GB",
@@ -770,6 +772,25 @@
       "success": "Updated",
       "notFound": "Not Found",
       "failed": "Failed"
+    },
+    "errors": {
+      "numberNotRegistered": "This number isn't registered to any customer line in the app yet.",
+      "companyNotSupported": "{company} doesn't have an automated Number Update provider set up.",
+      "providerRejected": "The supplier rejected this number.",
+      "providerUnreachable": "Couldn't reach the supplier's platform. Try again later.",
+      "skyUnavailable": "Sky's update flow isn't available from this screen right now."
+    },
+    "skyDialog": {
+      "title": "Updating via Sky…",
+      "subtitle": "This can take up to a few minutes. Don't close this window.",
+      "timeout": "Sky didn't respond in time. Try again later."
     }
+  },
+  "numberUpdateProvider": {
+    "none": "None",
+    "liyan": "Liyan",
+    "areen": "Areen",
+    "quickline": "QuickLine",
+    "sky": "Sky"
   }
 }
