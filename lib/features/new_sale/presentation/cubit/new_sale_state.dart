@@ -117,11 +117,30 @@ class NewSaleState extends Equatable {
 
   /// Selling a line consumes from the company's shipment balance at
   /// wholesale price (design/APP_CONTEXT.md) — never let a sale go
-  /// through for more than what's actually available.
+  /// through for more than what's actually available, **unless** the
+  /// company opted into "allow negative balance"
+  /// (`Company.allowNegativeBalance`'s doc comment) — then one sale is
+  /// still allowed through while the balance is still above zero (a
+  /// one-time credit-line style grace, e.g. 0.01 left is enough to sell
+  /// a 40 line, going to -39.99), but blocked again once the balance is
+  /// already at or below zero — no stacking further debt sale after
+  /// sale until a new shipment tops it back up.
   bool get exceedsCompanyBalance {
     final company = selectedCompany;
     if (company == null) return false;
-    return wholesaleCost > company.availableToSell;
+    if (wholesaleCost <= company.availableToSell) return false;
+    if (company.allowNegativeBalance && company.availableToSell > 0) return false;
+    return true;
+  }
+
+  /// True exactly when this sale is only going through *because* of the
+  /// negative-balance allowance above — used to show a heads-up (not a
+  /// blocking error, since `exceedsCompanyBalance` is false here) that
+  /// this specific sale will leave the company's balance negative.
+  bool get willDipCompanyBalanceNegative {
+    final company = selectedCompany;
+    if (company == null || !company.allowNegativeBalance) return false;
+    return wholesaleCost > company.availableToSell && company.availableToSell > 0;
   }
 
   bool get canGoNextFromPackageStep {

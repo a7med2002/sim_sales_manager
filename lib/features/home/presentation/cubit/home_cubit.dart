@@ -23,6 +23,8 @@ class HomeCubit extends Cubit<HomeState> {
   final CustomerCatalog _customerCatalog;
   final CompanyCatalog _companyCatalog;
   StreamSubscription<Profile>? _profileSubscription;
+  StreamSubscription<void>? _customersSubscription;
+  StreamSubscription<void>? _companiesSubscription;
 
   HomeCubit({required CustomerCatalog customerCatalog, required CompanyCatalog companyCatalog, required ProfileCubit profileCubit})
       : _customerCatalog = customerCatalog,
@@ -36,6 +38,14 @@ class HomeCubit extends Cubit<HomeState> {
     _profileSubscription = profileCubit.stream.listen((profile) {
       emit(state.copyWith(userName: _firstNameOf(profile.name)));
     });
+    // Companies/Customers load asynchronously (Drift/Supabase reads after
+    // construction) — on a cold app start Home is very likely built
+    // before that first load resolves, so the synchronous reads above
+    // capture an empty snapshot. Without this, the dashboard sits on
+    // zeros until something else happens to call `refresh()` (e.g.
+    // visiting Companies/Customers and coming back).
+    _customersSubscription = _customerCatalog.changes.listen((_) => refresh());
+    _companiesSubscription = _companyCatalog.changes.listen((_) => refresh());
   }
 
   static String _firstNameOf(String fullName) {
@@ -60,6 +70,8 @@ class HomeCubit extends Cubit<HomeState> {
   @override
   Future<void> close() {
     _profileSubscription?.cancel();
+    _customersSubscription?.cancel();
+    _companiesSubscription?.cancel();
     return super.close();
   }
 }

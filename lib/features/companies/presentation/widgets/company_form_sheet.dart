@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/number_update/number_update_provider.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -14,6 +17,10 @@ typedef CompanySaveCallback = void Function(
   String notes,
   List<CompanyPackage> packages,
   NumberUpdateProviderKey? numberUpdateProvider,
+  String? logoLocalPath,
+  bool removeLogo,
+  String? numberUpdateUrl,
+  bool allowNegativeBalance,
 );
 
 /// Add/Edit Company bottom sheet. Pass [company] to prefill for editing —
@@ -46,12 +53,14 @@ class CompanyFormSheet extends StatefulWidget {
 class _PackageRow {
   final String id;
   final TextEditingController nameController;
+  final TextEditingController simTypeController;
   final TextEditingController costController;
   final TextEditingController priceController;
 
-  _PackageRow({String? id, String name = '', String cost = '', String price = ''})
+  _PackageRow({String? id, String name = '', String simType = '', String cost = '', String price = ''})
       : id = id ?? UniqueKey().toString(),
         nameController = TextEditingController(text: name),
+        simTypeController = TextEditingController(text: simType),
         costController = TextEditingController(text: cost),
         priceController = TextEditingController(text: price);
 }
@@ -59,8 +68,19 @@ class _PackageRow {
 class _CompanyFormSheetState extends State<CompanyFormSheet> {
   late final TextEditingController _nameController;
   late final TextEditingController _notesController;
+  late final TextEditingController _numberUpdateUrlController;
   late final List<_PackageRow> _packageRows;
   NumberUpdateProviderKey? _numberUpdateProvider;
+  late bool _allowNegativeBalance;
+
+  /// The company's current logo URL (remote, from a prior save) —
+  /// shown as the starting preview when editing. Untouched by picking a
+  /// new local file or removing it; `_save` decides what to actually
+  /// send based on `_newLogoPath`/`_removeLogo` instead.
+  String? _existingLogoUrl;
+  String? _newLogoPath;
+  bool _removeLogo = false;
+  final _imagePicker = ImagePicker();
 
   bool get _isEditing => widget.company != null;
 
@@ -70,11 +90,15 @@ class _CompanyFormSheetState extends State<CompanyFormSheet> {
     final company = widget.company;
     _nameController = TextEditingController(text: company?.name ?? '');
     _notesController = TextEditingController(text: company?.notes ?? '');
+    _numberUpdateUrlController = TextEditingController(text: company?.numberUpdateUrl ?? '');
     _numberUpdateProvider = company?.numberUpdateProvider;
+    _allowNegativeBalance = company?.allowNegativeBalance ?? false;
+    _existingLogoUrl = company?.logoUrl;
     _packageRows = company?.packages
             .map((p) => _PackageRow(
                   id: p.id,
                   name: p.name,
+                  simType: p.simType ?? '',
                   cost: p.wholesaleCost == p.wholesaleCost.roundToDouble() ? p.wholesaleCost.toStringAsFixed(0) : p.wholesaleCost.toString(),
                   price: p.retailPrice == p.retailPrice.roundToDouble() ? p.retailPrice.toStringAsFixed(0) : p.retailPrice.toString(),
                 ))
@@ -86,8 +110,10 @@ class _CompanyFormSheetState extends State<CompanyFormSheet> {
   void dispose() {
     _nameController.dispose();
     _notesController.dispose();
+    _numberUpdateUrlController.dispose();
     for (final row in _packageRows) {
       row.nameController.dispose();
+      row.simTypeController.dispose();
       row.costController.dispose();
       row.priceController.dispose();
     }
@@ -102,21 +128,48 @@ class _CompanyFormSheetState extends State<CompanyFormSheet> {
     setState(() => _packageRows.remove(row));
   }
 
+  Future<void> _pickLogo() async {
+    final file = await _imagePicker.pickImage(source: ImageSource.gallery, imageQuality: 85, maxWidth: 512, maxHeight: 512);
+    if (file == null) return;
+    setState(() {
+      _newLogoPath = file.path;
+      _removeLogo = false;
+    });
+  }
+
+  void _removeLogoTapped() {
+    setState(() {
+      _newLogoPath = null;
+      _existingLogoUrl = null;
+      _removeLogo = true;
+    });
+  }
+
   void _save() {
     final name = _nameController.text.trim();
     if (name.isEmpty) return;
 
     final packages = _packageRows
-        .where((row) => row.nameController.text.trim().isNotEmpty)
+        .where((row) => row.nameController.text.trim().isNotEmpty && row.simTypeController.text.trim().isNotEmpty)
         .map((row) => CompanyPackage(
               id: row.id,
               name: row.nameController.text.trim(),
+              simType: row.simTypeController.text.trim(),
               wholesaleCost: double.tryParse(row.costController.text.trim()) ?? 0,
               retailPrice: double.tryParse(row.priceController.text.trim()) ?? 0,
             ))
         .toList();
 
-    widget.onSave(name, _notesController.text.trim(), packages, _numberUpdateProvider);
+    widget.onSave(
+      name,
+      _notesController.text.trim(),
+      packages,
+      _numberUpdateProvider,
+      _newLogoPath,
+      _removeLogo,
+      _numberUpdateUrlController.text.trim(),
+      _allowNegativeBalance,
+    );
     Navigator.of(context).pop();
   }
 
@@ -154,6 +207,41 @@ class _CompanyFormSheetState extends State<CompanyFormSheet> {
                 style: AppTextStyles.body(colors.textSecondary),
               ),
               const SizedBox(height: AppSpacing.lg),
+              Center(
+                child: Column(
+                  children: [
+                    GestureDetector(
+                      onTap: _pickLogo,
+                      child: Container(
+                        width: 72,
+                        height: 72,
+                        decoration: BoxDecoration(color: colors.surface, shape: BoxShape.circle, border: Border.all(color: colors.border)),
+                        clipBehavior: Clip.antiAlias,
+                        child: _newLogoPath != null
+                            ? Image.file(File(_newLogoPath!), fit: BoxFit.cover)
+                            : (_existingLogoUrl != null
+                                ? Image.network(_existingLogoUrl!, fit: BoxFit.cover)
+                                : Icon(Icons.apartment_rounded, color: colors.textSecondary, size: 28)),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextButton(onPressed: _pickLogo, child: Text('companies.form.logoChoose'.tr())),
+                        if (_newLogoPath != null || _existingLogoUrl != null) ...[
+                          const SizedBox(width: AppSpacing.xs),
+                          TextButton(
+                            onPressed: _removeLogoTapped,
+                            child: Text('companies.form.logoRemove'.tr(), style: TextStyle(color: colors.danger)),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
               Text('companies.form.nameLabel'.tr(), style: AppTextStyles.body(colors.textSecondary)),
               const SizedBox(height: AppSpacing.xs),
               TextField(
@@ -187,6 +275,51 @@ class _CompanyFormSheetState extends State<CompanyFormSheet> {
                   ),
                 ],
                 onChanged: (value) => setState(() => _numberUpdateProvider = value),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Text('companies.form.numberUpdateUrlLabel'.tr(), style: AppTextStyles.body(colors.textSecondary)),
+              const SizedBox(height: AppSpacing.xs),
+              TextField(
+                controller: _numberUpdateUrlController,
+                keyboardType: TextInputType.url,
+                style: AppTextStyles.cardTitle(colors.textPrimary),
+                decoration: _inputDecoration(colors).copyWith(hintText: 'https://...'),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                decoration: BoxDecoration(
+                  color: colors.surface,
+                  borderRadius: BorderRadius.circular(AppRadii.card),
+                  border: Border.all(color: colors.border),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'companies.form.allowNegativeBalanceLabel'.tr(),
+                            style: AppTextStyles.cardTitle(colors.textPrimary),
+                          ),
+                        ),
+                        Switch(
+                          value: _allowNegativeBalance,
+                          activeThumbColor: colors.primaryAction,
+                          onChanged: (value) => setState(() => _allowNegativeBalance = value),
+                        ),
+                      ],
+                    ),
+                    if (_allowNegativeBalance) ...[
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        'companies.form.allowNegativeBalanceExplanation'.tr(),
+                        style: AppTextStyles.body(colors.textSecondary),
+                      ),
+                    ],
+                  ],
+                ),
               ),
               const SizedBox(height: AppSpacing.lg),
               Text('companies.form.packagesSection'.tr(), style: AppTextStyles.overline(colors.textSecondary)),
@@ -282,6 +415,14 @@ class _PackageRowFields extends StatelessWidget {
                   controller: row.nameController,
                   style: AppTextStyles.body(colors.textPrimary),
                   decoration: decoration.copyWith(hintText: 'companies.form.packageNamePlaceholder'.tr()),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              Expanded(
+                child: TextField(
+                  controller: row.simTypeController,
+                  style: AppTextStyles.body(colors.textPrimary),
+                  decoration: decoration.copyWith(hintText: 'companies.form.simTypePlaceholder'.tr()),
                 ),
               ),
               IconButton(

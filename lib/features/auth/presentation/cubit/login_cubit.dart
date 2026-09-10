@@ -8,6 +8,7 @@ import '../../../../core/config/env.dart';
 import '../../../../core/di/service_locator.dart';
 import '../../../../core/sync/bloc/sync_bloc.dart';
 import '../../../../core/sync/bloc/sync_event.dart';
+import '../../../../core/utils/device_name.dart';
 import 'login_state.dart';
 
 /// Signs in against real Supabase Auth once a project is configured
@@ -69,7 +70,8 @@ class LoginCubit extends Cubit<LoginState> {
       // `SyncRequested` is a no-op on a bloc still in its initial
       // `offline` state.
       getIt<SyncBloc>().add(const SyncStarted());
-      getIt<ActivityLogger>().log(ActivityActionType.login, 'Signed in.');
+      final deviceName = await currentDeviceName();
+      getIt<ActivityLogger>().log(ActivityActionType.login, 'Signed in from $deviceName.');
       // Which shell to land on (admin's own home vs. the seller shell) —
       // resolved here, once, right after sign-in, rather than the page
       // making its own async call; a failure here just means "not an
@@ -81,8 +83,22 @@ class LoginCubit extends Cubit<LoginState> {
         // Offline or transient failure — fall back to the seller shell.
       }
       emit(state.copyWith(status: LoginStatus.success, isAdmin: isAdmin));
-    } on AuthException {
-      emit(state.copyWith(status: LoginStatus.failure, errorMessage: 'login.errors.invalidCredentials'));
+    } on AuthException catch (e) {
+      // Never surface Supabase's raw message to the user (it can be a
+      // low-level wrapped exception string, e.g. "ClientException with
+      // SocketException: Failed host lookup..." when a network/DNS call
+      // fails underneath gotrue) — always map to one of our own
+      // translated, user-facing keys instead.
+      final lower = e.message.toLowerCase();
+      final String errorKey;
+      if (lower.contains('invalid login credentials')) {
+        errorKey = 'login.errors.invalidCredentials';
+      } else if (lower.contains('socket') || lower.contains('host lookup') || lower.contains('connection') || lower.contains('network')) {
+        errorKey = 'login.errors.networkError';
+      } else {
+        errorKey = 'login.errors.unexpected';
+      }
+      emit(state.copyWith(status: LoginStatus.failure, errorMessage: errorKey));
     } catch (_) {
       emit(state.copyWith(status: LoginStatus.failure, errorMessage: 'login.errors.networkError'));
     }

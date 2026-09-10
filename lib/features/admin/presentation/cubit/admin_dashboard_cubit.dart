@@ -117,7 +117,7 @@ class AdminDashboardCubit extends Cubit<AdminDashboardState> {
                 displayName: (r['display_name'] as String?) ?? '',
                 role: r['role'] == 'admin' ? AppRole.admin : AppRole.seller,
                 isActive: r['is_active'] as bool? ?? true,
-                createdAt: DateTime.parse(r['created_at'] as String),
+                createdAt: DateTime.parse(r['created_at'] as String).toLocal(),
               ))
           .toList();
 
@@ -133,7 +133,7 @@ class AdminDashboardCubit extends Cubit<AdminDashboardState> {
         isLoading: false,
       ));
     } catch (e) {
-      emit(state.copyWith(isLoading: false, errorMessage: e.toString()));
+      emit(state.copyWith(isLoading: false, errorMessage: 'common.genericError'));
     }
   }
 }

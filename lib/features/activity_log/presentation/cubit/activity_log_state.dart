@@ -8,7 +8,7 @@ class ActivityLogState extends Equatable {
   final int pageSize;
 
   const ActivityLogState({
-    required this.entries,
+    this.entries = const [],
     this.searchQuery = '',
     this.pageSize = 50,
   });

@@ -9,19 +9,28 @@ String _monthLabel(DateTime date) => 'common.months.${_monthKeys[date.month - 1]
 
 /// Formats a date as "24 Aug 2026" — used across list rows/tables
 /// (Customers, Numbers, Activity Log, ...) instead of each page
-/// re-implementing the same month-name formatting.
+/// re-implementing the same month-name formatting. `.toLocal()` is a
+/// deliberate safety net: every DateTime read back from Supabase
+/// (`SyncEngine`'s `_xFromRow` mappers, and the admin cubits that read
+/// straight from Supabase) is already converted at the source, but this
+/// is the one place that guarantees a UTC value can never reach the
+/// screen even if a future call site forgets to convert it —
+/// `.toLocal()` on an already-local `DateTime` is a no-op, so this is
+/// always safe to call.
 String formatDate(DateTime date) {
-  return '${date.day} ${_monthLabel(date)} ${date.year}';
+  final local = date.toLocal();
+  return '${local.day} ${_monthLabel(local)} ${local.year}';
 }
 
 /// Formats a date + time as "24 Aug 2026, 9:12 AM" — used wherever the
-/// time-of-day matters too (Activity Log timestamps, Trusted Devices'
-/// first/last login and verification times).
+/// time-of-day matters too (Activity Log timestamps, Number Update
+/// history, ...). See `formatDate`'s doc comment for why `.toLocal()`.
 String formatDateTime(DateTime date) {
-  final hour = date.hour % 12 == 0 ? 12 : date.hour % 12;
-  final minute = date.minute.toString().padLeft(2, '0');
-  final period = date.hour >= 12 ? 'common.pm'.tr() : 'common.am'.tr();
-  return '${formatDate(date)}, $hour:$minute $period';
+  final local = date.toLocal();
+  final hour = local.hour % 12 == 0 ? 12 : local.hour % 12;
+  final minute = local.minute.toString().padLeft(2, '0');
+  final period = local.hour >= 12 ? 'common.pm'.tr() : 'common.am'.tr();
+  return '${formatDate(local)}, $hour:$minute $period';
 }
 
 /// A *short* month abbreviation for tight spaces (chart axis labels —

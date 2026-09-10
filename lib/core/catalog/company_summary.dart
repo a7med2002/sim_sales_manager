@@ -8,18 +8,20 @@ import '../number_update/number_update_provider.dart';
 class PackageSummary extends Equatable {
   final String id;
   final String name;
+  final String? simType;
   final double wholesaleCost;
   final double retailPrice;
 
   const PackageSummary({
     required this.id,
     required this.name,
+    this.simType,
     required this.wholesaleCost,
     required this.retailPrice,
   });
 
   @override
-  List<Object?> get props => [id, name, wholesaleCost, retailPrice];
+  List<Object?> get props => [id, name, simType, wholesaleCost, retailPrice];
 }
 
 /// Read-only company snapshot exposed to other features through
@@ -38,6 +40,13 @@ class CompanySummary extends Equatable {
   final double availableToSell;
   final double owedToCompany;
   final NumberUpdateProviderKey? numberUpdateProvider;
+  final String? logoUrl;
+  final String? numberUpdateUrl;
+
+  /// See `Company.allowNegativeBalance`'s doc comment — carried through
+  /// here so New Sale (the only consumer that needs it) can decide
+  /// whether a sale exceeding [availableToSell] is still allowed.
+  final bool allowNegativeBalance;
 
   const CompanySummary({
     required this.id,
@@ -51,6 +60,9 @@ class CompanySummary extends Equatable {
     this.availableToSell = 0,
     this.owedToCompany = 0,
     this.numberUpdateProvider,
+    this.logoUrl,
+    this.numberUpdateUrl,
+    this.allowNegativeBalance = false,
   });
 
   @override
@@ -66,5 +78,8 @@ class CompanySummary extends Equatable {
         availableToSell,
         owedToCompany,
         numberUpdateProvider,
+        logoUrl,
+        numberUpdateUrl,
+        allowNegativeBalance,
       ];
 }

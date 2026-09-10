@@ -7,7 +7,7 @@ class CompaniesState extends Equatable {
   final CompanyStatus selectedTab;
 
   const CompaniesState({
-    required this.companies,
+    this.companies = const [],
     this.selectedTab = CompanyStatus.active,
   });
 

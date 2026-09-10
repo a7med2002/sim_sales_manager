@@ -6,6 +6,7 @@ import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/empty_state.dart';
+import '../../../../core/widgets/logo_avatar.dart';
 import '../../../../core/widgets/status_badge.dart';
 import '../../domain/entities/company.dart';
 import '../../domain/entities/preset_company.dart';
@@ -134,13 +135,7 @@ class _PresetTile extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(color: colors.background, shape: BoxShape.circle, border: Border.all(color: colors.border)),
-              alignment: Alignment.center,
-              child: Text(preset.initials, style: AppTextStyles.cardTitle(colors.textPrimary)),
-            ),
+            LogoAvatar(initials: preset.initials, logoUrl: preset.logoUrl),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Column(

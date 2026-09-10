@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.0+1
+version: 1.0.1+2
 
 environment:
   sdk: ^3.11.0
@@ -49,12 +49,21 @@ dependencies:
   easy_localization: ^3.0.8
   url_launcher: ^6.3.2
   webview_flutter: ^4.10.0
+  device_info_plus: ^11.2.0
+  excel: ^4.0.6
+  pdf: ^3.11.1
+  share_plus: ^10.1.4
+  package_info_plus: ^8.1.2
+  http: ^1.2.2
+  open_filex: ^4.7.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   drift_dev: 2.34.0
   build_runner: ^2.4.13
+  flutter_launcher_icons: ^0.14.3
+  flutter_native_splash: ^2.4.4
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -78,6 +87,8 @@ flutter:
   assets:
     - assets/fonts/
     - assets/translations/
+    - assets/images/
+    - assets/icons/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
@@ -105,3 +116,22 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icons/icon.png"
+  remove_alpha_ios: true
+
+flutter_native_splash:
+  color: "#FAFAFA"
+  # A padded variant of the launcher icon, not the raw icon itself — the
+  # raw one has no internal margin, so both the legacy splash and
+  # (especially) Android 12+'s own masked/circular splash icon API were
+  # rendering it edge-to-edge, reading as oversized/cropped ("زوم"). This
+  # one keeps the visible glyph to about 59% of the canvas, matching
+  # Android's own guidance for its splash icon safe zone.
+  image: assets/icons/icon_splash.png
+  android_12:
+    color: "#FAFAFA"
+    image: assets/icons/icon_splash.png

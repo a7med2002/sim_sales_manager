@@ -35,6 +35,25 @@ class Company extends Equatable {
   /// hasn't picked one).
   final NumberUpdateProviderKey? numberUpdateProvider;
 
+  /// A `company-logos` Storage public URL — see
+  /// `features/companies/presentation/widgets/company_form_sheet.dart`'s
+  /// upload flow. Null shows the initials avatar instead.
+  final String? logoUrl;
+
+  /// A manual "open this supplier's update page yourself" link — the
+  /// fallback Number Update offers when this company has no automated
+  /// `numberUpdateProvider` (or as a reference even when it does).
+  final String? numberUpdateUrl;
+
+  /// Opt-in per company: lets one sale dip [availableToSell] below zero
+  /// instead of being blocked — a one-time credit-line style grace. Only
+  /// takes effect while the balance is still above zero (see
+  /// `NewSaleState.exceedsCompanyBalance`, the only place that actually
+  /// enforces the "one dip, then blocked again until topped up" rule);
+  /// [applySale] here just reflects whatever the balance ends up being,
+  /// clamped to zero when this is off (today's original behavior).
+  final bool allowNegativeBalance;
+
   const Company({
     required this.id,
     required this.name,
@@ -51,6 +70,9 @@ class Company extends Equatable {
     this.owedToCompany = 0,
     this.catalogCompanyId,
     this.numberUpdateProvider,
+    this.logoUrl,
+    this.numberUpdateUrl,
+    this.allowNegativeBalance = false,
   });
 
   Company copyWith({
@@ -62,6 +84,10 @@ class Company extends Equatable {
     List<CompanyPackage>? packages,
     bool clearNumberUpdateProvider = false,
     NumberUpdateProviderKey? numberUpdateProvider,
+    bool clearLogoUrl = false,
+    String? logoUrl,
+    String? numberUpdateUrl,
+    bool? allowNegativeBalance,
   }) {
     return Company(
       id: id,
@@ -79,6 +105,9 @@ class Company extends Equatable {
       owedToCompany: owedToCompany,
       catalogCompanyId: catalogCompanyId,
       numberUpdateProvider: clearNumberUpdateProvider ? null : (numberUpdateProvider ?? this.numberUpdateProvider),
+      logoUrl: clearLogoUrl ? null : (logoUrl ?? this.logoUrl),
+      numberUpdateUrl: numberUpdateUrl ?? this.numberUpdateUrl,
+      allowNegativeBalance: allowNegativeBalance ?? this.allowNegativeBalance,
     );
   }
 
@@ -87,7 +116,13 @@ class Company extends Equatable {
   /// recalculated, and operations/profit counters bump.
   Company applySale({required double wholesaleCost, required double profit}) {
     final newConsumed = consumed + wholesaleCost;
-    final newAvailable = (availableToSell - wholesaleCost).clamp(0, double.infinity).toDouble();
+    final rawAvailable = availableToSell - wholesaleCost;
+    // A negative balance is only ever meaningful for a company that
+    // opted in — see this class's doc comment on [allowNegativeBalance].
+    // `NewSaleState.exceedsCompanyBalance` is what actually decides
+    // whether a sale that would go negative is allowed through at all;
+    // this just reflects the resulting balance either way.
+    final newAvailable = allowNegativeBalance ? rawAvailable : rawAvailable.clamp(0, double.infinity).toDouble();
     final total = newConsumed + newAvailable;
     final newUsagePercent = total <= 0 ? 0 : ((newConsumed / total) * 100).round();
 
@@ -107,6 +142,9 @@ class Company extends Equatable {
       owedToCompany: owedToCompany,
       catalogCompanyId: catalogCompanyId,
       numberUpdateProvider: numberUpdateProvider,
+      logoUrl: logoUrl,
+      numberUpdateUrl: numberUpdateUrl,
+      allowNegativeBalance: allowNegativeBalance,
     );
   }
 
@@ -136,6 +174,9 @@ class Company extends Equatable {
       owedToCompany: owedToCompany,
       catalogCompanyId: catalogCompanyId,
       numberUpdateProvider: numberUpdateProvider,
+      logoUrl: logoUrl,
+      numberUpdateUrl: numberUpdateUrl,
+      allowNegativeBalance: allowNegativeBalance,
     );
   }
 
@@ -164,6 +205,9 @@ class Company extends Equatable {
       owedToCompany: owedToCompany + unpaid,
       catalogCompanyId: catalogCompanyId,
       numberUpdateProvider: numberUpdateProvider,
+      logoUrl: logoUrl,
+      numberUpdateUrl: numberUpdateUrl,
+      allowNegativeBalance: allowNegativeBalance,
     );
   }
 
@@ -184,5 +228,8 @@ class Company extends Equatable {
         catalogCompanyId,
         owedToCompany,
         numberUpdateProvider,
+        logoUrl,
+        numberUpdateUrl,
+        allowNegativeBalance,
       ];
 }

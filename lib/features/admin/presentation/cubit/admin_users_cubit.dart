@@ -47,12 +47,12 @@ class AdminUsersCubit extends Cubit<AdminUsersState> {
                 displayName: (r['display_name'] as String?) ?? '',
                 role: r['role'] == 'admin' ? AppRole.admin : AppRole.seller,
                 isActive: r['is_active'] as bool? ?? true,
-                createdAt: DateTime.parse(r['created_at'] as String),
+                createdAt: DateTime.parse(r['created_at'] as String).toLocal(),
               ))
           .toList();
       emit(state.copyWith(users: users, isLoading: false));
     } catch (e) {
-      emit(state.copyWith(isLoading: false, errorMessage: e.toString()));
+      emit(state.copyWith(isLoading: false, errorMessage: 'common.genericError'));
     }
   }
 

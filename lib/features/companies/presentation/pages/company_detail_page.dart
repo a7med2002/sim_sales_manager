@@ -11,10 +11,12 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
+import '../../../../core/utils/package_display.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/status_badge.dart';
 import '../../domain/entities/company.dart';
 import '../cubit/companies_cubit.dart';
+import '../../../../core/widgets/logo_avatar.dart';
 import '../widgets/company_form_sheet.dart';
 
 /// Company Detail: header (name/notes + edit), balance-usage card (same
@@ -95,6 +97,8 @@ class _DetailHeader extends StatelessWidget {
           constraints: const BoxConstraints(),
         ),
         const SizedBox(width: AppSpacing.sm),
+        LogoAvatar(initials: company.initials, logoUrl: company.logoUrl, size: 44),
+        const SizedBox(width: AppSpacing.sm),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -108,12 +112,16 @@ class _DetailHeader extends StatelessWidget {
           onTap: () => CompanyFormSheet.show(
             context,
             company: company,
-            onSave: (name, notes, packages, numberUpdateProvider) => cubit.updateCompany(
+            onSave: (name, notes, packages, numberUpdateProvider, logoLocalPath, removeLogo, numberUpdateUrl, allowNegativeBalance) => cubit.updateCompany(
               company.id,
               name: name,
               notes: notes,
               packages: packages,
               numberUpdateProvider: numberUpdateProvider,
+              logoLocalPath: logoLocalPath,
+              removeLogo: removeLogo,
+              numberUpdateUrl: numberUpdateUrl,
+              allowNegativeBalance: allowNegativeBalance,
             ),
           ),
           child: Container(
@@ -186,7 +194,11 @@ class _CompanySummaryCard extends StatelessWidget {
           Row(
             children: [
               _DataColumn(label: 'companies.card.consumed'.tr(), value: formatCurrency(company.consumed), color: colors.textPrimary),
-              _DataColumn(label: 'companies.card.availableToSell'.tr(), value: formatCurrency(company.availableToSell), color: colors.textPrimary),
+              _DataColumn(
+                label: 'companies.card.availableToSell'.tr(),
+                value: formatCurrency(company.availableToSell),
+                color: company.availableToSell < 0 ? colors.danger : colors.textPrimary,
+              ),
               _DataColumn(
                 label: 'companies.card.owedToCompany'.tr(),
                 value: formatCurrency(company.owedToCompany),
@@ -263,7 +275,7 @@ class _LineTile extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(line.packageName, style: AppTextStyles.cardTitle(colors.textPrimary)),
+                    Text(packageDisplayLabel(line.packageName, line.packageSimType), style: AppTextStyles.cardTitle(colors.textPrimary)),
                     Text(
                       '${line.customerName} · ${line.simNumber}',
                       style: AppTextStyles.body(colors.textSecondary),

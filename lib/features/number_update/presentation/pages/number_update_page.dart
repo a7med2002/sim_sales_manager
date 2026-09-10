@@ -2,9 +2,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../core/catalog/company_catalog.dart';
-import '../../../../core/catalog/customer_catalog.dart';
-import '../../../../core/di/service_locator.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -16,12 +13,12 @@ import '../../../../core/widgets/status_badge.dart';
 import '../../domain/entities/number_update_entry.dart';
 import '../cubit/number_update_cubit.dart';
 import '../cubit/number_update_state.dart';
-import '../widgets/sky_webview_updater.dart';
+import '../widgets/form_webview_updater.dart';
 
 /// Number Update: matches design/screenshots/numbers update.png (translated
 /// to English + this app's own visual style, per the reference's design and
-/// logic — not its exact look). Real per-company automated lookup — see
-/// `NumberUpdateCubit`'s doc comment.
+/// logic — not its exact look). Real automated multi-supplier lookup —
+/// see `NumberUpdateCubit`'s doc comment.
 class NumberUpdatePage extends StatelessWidget {
   const NumberUpdatePage({super.key});
 
@@ -29,9 +26,8 @@ class NumberUpdatePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => NumberUpdateCubit(
-        companyCatalog: getIt<CompanyCatalog>(),
-        customerCatalog: getIt<CustomerCatalog>(),
-        runSkyFlow: (phoneNumber) => SkyWebViewUpdater.run(context, phoneNumber),
+        runSmileSimFlow: (phoneNumber) => FormWebViewUpdater.run(context, phoneNumber, url: 'https://rn.smilesim.net/'),
+        runSkyFlow: (phoneNumber) => FormWebViewUpdater.run(context, phoneNumber, url: 'https://www.refreshsims.net/'),
       ),
       child: const _NumberUpdateView(),
     );
@@ -110,13 +106,6 @@ class _NumberUpdateViewState extends State<_NumberUpdateView> {
                           ),
                         ),
                       ),
-                      if (state.errorMessage != null) ...[
-                        const SizedBox(height: AppSpacing.xs),
-                        Text(
-                          state.errorMessage!.tr(namedArgs: state.errorMessageArgs),
-                          style: AppTextStyles.body(colors.danger),
-                        ),
-                      ],
                       const SizedBox(height: AppSpacing.md),
                       SizedBox(
                         width: double.infinity,

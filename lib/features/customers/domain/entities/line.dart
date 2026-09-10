@@ -38,10 +38,14 @@ class Line extends Equatable {
   final String simNumber;
 
   /// Real FK once Lines persist to Drift's `lines` table — the seller's
-  /// own `companies.id`, not a catalog id. `companyName`/`companyInitials`
-  /// stay alongside it purely for display (existing widgets read them
-  /// directly rather than looking the company back up).
-  final String companyId;
+  /// own `companies.id`, not a catalog id. Nullable: a permanently-
+  /// deleted company detaches from its Lines instead of taking them with
+  /// it (`ON DELETE SET NULL` server-side — see
+  /// `CompaniesCubit.permanentlyDelete`'s doc comment). `companyName`/
+  /// `companyInitials` stay alongside it purely for display (existing
+  /// widgets read them directly rather than looking the company back
+  /// up) — and are what keeps a detached Line still showing correctly.
+  final String? companyId;
   final String companyName;
   final String companyInitials;
 
@@ -49,6 +53,7 @@ class Line extends Equatable {
   /// matching `packages` row). `packageName` stays for display.
   final String? packageId;
   final String packageName;
+  final String? packageSimType;
 
   final DateTime purchaseDate;
   final DateTime expiryDate;
@@ -67,6 +72,7 @@ class Line extends Equatable {
     required this.companyInitials,
     this.packageId,
     required this.packageName,
+    this.packageSimType,
     required this.purchaseDate,
     required this.expiryDate,
     required this.wholesaleCost,
@@ -108,6 +114,7 @@ class Line extends Equatable {
     String? companyInitials,
     String? packageId,
     String? packageName,
+    String? packageSimType,
     DateTime? purchaseDate,
     DateTime? expiryDate,
     double? wholesaleCost,
@@ -125,6 +132,7 @@ class Line extends Equatable {
       companyInitials: companyInitials ?? this.companyInitials,
       packageId: packageId ?? this.packageId,
       packageName: packageName ?? this.packageName,
+      packageSimType: packageSimType ?? this.packageSimType,
       purchaseDate: purchaseDate ?? this.purchaseDate,
       expiryDate: expiryDate ?? this.expiryDate,
       wholesaleCost: wholesaleCost ?? this.wholesaleCost,
@@ -145,6 +153,7 @@ class Line extends Equatable {
         companyInitials,
         packageId,
         packageName,
+        packageSimType,
         purchaseDate,
         expiryDate,
         wholesaleCost,

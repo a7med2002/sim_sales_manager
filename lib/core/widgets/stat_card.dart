@@ -14,6 +14,7 @@ class StatCard extends StatelessWidget {
   final String value;
   final Color? valueColor;
   final String? caption;
+  final VoidCallback? onTap;
 
   const StatCard({
     super.key,
@@ -23,13 +24,14 @@ class StatCard extends StatelessWidget {
     required this.value,
     this.valueColor,
     this.caption,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
 
-    return Container(
+    final card = Container(
       padding: const EdgeInsets.all(AppSpacing.cardPadding),
       decoration: BoxDecoration(
         color: colors.surface,
@@ -73,6 +75,17 @@ class StatCard extends StatelessWidget {
             Text(caption!, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTextStyles.body(colors.textSecondary)),
           ],
         ],
+      ),
+    );
+
+    if (onTap == null) return card;
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(AppRadii.card),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadii.card),
+        child: card,
       ),
     );
   }

@@ -39,9 +39,18 @@ class ReportsState extends Equatable {
   double get totalSales => filteredLines.fold(0.0, (sum, l) => sum + l.retailPrice);
   int get linesSold => filteredLines.length;
   int get operationsCount => filteredLines.length;
-  double get amountToCollect => filteredLines.fold(0.0, (sum, l) => sum + l.amountRemaining);
-  int get partiallyPaidCount => filteredLines.where((l) => l.paymentStatus == LinePaymentStatus.partial).length;
-  int get unpaidCount => filteredLines.where((l) => l.paymentStatus == LinePaymentStatus.unpaid).length;
+  // Excludes deleted customers' lines — see LineSummary.customerDeleted's
+  // doc comment: that debt/follow-up is no longer collectible/actionable
+  // through the app once its customer is gone. totalProfit/totalSales/
+  // linesSold/operationsCount above stay full-history on purpose — a
+  // completed sale's profit doesn't stop being real just because the
+  // customer record was later deleted.
+  double get amountToCollect =>
+      filteredLines.where((l) => !l.customerDeleted).fold(0.0, (sum, l) => sum + l.amountRemaining);
+  int get partiallyPaidCount =>
+      filteredLines.where((l) => !l.customerDeleted && l.paymentStatus == LinePaymentStatus.partial).length;
+  int get unpaidCount =>
+      filteredLines.where((l) => !l.customerDeleted && l.paymentStatus == LinePaymentStatus.unpaid).length;
 
   ReportsState copyWith({
     List<LineSummary>? lines,

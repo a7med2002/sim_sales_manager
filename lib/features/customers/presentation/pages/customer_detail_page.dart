@@ -8,6 +8,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/utils/contact_launcher.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/confirm_dialog.dart';
 import '../../../../core/widgets/empty_state.dart';
@@ -77,7 +78,7 @@ class CustomerDetailPage extends StatelessWidget {
                     onPressed: () => LineFormSheet.show(
                       context,
                       companies: companies,
-                      onSave: (sim, companyId, company, initials, packageId, package, purchase, expiry, wholesale, retail, status, paid, remaining) =>
+                      onSave: (sim, companyId, company, initials, packageId, package, packageSimType, purchase, expiry, wholesale, retail, status, paid, remaining) =>
                           cubit.addLine(
                         customerId,
                         simNumber: sim,
@@ -86,6 +87,7 @@ class CustomerDetailPage extends StatelessWidget {
                         companyInitials: initials,
                         packageId: packageId,
                         packageName: package,
+                        packageSimType: packageSimType,
                         purchaseDate: purchase,
                         expiryDate: expiry,
                         wholesaleCost: wholesale,
@@ -123,7 +125,7 @@ class CustomerDetailPage extends StatelessWidget {
                           context,
                           line: line,
                           companies: companies,
-                          onSave: (sim, companyId, company, initials, packageId, package, purchase, expiry, wholesale, retail, status, paid, remaining) =>
+                          onSave: (sim, companyId, company, initials, packageId, package, packageSimType, purchase, expiry, wholesale, retail, status, paid, remaining) =>
                               cubit.updateLine(
                             line.id,
                             simNumber: sim,
@@ -132,6 +134,7 @@ class CustomerDetailPage extends StatelessWidget {
                             companyInitials: initials,
                             packageId: packageId,
                             packageName: package,
+                            packageSimType: packageSimType,
                             purchaseDate: purchase,
                             expiryDate: expiry,
                             wholesaleCost: wholesale,
@@ -195,6 +198,17 @@ class _DetailHeader extends StatelessWidget {
             ],
           ),
         ),
+        _IconButton(
+          icon: Icons.chat_rounded,
+          color: colors.success,
+          onTap: () => ContactLauncher.openWhatsApp(customer.contactNumber),
+        ),
+        const SizedBox(width: AppSpacing.xs),
+        _IconButton(
+          icon: Icons.sms_outlined,
+          onTap: () => ContactLauncher.openSms(customer.contactNumber),
+        ),
+        const SizedBox(width: AppSpacing.xs),
         if (customer.deleted) ...[
           _IconButton(
             icon: Icons.restore_rounded,

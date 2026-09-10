@@ -7,6 +7,7 @@ import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/utils/package_display.dart';
 import '../../../../core/widgets/date_field.dart';
 import '../cubit/new_sale_cubit.dart';
 import '../cubit/new_sale_state.dart';
@@ -113,7 +114,9 @@ class _PackagePriceStepState extends State<PackagePriceStep> {
           style: AppTextStyles.cardTitle(colors.textPrimary),
           dropdownColor: colors.surface,
           decoration: _decoration(colors),
-          items: (selectedCompany?.packages ?? []).map((p) => DropdownMenuItem(value: p.id, child: Text(p.name))).toList(),
+          items: (selectedCompany?.packages ?? [])
+              .map((p) => DropdownMenuItem(value: p.id, child: Text(packageDisplayLabel(p.name, p.simType), overflow: TextOverflow.ellipsis)))
+              .toList(),
           onChanged: selectedCompany == null
               ? null
               : (value) {
@@ -163,6 +166,12 @@ class _PackagePriceStepState extends State<PackagePriceStep> {
           Text(
             'newSale.packagePriceStep.insufficientBalance'.tr(),
             style: AppTextStyles.body(colors.danger),
+          ),
+        ] else if (state.willDipCompanyBalanceNegative) ...[
+          const SizedBox(height: 4),
+          Text(
+            'newSale.packagePriceStep.willGoNegative'.tr(),
+            style: AppTextStyles.body(colors.warning),
           ),
         ],
         const SizedBox(height: AppSpacing.sm),

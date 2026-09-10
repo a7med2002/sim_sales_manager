@@ -16,7 +16,6 @@ import '../../../../core/database/app_database.dart';
 import '../../../../core/di/service_locator.dart';
 import '../../../../core/sync/sync_engine.dart';
 import '../../../../core/utils/uuid.dart';
-import '../../data/shipments_mock_data.dart';
 import '../../domain/entities/shipment.dart';
 import 'shipments_operations_state.dart';
 
@@ -44,7 +43,6 @@ class ShipmentsOperationsCubit extends Cubit<ShipmentsOperationsState> {
   final AppDatabase? _db;
   final AuthService? _auth;
   final SyncEngine? _syncEngine;
-  int _shipmentIdCounter = 1;
 
   ShipmentsOperationsCubit({
     required CompanyCatalog companyCatalog,
@@ -58,7 +56,7 @@ class ShipmentsOperationsCubit extends Cubit<ShipmentsOperationsState> {
         _syncEngine = syncEngine ?? (Env.isConfigured ? getIt<SyncEngine>() : null),
         super(ShipmentsOperationsState(
           companies: companyCatalog.activeCompanies,
-          shipments: _resolveDb(db) == null ? ShipmentsMockData.initialShipments() : const [],
+          shipments: const [],
           lines: customerCatalog.allLines,
           now: DateTime.now(),
         )) {
@@ -139,7 +137,7 @@ class ShipmentsOperationsCubit extends Cubit<ShipmentsOperationsState> {
     required String notes,
   }) {
     final shipment = Shipment(
-      id: _isReal ? generateUuidV4() : 'shipment-${_shipmentIdCounter++}',
+      id: generateUuidV4(),
       companyId: companyId,
       companyName: companyName,
       companyInitials: companyInitials,

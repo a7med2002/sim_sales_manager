@@ -29,22 +29,7 @@ class NumbersState extends Equatable {
     this.pageSize = 50,
   });
 
-  List<LineSummary> get filteredLines {
-    final query = searchQuery.trim().toLowerCase();
-    final filtered = lines.where((line) {
-      if (!matchesPeriod(line.purchaseDate, period, now, customRange: customRange)) return false;
-      if (companyFilter != null && line.companyName != companyFilter) return false;
-      if (statusFilter != null && line.statusAt(now) != statusFilter) return false;
-      if (query.isNotEmpty && !line.simNumber.toLowerCase().contains(query)) return false;
-      return true;
-    }).toList()
-      ..sort((a, b) => b.purchaseDate.compareTo(a.purchaseDate));
-
-    if (pageSize == -1) return filtered;
-    return filtered.take(pageSize).toList();
-  }
-
-  int get totalMatchCount {
+  List<LineSummary> get _matchingLines {
     final query = searchQuery.trim().toLowerCase();
     return lines.where((line) {
       if (!matchesPeriod(line.purchaseDate, period, now, customRange: customRange)) return false;
@@ -52,8 +37,22 @@ class NumbersState extends Equatable {
       if (statusFilter != null && line.statusAt(now) != statusFilter) return false;
       if (query.isNotEmpty && !line.simNumber.toLowerCase().contains(query)) return false;
       return true;
-    }).length;
+    }).toList()
+      ..sort((a, b) => b.purchaseDate.compareTo(a.purchaseDate));
   }
+
+  List<LineSummary> get filteredLines {
+    final filtered = _matchingLines;
+    if (pageSize == -1) return filtered;
+    return filtered.take(pageSize).toList();
+  }
+
+  /// Every line matching the current filters, ignoring the page-size cap
+  /// — used for export, so a PDF/Excel/CSV always covers everything the
+  /// filters select, not just the current page shown on screen.
+  List<LineSummary> get exportLines => _matchingLines;
+
+  int get totalMatchCount => _matchingLines.length;
 
   NumbersState copyWith({
     List<LineSummary>? lines,

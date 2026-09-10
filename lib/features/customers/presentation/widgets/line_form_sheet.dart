@@ -7,6 +7,7 @@ import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/utils/package_display.dart';
 import '../../../../core/widgets/date_field.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../domain/entities/line.dart';
@@ -18,6 +19,7 @@ typedef LineSaveCallback = void Function(
   String companyInitials,
   String? packageId,
   String packageName,
+  String? packageSimType,
   DateTime purchaseDate,
   DateTime expiryDate,
   double wholesaleCost,
@@ -181,7 +183,21 @@ class _LineFormSheetState extends State<LineFormSheet> {
     if (_isEditing) return false;
     final company = _selectedCompany;
     if (company == null) return false;
-    return _wholesale > company.availableToSell;
+    if (_wholesale <= company.availableToSell) return false;
+    // See NewSaleState.exceedsCompanyBalance's doc comment — same
+    // negative-balance-allowance rule applies here too, since this is
+    // just another way of recording a sale.
+    if (company.allowNegativeBalance && company.availableToSell > 0) return false;
+    return true;
+  }
+
+  /// Mirrors `NewSaleState.willDipCompanyBalanceNegative` — a heads-up,
+  /// not a block, shown only when `_exceedsBalance` is false.
+  bool get _willDipNegative {
+    if (_isEditing) return false;
+    final company = _selectedCompany;
+    if (company == null || !company.allowNegativeBalance) return false;
+    return _wholesale > company.availableToSell && company.availableToSell > 0;
   }
 
   bool get _canSave =>
@@ -192,6 +208,7 @@ class _LineFormSheetState extends State<LineFormSheet> {
     if (!_canSave || company == null) return;
     final matchingPackages = company.packages.where((p) => p.id == _selectedPackageId);
     final packageName = matchingPackages.isEmpty ? '' : matchingPackages.first.name;
+    final packageSimType = matchingPackages.isEmpty ? null : matchingPackages.first.simType;
     widget.onSave(
       _simController.text.trim(),
       company.id,
@@ -199,6 +216,7 @@ class _LineFormSheetState extends State<LineFormSheet> {
       company.initials,
       _selectedPackageId,
       packageName,
+      packageSimType,
       _purchaseDate,
       _expiryDate,
       _wholesale,
@@ -279,7 +297,10 @@ class _LineFormSheetState extends State<LineFormSheet> {
                   style: AppTextStyles.cardTitle(colors.textPrimary),
                   decoration: _decoration(colors, hint: 'customers.lineForm.packageHint'.tr()),
                   items: (_selectedCompany?.packages ?? const [])
-                      .map((p) => DropdownMenuItem(value: p.id, child: Text(p.name, style: AppTextStyles.cardTitle(colors.textPrimary))))
+                      .map((p) => DropdownMenuItem(
+                            value: p.id,
+                            child: Text(packageDisplayLabel(p.name, p.simType), style: AppTextStyles.cardTitle(colors.textPrimary), overflow: TextOverflow.ellipsis),
+                          ))
                       .toList(),
                   onChanged: _selectedCompany == null ? null : _selectPackage,
                 ),
@@ -339,6 +360,9 @@ class _LineFormSheetState extends State<LineFormSheet> {
                 if (_exceedsBalance) ...[
                   const SizedBox(height: 4),
                   Text('customers.lineForm.insufficientBalance'.tr(), style: AppTextStyles.body(colors.danger)),
+                ] else if (_willDipNegative) ...[
+                  const SizedBox(height: 4),
+                  Text('customers.lineForm.willGoNegative'.tr(), style: AppTextStyles.body(colors.warning)),
                 ],
                 const SizedBox(height: 4),
                 Text('customers.lineForm.profitLine'.tr(namedArgs: {'amount': formatCurrency(_profit)}), style: AppTextStyles.body(colors.success)),

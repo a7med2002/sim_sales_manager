@@ -21,6 +21,11 @@ class CompaniesTable extends Table with TenantColumns {
   BoolColumn get pinned => boolean().withDefault(const Constant(false))();
   TextColumn get catalogCompanyId => text().references(CompanyCatalogTable, #id).nullable()();
   TextColumn get numberUpdateProvider => text().nullable()();
+  TextColumn get numberUpdateUrl => text().nullable()();
+  // See CompaniesCubit._loadFromDrift's doc comment on availableToSell —
+  // an explicit per-company opt-in letting one sale dip the balance
+  // below zero as a one-time credit-line style grace.
+  BoolColumn get allowNegativeBalance => boolean().withDefault(const Constant(false))();
 
   @override
   Set<Column> get primaryKey => {id};

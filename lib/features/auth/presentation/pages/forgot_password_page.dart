@@ -7,6 +7,7 @@ import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/app_top_bar.dart';
+import '../../../../core/widgets/language_switch.dart';
 import '../cubit/forgot_password_cubit.dart';
 import '../cubit/forgot_password_state.dart';
 import '../widgets/auth_text_field.dart';
@@ -46,7 +47,12 @@ class _ForgotPasswordView extends StatelessWidget {
               children: [
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: AppSpacing.pageHorizontal, vertical: AppSpacing.md),
-                  child: AppTopBar(title: 'forgotPassword.title'.tr(), showBack: true),
+                  child: AppTopBar(
+                    title: 'forgotPassword.title'.tr(),
+                    showBack: true,
+                    showSyncStatus: false,
+                    actions: const [LanguageSwitch()],
+                  ),
                 ),
                 Expanded(
                   child: LayoutBuilder(
@@ -59,6 +65,8 @@ class _ForgotPasswordView extends StatelessWidget {
                             mainAxisAlignment: MainAxisAlignment.center,
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
+                              Image.asset('assets/images/logo_full.png', height: 56, fit: BoxFit.contain),
+                              const SizedBox(height: AppSpacing.xl),
                               if (state.status == ForgotPasswordStatus.success)
                                 _SuccessCard(email: state.email)
                               else

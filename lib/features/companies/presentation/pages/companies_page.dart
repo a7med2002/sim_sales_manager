@@ -77,8 +77,15 @@ class _CompaniesView extends StatelessWidget {
                       child: ElevatedButton.icon(
                         onPressed: () => CompanyFormSheet.show(
                           context,
-                          onSave: (name, notes, packages, numberUpdateProvider) =>
-                              cubit.addCompany(name: name, notes: notes, packages: packages, numberUpdateProvider: numberUpdateProvider),
+                          onSave: (name, notes, packages, numberUpdateProvider, logoLocalPath, removeLogo, numberUpdateUrl, allowNegativeBalance) => cubit.addCompany(
+                            name: name,
+                            notes: notes,
+                            packages: packages,
+                            numberUpdateProvider: numberUpdateProvider,
+                            logoLocalPath: logoLocalPath,
+                            numberUpdateUrl: numberUpdateUrl,
+                            allowNegativeBalance: allowNegativeBalance,
+                          ),
                         ),
                         icon: Icon(Icons.add_rounded, color: colors.onPrimaryAction, size: 18),
                         label: Text('companies.addCompany'.tr(), style: AppTextStyles.body(colors.onPrimaryAction).copyWith(fontWeight: FontWeight.w600)),
@@ -148,12 +155,16 @@ class _CompaniesView extends StatelessWidget {
                         onEdit: () => CompanyFormSheet.show(
                           context,
                           company: company,
-                          onSave: (name, notes, packages, numberUpdateProvider) => cubit.updateCompany(
+                          onSave: (name, notes, packages, numberUpdateProvider, logoLocalPath, removeLogo, numberUpdateUrl, allowNegativeBalance) => cubit.updateCompany(
                             company.id,
                             name: name,
                             notes: notes,
                             packages: packages,
                             numberUpdateProvider: numberUpdateProvider,
+                            logoLocalPath: logoLocalPath,
+                            removeLogo: removeLogo,
+                            numberUpdateUrl: numberUpdateUrl,
+                            allowNegativeBalance: allowNegativeBalance,
                           ),
                         ),
                         onTogglePin: () => cubit.togglePin(company.id),

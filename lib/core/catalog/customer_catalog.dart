@@ -11,6 +11,11 @@ abstract class CustomerCatalog {
   /// page, which is a global log rather than a per-customer view.
   List<LineSummary> get allLines;
 
+  /// Fires whenever [activeCustomers]/[allLines] may have changed —
+  /// including the cubit's own async initial load finishing (see
+  /// [CompanyCatalog.changes] for why this matters).
+  Stream<void> get changes;
+
   /// Quick customer creation from within the New Sale flow (name +
   /// contact only — full editing still happens on the Customers page).
   /// Returns the new customer's id.
@@ -32,6 +37,7 @@ abstract class CustomerCatalog {
     required String companyInitials,
     String? packageId,
     required String packageName,
+    String? packageSimType,
     required DateTime purchaseDate,
     required DateTime expiryDate,
     required double wholesaleCost,

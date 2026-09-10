@@ -17,9 +17,13 @@ import '../../../../core/widgets/list_row.dart';
 import '../../../profile/domain/entities/profile.dart';
 import '../../../profile/presentation/cubit/profile_cubit.dart';
 
-/// More landing page: profile card + the 9 sub-page menu rows + Logout.
+/// More landing page: profile card + the sub-page menu rows + Logout.
 /// Matches design/screenshots/more.png (the original 8 rows) plus Number
-/// Update, added later per design/screenshots/numbers update.png.
+/// Update, added later per design/screenshots/numbers update.png. No
+/// "Trusted Devices" row (there was one, briefly) — dropped in favor of
+/// just logging a "Signed in from {device}" Activity Log entry on every
+/// sign-in (see `LoginCubit.submit`); a dedicated device-management
+/// screen was more than this app actually needed.
 /// No "Admin" row here (there was one, briefly) — an admin account never
 /// reaches this page at all, since it lands on its own home
 /// (`AdminHubPage`) straight from login/session-restore instead of the
@@ -105,12 +109,6 @@ class _MoreView extends StatelessWidget {
                         icon: Icons.headset_mic_outlined,
                         title: 'more.supportFeedback'.tr(),
                         onTap: () => Navigator.of(context).pushNamed(RouteNames.supportFeedback),
-                      ),
-                      _divider(colors),
-                      ListRow(
-                        icon: Icons.phone_iphone_outlined,
-                        title: 'more.trustedDevices'.tr(),
-                        onTap: () => Navigator.of(context).pushNamed(RouteNames.trustedDevices),
                       ),
                       _divider(colors),
                       ListRow(

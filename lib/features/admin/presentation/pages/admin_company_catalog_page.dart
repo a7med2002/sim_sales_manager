@@ -8,6 +8,7 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/app_top_bar.dart';
 import '../../../../core/widgets/empty_state.dart';
+import '../../../../core/widgets/logo_avatar.dart';
 import '../../../../core/widgets/status_badge.dart';
 import '../../domain/entities/catalog_company_admin.dart';
 import '../cubit/admin_company_catalog_cubit.dart';
@@ -58,8 +59,14 @@ class _AdminCompanyCatalogView extends StatelessWidget {
                     child: ElevatedButton.icon(
                       onPressed: () => CatalogCompanyFormSheet.show(
                         context,
-                        onSave: (name, notes, url, provider, packages) =>
-                            cubit.addCompany(name: name, notes: notes, numberUpdateUrl: url, numberUpdateProvider: provider, packages: packages),
+                        onSave: (name, notes, url, provider, logoLocalPath, removeLogo, packages) => cubit.addCompany(
+                          name: name,
+                          notes: notes,
+                          numberUpdateUrl: url,
+                          numberUpdateProvider: provider,
+                          logoLocalPath: logoLocalPath,
+                          packages: packages,
+                        ),
                       ),
                       icon: Icon(Icons.add_rounded, color: colors.onPrimaryAction, size: 18),
                       label: Text('admin.catalog.addCompany'.tr(), style: AppTextStyles.cardTitle(colors.onPrimaryAction)),
@@ -74,7 +81,7 @@ class _AdminCompanyCatalogView extends StatelessWidget {
                   if (state.errorMessage != null)
                     Padding(
                       padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                      child: Text(state.errorMessage!, style: AppTextStyles.body(colors.danger)),
+                      child: Text(state.errorMessage!.tr(), style: AppTextStyles.body(colors.danger)),
                     ),
                   if (state.isLoading && state.companies.isEmpty)
                     const Padding(padding: EdgeInsets.symmetric(vertical: AppSpacing.xl), child: Center(child: CircularProgressIndicator()))
@@ -125,6 +132,8 @@ class _CatalogCompanyCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              LogoAvatar(initials: _initialsFor(company.name), logoUrl: company.logoUrl),
+              const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -156,12 +165,14 @@ class _CatalogCompanyCard extends StatelessWidget {
                     value: () => CatalogCompanyFormSheet.show(
                       context,
                       company: company,
-                      onSave: (name, notes, url, provider, packages) => cubit.updateCompany(
+                      onSave: (name, notes, url, provider, logoLocalPath, removeLogo, packages) => cubit.updateCompany(
                         company.id,
                         name: name,
                         notes: notes,
                         numberUpdateUrl: url,
                         numberUpdateProvider: provider,
+                        logoLocalPath: logoLocalPath,
+                        removeLogo: removeLogo,
                         packages: packages,
                       ),
                     ),
@@ -186,5 +197,12 @@ class _CatalogCompanyCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _initialsFor(String name) {
+    final words = name.trim().split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
+    if (words.isEmpty) return '?';
+    if (words.length == 1) return words.first.substring(0, 1).toUpperCase();
+    return (words.first.substring(0, 1) + words[1].substring(0, 1)).toUpperCase();
   }
 }

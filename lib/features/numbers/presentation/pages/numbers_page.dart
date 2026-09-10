@@ -11,12 +11,15 @@ import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/date_formatter.dart';
+import '../../../../core/utils/package_display.dart';
+import '../../../../core/utils/table_export.dart';
 import '../../../../core/widgets/app_top_bar.dart';
 import '../../../../core/widgets/company_filter_dropdown.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/page_size_dropdown.dart';
 import '../../../../core/widgets/period_filter_row.dart';
 import '../../../../core/widgets/status_badge.dart';
+import '../../data/numbers_export.dart';
 import '../cubit/numbers_cubit.dart';
 import '../cubit/numbers_state.dart';
 
@@ -36,13 +39,37 @@ class NumbersPage extends StatelessWidget {
   }
 }
 
-class _NumbersView extends StatelessWidget {
+class _NumbersView extends StatefulWidget {
   const _NumbersView();
 
-  void _comingSoon(BuildContext context) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text('common.comingSoon'.tr())));
+  @override
+  State<_NumbersView> createState() => _NumbersViewState();
+}
+
+class _NumbersViewState extends State<_NumbersView> {
+  TableExportFormat? _exportingFormat;
+
+  Future<void> _export(NumbersState state, TableExportFormat format) async {
+    if (_exportingFormat != null) return;
+    final lines = state.exportLines;
+    if (lines.isEmpty) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text('numbers.export.empty'.tr())));
+      return;
+    }
+    setState(() => _exportingFormat = format);
+    try {
+      await exportNumbers(context: context, lines: lines, format: format);
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(SnackBar(content: Text('numbers.export.error'.tr())));
+      }
+    } finally {
+      if (mounted) setState(() => _exportingFormat = null);
+    }
   }
 
   @override
@@ -73,10 +100,24 @@ class _NumbersView extends StatelessWidget {
                   spacing: AppSpacing.sm,
                   runSpacing: AppSpacing.sm,
                   children: [
-                    _ExportButton(label: 'numbers.export.pdf'.tr(), onTap: () => _comingSoon(context)),
-                    _ExportButton(label: 'numbers.export.csv'.tr(), onTap: () => _comingSoon(context)),
-                    _ExportButton(label: 'numbers.export.excel'.tr(), onTap: () => _comingSoon(context)),
-                    _IconOnlyButton(icon: Icons.refresh_rounded, onTap: cubit.refresh),
+                    _ExportButton(
+                      label: 'numbers.export.pdf'.tr(),
+                      isLoading: _exportingFormat == TableExportFormat.pdf,
+                      isDisabled: _exportingFormat != null,
+                      onTap: () => _export(state, TableExportFormat.pdf),
+                    ),
+                    _ExportButton(
+                      label: 'numbers.export.csv'.tr(),
+                      isLoading: _exportingFormat == TableExportFormat.csv,
+                      isDisabled: _exportingFormat != null,
+                      onTap: () => _export(state, TableExportFormat.csv),
+                    ),
+                    _ExportButton(
+                      label: 'numbers.export.excel'.tr(),
+                      isLoading: _exportingFormat == TableExportFormat.excel,
+                      isDisabled: _exportingFormat != null,
+                      onTap: () => _export(state, TableExportFormat.excel),
+                    ),
                   ],
                 ),
                 const SizedBox(height: AppSpacing.md),
@@ -174,46 +215,27 @@ class _NumbersView extends StatelessWidget {
 
 class _ExportButton extends StatelessWidget {
   final String label;
+  final bool isLoading;
+  final bool isDisabled;
   final VoidCallback onTap;
 
-  const _ExportButton({required this.label, required this.onTap});
+  const _ExportButton({required this.label, required this.onTap, this.isLoading = false, this.isDisabled = false});
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
 
     return OutlinedButton.icon(
-      onPressed: onTap,
-      icon: Icon(Icons.download_outlined, size: 16, color: colors.textPrimary),
+      onPressed: isDisabled ? null : onTap,
+      icon: isLoading
+          ? SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: colors.textSecondary))
+          : Icon(Icons.download_outlined, size: 16, color: colors.textPrimary),
       label: Text(label, style: AppTextStyles.body(colors.textPrimary)),
       style: OutlinedButton.styleFrom(
         foregroundColor: colors.textPrimary,
         side: BorderSide(color: colors.border),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.button)),
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 8),
-      ),
-    );
-  }
-}
-
-class _IconOnlyButton extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-
-  const _IconOnlyButton({required this.icon, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 36,
-        height: 36,
-        decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: colors.border)),
-        alignment: Alignment.center,
-        child: Icon(icon, size: 18, color: colors.textPrimary),
       ),
     );
   }
@@ -320,7 +342,7 @@ class _NumbersTable extends StatelessWidget {
                     Text(line.companyName),
                   ],
                 )),
-                DataCell(Text(line.packageName)),
+                DataCell(Text(packageDisplayLabel(line.packageName, line.packageSimType))),
                 DataCell(StatusBadge(label: status.label, type: badgeType)),
                 DataCell(Text(formatDate(line.purchaseDate))),
                 DataCell(Text(formatDate(line.expiryDate), style: AppTextStyles.body(expiryColor).copyWith(fontWeight: FontWeight.w600))),

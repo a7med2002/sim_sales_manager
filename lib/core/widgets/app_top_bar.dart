@@ -6,12 +6,22 @@ import 'sync_status_indicator.dart';
 
 /// Page header: title (+ optional subtitle) on the leading side, an optional
 /// dark/light mode toggle on the trailing side. Main nav pages have no back
-/// arrow; sub-pages inside "More" pass [showBack].
+/// arrow; sub-pages inside "More" pass [showBack]. [showBrandMark] shows a
+/// small app-icon badge instead — only meant for Home, the app's one true
+/// "front door" screen, so the brand identity shows up somewhere inside the
+/// app itself and not only on Login/the launcher icon. [showSyncStatus]
+/// defaults on, but the pre-login auth flow (Forgot/Reset Password — Login
+/// itself doesn't use this widget) passes it off: "sync" is a signed-in
+/// account concept, and showing/tapping it before anyone's signed in
+/// exposed a raw, alarming-looking network exception instead of anything
+/// meaningful.
 class AppTopBar extends StatelessWidget {
   final String title;
   final String? subtitle;
   final bool showBack;
   final VoidCallback? onBack;
+  final bool showBrandMark;
+  final bool showSyncStatus;
   final bool isDarkMode;
   final VoidCallback? onThemeToggle;
   final List<Widget>? actions;
@@ -22,6 +32,8 @@ class AppTopBar extends StatelessWidget {
     this.subtitle,
     this.showBack = false,
     this.onBack,
+    this.showBrandMark = false,
+    this.showSyncStatus = true,
     this.isDarkMode = false,
     this.onThemeToggle,
     this.actions,
@@ -42,6 +54,13 @@ class AppTopBar extends StatelessWidget {
             constraints: const BoxConstraints(),
           ),
         if (showBack) const SizedBox(width: 8),
+        if (showBrandMark) ...[
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: Image.asset('assets/icons/icon.png', width: 40, height: 40, fit: BoxFit.cover),
+          ),
+          const SizedBox(width: 10),
+        ],
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -55,7 +74,7 @@ class AppTopBar extends StatelessWidget {
             ],
           ),
         ),
-        const SyncStatusIndicator(),
+        if (showSyncStatus) const SyncStatusIndicator(),
         if (onThemeToggle != null) ...[
           const SizedBox(width: 4),
           _ThemeToggleButton(isDark: isDarkMode, onTap: onThemeToggle!),

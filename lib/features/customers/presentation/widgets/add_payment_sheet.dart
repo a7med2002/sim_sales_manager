@@ -6,6 +6,7 @@ import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/utils/package_display.dart';
 import '../../domain/entities/line.dart';
 
 /// Quick "collect a payment" sheet for one specific line — separate from
@@ -88,7 +89,7 @@ class _AddPaymentSheetState extends State<AddPaymentSheet> {
                 ],
               ),
               const SizedBox(height: 4),
-              Text('${line.packageName} · ${line.simNumber}', style: AppTextStyles.body(colors.textSecondary)),
+              Text('${packageDisplayLabel(line.packageName, line.packageSimType)} · ${line.simNumber}', style: AppTextStyles.body(colors.textSecondary)),
               const SizedBox(height: AppSpacing.lg),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 12),

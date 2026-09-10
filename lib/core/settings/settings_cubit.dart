@@ -9,6 +9,7 @@ import '../auth/auth_service.dart';
 import '../config/env.dart';
 import '../database/app_database.dart';
 import '../di/service_locator.dart';
+import '../sync/connectivity_service.dart';
 import '../sync/sync_engine.dart';
 import 'app_settings.dart';
 
@@ -20,11 +21,13 @@ class SettingsCubit extends Cubit<AppSettings> {
   final AppDatabase? _db;
   final AuthService? _auth;
   final SyncEngine? _syncEngine;
+  final ConnectivityService? _connectivity;
 
-  SettingsCubit({AppDatabase? db, AuthService? auth, SyncEngine? syncEngine})
+  SettingsCubit({AppDatabase? db, AuthService? auth, SyncEngine? syncEngine, ConnectivityService? connectivity})
     : _db = _resolveDb(db),
       _auth = _resolveAuth(auth),
       _syncEngine = syncEngine ?? (Env.isConfigured ? getIt<SyncEngine>() : null),
+      _connectivity = connectivity ?? getIt<ConnectivityService>(),
       super(const AppSettings()) {
     if (_db != null && _auth?.currentOwnerId != null) {
       _syncThenLoad();
@@ -39,7 +42,11 @@ class SettingsCubit extends Cubit<AppSettings> {
   Future<void> _syncThenLoad() async {
     final engine = _syncEngine;
     final ownerId = _auth?.currentOwnerId;
-    if (engine != null && ownerId != null) {
+    // Checking connectivity first (a cheap, instant OS-level flag) skips
+    // even attempting the network call while offline — without it, this
+    // waited out a multi-second connect/DNS timeout before falling back
+    // every single time.
+    if (engine != null && ownerId != null && await (_connectivity?.isOnline ?? Future.value(true))) {
       try {
         await engine.pushPendingSettings(ownerId);
         await engine.pullSettings(ownerId);

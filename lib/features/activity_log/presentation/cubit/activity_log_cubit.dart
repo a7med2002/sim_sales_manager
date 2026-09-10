@@ -6,16 +6,14 @@ import '../../../../core/config/env.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/di/service_locator.dart';
 import '../../../../core/sync/sync_engine.dart';
-import '../../data/activity_log_mock_data.dart';
 import '../../domain/entities/activity_log_entry.dart';
 import 'activity_log_state.dart';
 
-/// Real mode reads every `activity_log` row for the signed-in owner from
-/// Drift, newest first — entries themselves are written elsewhere, by
+/// Reads every `activity_log` row for the signed-in owner from Drift,
+/// newest first — entries themselves are written elsewhere, by
 /// `ActivityLogger` (see its doc comment: every mutating Cubit across the
 /// app calls it right after a real write succeeds). This Cubit is purely
-/// a read/filter surface, same conditional real/mock pattern as the rest
-/// of the app; falls back to the static mock list offline/in demo mode.
+/// a read/filter surface.
 class ActivityLogCubit extends Cubit<ActivityLogState> {
   final AppDatabase? _db;
   final AuthService? _auth;
@@ -25,7 +23,7 @@ class ActivityLogCubit extends Cubit<ActivityLogState> {
     : _db = _resolveDb(db),
       _auth = _resolveAuth(auth),
       _syncEngine = syncEngine ?? (Env.isConfigured ? getIt<SyncEngine>() : null),
-      super(ActivityLogState(entries: _resolveDb(db) == null ? ActivityLogMockData.initialEntries() : const [])) {
+      super(const ActivityLogState()) {
     if (_db != null && _auth?.currentOwnerId != null) {
       _syncThenLoad();
     }

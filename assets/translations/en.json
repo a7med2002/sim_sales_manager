@@ -4,7 +4,19 @@
       "offline": "Offline — changes will sync when you're back online",
       "syncing": "Syncing…",
       "idle": "Synced",
-      "error": "Sync error — tap to retry"
+      "error": "Sync error — tap to retry",
+      "retrying": "Retrying sync…"
+    }
+  },
+  "update": {
+    "title": "A new update is available",
+    "mandatoryTitle": "Update required",
+    "versionLabel": "Version {version}",
+    "updateNow": "Update now",
+    "later": "Later",
+    "downloading": "Downloading update…",
+    "errors": {
+      "downloadFailed": "Couldn't download the update. Check your connection and try again."
     }
   },
   "common": {
@@ -15,6 +27,7 @@
     "show": "Show",
     "balanceUsedPercent": "{percent}% balance used",
     "comingSoon": "Coming soon",
+    "genericError": "Something went wrong. Check your connection and try again.",
     "am": "AM",
     "pm": "PM",
     "months": {
@@ -68,11 +81,11 @@
     "newSale": "New Sale"
   },
   "login": {
-    "brandName": "SIM Manager",
+    "brandName": "eSIM Dafter",
     "brandTagline": "eSIM & SIM sales, balances and profit",
     "title": "Sign in",
     "subtitle": "Manage your SIM sales, balances and profit.",
-    "usernameLabel": "Username or email",
+    "usernameLabel": "Email",
     "usernamePlaceholder": "owner@simmanager.app",
     "passwordLabel": "Password",
     "rememberMe": "Remember me",
@@ -86,7 +99,8 @@
       "usernameRequired": "Enter a username or email.",
       "passwordTooShort": "Password must be at least 6 characters.",
       "invalidCredentials": "Incorrect email or password.",
-      "networkError": "Couldn't reach the server. Check your connection and try again."
+      "networkError": "Couldn't reach the server. Check your connection and try again.",
+      "unexpected": "Something went wrong. Please try again later."
     }
   },
   "forgotPassword": {
@@ -101,6 +115,22 @@
     "backToSignIn": "Back to Sign in",
     "errors": {
       "invalidEmail": "Enter a valid email address."
+    }
+  },
+  "resetPassword": {
+    "title": "Set new password",
+    "description": "Choose a new password for your account.",
+    "newPasswordLabel": "New password",
+    "confirmNewPasswordLabel": "Confirm new password",
+    "save": "Save new password",
+    "successTitle": "Password updated",
+    "successDescription": "Your password has been changed. Sign in with your new password.",
+    "backToSignIn": "Back to Sign in",
+    "errors": {
+      "tooShort": "New password must be at least 6 characters.",
+      "mismatch": "New password and confirmation don't match.",
+      "expiredLink": "This reset link has expired. Request a new one.",
+      "generic": "Couldn't reset the password. Check your connection and try again."
     }
   },
   "home": {
@@ -128,7 +158,6 @@
     "profits": "Profits",
     "reports": "Reports",
     "supportFeedback": "Support & Feedback",
-    "trustedDevices": "Trusted Devices",
     "activityLog": "Activity Log",
     "settings": "Settings",
     "logout": "Logout"
@@ -193,6 +222,7 @@
       "packagesSection": "PACKAGES",
       "addPackage": "Add Package",
       "packageNamePlaceholder": "Package name",
+      "simTypePlaceholder": "SIM type, e.g. Cellcom Bundle",
       "wholesaleCostPlaceholder": "Wholesale cost",
       "retailPricePlaceholder": "Retail price",
       "save": "Save"
@@ -252,7 +282,9 @@
     "errors": {
       "currentRequired": "Enter your current password.",
       "tooShort": "New password must be at least 6 characters.",
-      "mismatch": "New password and confirmation don't match."
+      "mismatch": "New password and confirmation don't match.",
+      "currentIncorrect": "Current password is incorrect.",
+      "generic": "Couldn't change the password. Check your connection and try again."
     }
   },
   "periodFilter": {
@@ -321,11 +353,17 @@
       "editSubtitle": "Update this company's details.",
       "addSubtitle": "Pick a preset brand with default packages, or add your own.",
       "nameLabel": "Company name",
+      "logoChoose": "Choose Logo",
+      "logoRemove": "Remove",
       "notesLabel": "Notes (Optional)",
       "numberUpdateProviderLabel": "Number Update Provider (Optional)",
+      "numberUpdateUrlLabel": "Number Update URL (Optional)",
+      "allowNegativeBalanceLabel": "Allow negative balance",
+      "allowNegativeBalanceExplanation": "If this company's balance is only slightly positive (e.g. ₪0.01) and you sell a line that costs more, the sale will still go through and the balance will go negative by the difference — but only once: while the balance stays at or below zero, you won't be able to sell from this company again until a new shipment brings it back above zero.",
       "packagesSection": "PACKAGES (OPTIONAL)",
       "addPackage": "Add package",
       "packageNamePlaceholder": "Package name, e.g. Monthly 3GB",
+      "simTypePlaceholder": "SIM type, e.g. Cellcom Bundle",
       "wholesaleCostPlaceholder": "Wholesale cost",
       "retailPricePlaceholder": "Retail sale price",
       "save": "Save"
@@ -441,6 +479,7 @@
       "noCompaniesDescription": "Add a company first (from the Companies tab) before you can add a line.",
       "availableBalance": "Available balance: {amount}",
       "insufficientBalance": "Wholesale cost exceeds this company's available balance — add a shipment first.",
+      "willGoNegative": "This company's balance will go negative after this sale.",
       "simLabel": "SIM / phone number",
       "wholesaleCostLabel": "Wholesale cost",
       "retailSalePriceLabel": "Retail sale price",
@@ -486,7 +525,8 @@
       "purchaseDateLabel": "Purchase date",
       "expiryDateLabel": "Expiry date",
       "availableBalance": "Available balance: {amount}",
-      "insufficientBalance": "Wholesale cost exceeds this company's available balance — add a shipment first."
+      "insufficientBalance": "Wholesale cost exceeds this company's available balance — add a shipment first.",
+      "willGoNegative": "This company's balance will go negative after this sale."
     },
     "paymentStep": {
       "amountPaidNowLabel": "Amount paid now",
@@ -517,7 +557,9 @@
     "export": {
       "pdf": "PDF",
       "csv": "CSV",
-      "excel": "Excel"
+      "excel": "Excel",
+      "empty": "No numbers match the current filters to export.",
+      "error": "Couldn't create the file. Try again."
     },
     "searchHint": "Search by phone number",
     "matchCount": "{count} numbers",
@@ -555,26 +597,6 @@
       "edit": "Edit",
       "delete": "Delete",
       "fullCollection": "Full Collection"
-    }
-  },
-  "trustedDevices": {
-    "title": "Trusted Devices",
-    "description": "These devices skip the verification code until their session expires. Revoking one will require a code again next login.",
-    "empty": {
-      "title": "No trusted devices",
-      "description": "Devices you log in from will show up here."
-    },
-    "thisDevice": "This Device",
-    "revokeDialog": {
-      "title": "Revoke {name}?",
-      "message": "This device will need a verification code again next login.",
-      "confirm": "Revoke"
-    },
-    "info": {
-      "ipAddress": "IP address",
-      "firstLogin": "First login",
-      "lastLogin": "Last login",
-      "lastVerification": "Last verification"
     }
   },
   "supportFeedback": {
@@ -640,6 +662,8 @@
     "partiallyPaid": "Partially Paid",
     "unpaid": "Unpaid",
     "operationsSection": "OPERATIONS",
+    "exportEmpty": "No operations match the current filters to export.",
+    "exportError": "Couldn't create the file. Try again.",
     "empty": {
       "title": "No operations yet",
       "description": "Operations show up here as soon as you sell a SIM/eSIM line to a customer."
@@ -705,7 +729,9 @@
       "searchHint": "Search by SIM number or operation ID",
       "addOperation": "Add Operation",
       "exportExcel": "Export Excel",
-      "import": "Import",
+      "exportPdf": "Export PDF",
+      "exportEmpty": "No operations match the current filters to export.",
+      "exportError": "Couldn't create the file. Try again.",
       "empty": {
         "title": "No operations yet",
         "description": "Operations show up here as soon as you sell a SIM/eSIM line."
@@ -754,7 +780,7 @@
   },
   "numberUpdate": {
     "title": "Number Update",
-    "subtitle": "Update any number's status directly from your supplier companies' platforms.",
+    "subtitle": "Enter any number — it's automatically checked against every supplier we support.",
     "enterNumberLabel": "Enter phone number",
     "numberHint": "05xxxxxxxx",
     "updateButton": "Update Number",
@@ -774,16 +800,14 @@
       "failed": "Failed"
     },
     "errors": {
-      "numberNotRegistered": "This number isn't registered to any customer line in the app yet.",
-      "companyNotSupported": "{company} doesn't have an automated Number Update provider set up.",
       "providerRejected": "The supplier rejected this number.",
       "providerUnreachable": "Couldn't reach the supplier's platform. Try again later.",
-      "skyUnavailable": "Sky's update flow isn't available from this screen right now."
+      "notFoundAnyProvider": "This number wasn't recognized by any supported supplier (Liyan, QuickLine, Areen, Aloha, Sky)."
     },
-    "skyDialog": {
-      "title": "Updating via Sky…",
+    "webviewDialog": {
+      "title": "Updating…",
       "subtitle": "This can take up to a few minutes. Don't close this window.",
-      "timeout": "Sky didn't respond in time. Try again later."
+      "timeout": "The supplier didn't respond in time. Try again later."
     }
   },
   "numberUpdateProvider": {
@@ -791,6 +815,8 @@
     "liyan": "Liyan",
     "areen": "Areen",
     "quickline": "QuickLine",
+    "aloha": "Aloha",
+    "smilesim": "General Update",
     "sky": "Sky"
   }
 }

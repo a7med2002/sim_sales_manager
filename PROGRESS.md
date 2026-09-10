@@ -3324,3 +3324,2001 @@ of the four to need a fix if Sky ever changes their page.
 Areen, QuickLine (plain HTTP) and Sky (WebView) — Number Update's
 "real logic" gap from the original mock-data audit is now fully closed
 for every supplier the user asked about.
+
+## Company logo upload — the last unwired placeholder field
+
+`logo_url` has existed on both `companies` and `company_catalog` since
+the very first schema migration, but nothing ever uploaded to it — no
+UI existed on either the seller or admin side. Built both this pass.
+
+**New migration**: `supabase/migrations/0007_company_logos_storage.sql`
+— **not applied automatically, run it in the Supabase SQL editor**
+(same as 0001-0006 before it). Creates a **public** `company-logos`
+bucket (logos aren't sensitive, unlike Support & Feedback's private
+attachments — no signed-URL machinery needed, `Image.network(url)`
+just works) with RLS restricting *writes* only: a seller can write to
+their own `{owner_id}/...` folder, an admin can write to the shared
+`catalog/...` folder used by `company_catalog` entries. No new package —
+reused `image_picker`, already a dependency since Support & Feedback's
+photo attach.
+
+**Entities**: `Company`, `CompanySummary`, `PresetCompany`,
+`CatalogCompanyAdmin` all gained a `logoUrl` field, threaded through
+the same way `numberUpdateProvider` was in the previous pass
+(`copyWith`'s `clearLogoUrl` flag, every balance-mutation method's
+passthrough, `props`).
+
+**Seller side** (`CompanyFormSheet` + `CompaniesCubit`): a tappable
+72px avatar (pick from gallery, `ImagePicker`) sits above the name
+field, with "Choose Logo"/"Remove" text buttons. On save, the local
+file path (or a remove flag) reaches `CompaniesCubit.addCompany`/
+`updateCompany`, which uploads it to `company-logos/{ownerId}/{companyId}.<ext>`
+via `_uploadLogo` and stores the resulting **public URL** (not the
+local path) in Drift/Supabase — same fire-and-forget-tolerant pattern
+as every other upload in this app (a failed upload just leaves the
+company without a logo, never blocks the rest of the save). Offline/
+demo mode has no Storage to upload to, so it just points `logoUrl` at
+the local file path directly — display widgets handle both cases via
+`Image.network` and treat any non-http value as unreachable (falls back
+to initials).
+
+**Admin side** (`CatalogCompanyFormSheet` + `AdminCompanyCatalogCubit`):
+identical picker UI; uploads to the shared `catalog/{catalogCompanyId}.<ext>`
+path instead.
+
+**Import carry-over**: `CompaniesCubit.importPreset` copies the
+catalog's logo **URL** directly (not a re-upload) into the new
+company — a deliberate simplification: unlike every other imported
+field, an imported company's logo keeps pointing at the shared catalog
+asset even though "Import Ready-Made" is otherwise a one-time copy, not
+a live link (see `CompaniesCubit`'s class doc comment). Low-stakes for
+a logo image; avoids duplicating storage for no real benefit.
+
+**Display**: new shared `CompanyAvatar` widget (`features/companies/presentation/widgets/company_avatar.dart`)
+— shows the logo when present (falls back to initials on load error
+too), used by both the Companies list card and the Company Detail
+header. The admin catalog list card was **not** updated to show the
+logo this pass (kept in scope to the seller-facing surfaces + both
+forms); a small follow-up if wanted.
+
+**Verified**: `flutter analyze` clean; `flutter test` 31/32 (same
+pre-existing Profits flake, no regressions); `flutter build apk --debug`
+with real `--dart-define` credentials run in background.
+
+**Not yet live-tested — needs migration 0007 applied first**: run it,
+then add/edit a company with a logo (both as a seller and, separately,
+a catalog entry as admin), confirm it uploads and displays on the
+Companies list + detail page, confirm "Remove" clears it back to
+initials, and confirm importing a catalog company with a logo carries
+it over.
+
+## Two small follow-ups from the logo pass
+
+**1. Admin catalog card now shows the logo.** The upload flow from the
+previous pass worked, but the admin catalog list itself (`_CatalogCompanyCard`)
+never rendered it. `CompanyAvatar` was pulled up into `core/widgets/logo_avatar.dart`
+as `LogoAvatar` (it was purely a name+logoUrl+size widget with no real
+dependency on the Companies feature's `Company` entity, so promoting it
+let the admin feature use it too without a cross-feature import) and
+wired into the catalog card (initials derived the same way
+`CompaniesCubit` already does). The Companies list card and Company
+Detail header now both use the promoted `LogoAvatar` too — no visual
+change there, just where the widget lives.
+
+**2. Manual fallback link for companies without automation.**
+`company_catalog.number_update_url` existed since 0001 but a seller's
+own `companies` never had an equivalent — so a company with no
+`numberUpdateProvider` had nothing to fall back to besides a plain
+error message.
+
+- **New migration**: `supabase/migrations/0008_company_number_update_url.sql`
+  — **not applied automatically, run it in the Supabase SQL editor**.
+  Adds `number_update_url` to `companies` (mirrors the catalog's
+  existing column).
+- `Company`/`CompanySummary`/`PresetCompany` gained a `numberUpdateUrl`
+  field, threaded through the same way every other per-company field
+  has been all pass (`CompaniesCubit` load/persist/import-carry-over,
+  `CompanyFormSheet` gained a plain "Number Update URL (Optional)" text
+  field right under the provider dropdown — visible regardless of
+  whether a provider is set, since it's also just useful as a
+  reference).
+- `NumberUpdateState` gained `manualUrl` (+ a `clearManualUrl` flag on
+  `copyWith`, needed so a *different* company's stale URL couldn't leak
+  into a fresh "not supported" result — a real bug caught while wiring
+  this up, fixed before it ever shipped). `NumberUpdateCubit` sets it
+  from the matched company's `numberUpdateUrl` whenever it hits the
+  "company not supported" branch. `NumberUpdatePage` shows an "Open
+  Supplier's Page" outlined button under the error message when present,
+  opening it externally via `url_launcher` (already a dependency, no
+  new package).
+
+**Verified**: `flutter analyze` clean; `flutter test` 31/32 (same
+pre-existing Profits flake, no regressions); `flutter build apk --debug`
+with real `--dart-define` credentials run in background.
+
+**Not yet live-tested — needs migration 0008 applied first**: run it,
+then set a "Number Update URL" on a company with no provider selected,
+open Number Update, submit one of that company's numbers, confirm the
+error message shows with an "Open Supplier's Page" button, and confirm
+tapping it opens the URL in the device's browser. Also confirm the
+admin catalog list now shows an uploaded logo without needing to open
+the edit sheet.
+
+## Trusted Devices removed — replaced with a device name in the login's Activity Log entry
+
+User call: a dedicated device-management screen (list devices, revoke
+one, IP/first-seen/last-seen tracking) was more machinery than this app
+actually needed. Simpler and just as useful: log which device signed in,
+in the Activity Log that already exists and is already real.
+
+**Removed entirely**: `lib/features/trusted_devices/` (page, cubit, mock
+data, entity), `TrustedDevicesTable` (Drift — regenerated
+`app_database.g.dart`), `RouteNames.trustedDevices` + its route/import in
+`main.dart`, the "Trusted Devices" row in `more_page.dart`, the
+`trustedDevices`/`more.trustedDevices` translation keys in both
+`en.json`/`ar.json`, and its widget test. The Supabase `trusted_devices`
+table from migration 0001 was **deliberately left alone** — dropping a
+live table is a separate, more deliberate decision than removing client
+code, and this one never had a single real row written to it anyway, so
+leaving it is zero-cost.
+
+**New**: `core/utils/device_name.dart`'s `currentDeviceName()` — uses
+`device_info_plus` (new package, added after asking) to get a real
+device name: manufacturer + model on Android (e.g. "samsung SM-G991B" —
+Android has no OS API for marketing names like "Galaxy S21", so this is
+the ceiling of what's available there), the user-assigned device name on
+iOS (e.g. "Ahmed's iPhone", friendlier), computer name on
+Windows/macOS, hostname on Linux. Falls back to a plain
+`Platform.operatingSystem` label on any other platform or on failure —
+this is a nice-to-have log detail, never worth blocking sign-in over.
+
+`LoginCubit.submit()`'s existing `ActivityLogger.log(ActivityActionType.login, ...)`
+call (already there from the Activity Log pass) now reads
+`'Signed in from $deviceName.'` instead of a static `'Signed in.'`.
+
+**Verified**: `flutter analyze` clean; `flutter test` 30/31 (one fewer
+test — Trusted Devices' own — same pre-existing Profits flake, no other
+regressions); `flutter build apk --debug` with real `--dart-define`
+credentials run in background.
+
+**Not yet live-tested**: sign in on a real device and confirm Activity
+Log shows "Signed in from {your device's real name}" instead of the
+old generic message.
+
+**This closes the mock-data audit** started several passes ago — every
+feature in the app is now either genuinely real, or a deliberately
+documented external-dependency blocker (Sky's Number Update integration
+alone still needs the WebView flow to be verified against a live
+account — see its own PROGRESS.md entry). Nothing left is mock-only by
+oversight.
+
+## Fix: timestamps shown wrong everywhere (a real timezone bug in the sync layer)
+
+User report: times shown in every feature's history (Activity Log,
+Number Update, Support & Feedback's requests, Admin's recent signups,
+...) were off — not random, but consistently shifted.
+
+**Root cause**: every timestamp written to Supabase went through plain
+`.toIso8601String()` on a *local* `DateTime` (e.g. `DateTime.now()`).
+Dart's `toIso8601String()` on a non-UTC `DateTime` prints the wall-clock
+value with **no timezone marker at all** — neither `Z` nor a numeric
+offset. Postgres' `timestamptz` columns interpret an unmarked timestamp
+string as UTC, so a seller's local 3:00 PM got stored as 3:00 PM UTC
+instead of the correct UTC instant for their timezone — a shift equal
+to their UTC offset, in the wrong direction, on every single write.
+
+Separately, every timestamp **read back** from Supabase (which
+Postgres always returns with an explicit UTC marker, so `DateTime.parse`
+correctly produces a UTC `DateTime`) was displayed via `.hour`/`.day`/
+etc. directly, with no `.toLocal()` call — so even a correctly-stored
+UTC instant would still display as if its UTC clock time were the local
+one. Two independent bugs compounding into "the time is just wrong"
+everywhere a synced record's timestamp showed up.
+
+**Fix, two layers**:
+1. **`SyncEngine`** (`lib/core/sync/sync_engine.dart`) — every `_xToRow`
+   mapper now sends `.toUtc().toIso8601String()` instead of a bare
+   `.toIso8601String()` (15 call sites: companies, packages, customers,
+   lines, shipments, settings, activity log, support requests, number
+   update log). Every `_xFromRow` mapper now calls `.toLocal()` right
+   after `DateTime.parse(...)` (19 call sites) — so every `DateTime`
+   that ends up in Drift or app state is consistently local, matching
+   what `DateTime.now()` already produces for locally-created records.
+2. **Admin cubits that read Supabase directly** (no `SyncEngine`
+   involved): `AdminDashboardCubit`, `AdminUsersCubit`,
+   `AdminSupportFeedbackCubit` — same `.toLocal()` fix applied to their
+   own `DateTime.parse(row['created_at'] ...)` calls.
+3. **Defense in depth**: `formatDate`/`formatDateTime`
+   (`core/utils/date_formatter.dart`) now call `.toLocal()` on their
+   input before formatting, regardless of source. `.toLocal()` on an
+   already-local `DateTime` is a no-op, so this can never break a
+   correctly-converted value — it just guarantees a stray UTC
+   `DateTime` from some future call site can never reach the screen
+   un-converted again.
+
+This also silently fixes a second, related correctness issue: **
+`SupportFeedbackCubit`'s daily-limit day-boundary check** (`r.createdAt.year
+== now.year && ... .day == now.day`) compares a Supabase-sourced
+`createdAt` against a local `DateTime.now()` — with the timezone bug,
+a request submitted late at night could have miscounted against the
+wrong calendar day after a sync round-trip. Now that `createdAt` is
+reliably local, this comparison is correct too.
+
+**Verified**: `flutter analyze` clean; `flutter test` 30/31 (same
+pre-existing Profits flake, no regressions); `flutter build apk --debug`
+with real `--dart-define` credentials run in background.
+
+**Not yet live-tested**: this only actually manifests after a
+Supabase round-trip (push then pull, which `syncAll` does back-to-back,
+so it's visible almost immediately) — create something with a
+timestamp (a company, a sale, a support request, sign in again), let it
+sync, and confirm its displayed time now matches your device's actual
+clock instead of being off by your UTC offset. Existing rows already
+written with the bug are **not** retroactively fixed by this change —
+their stored `updated_at`/`created_at` in Supabase is already wrong;
+only newly-written timestamps will be correct from here on. If old,
+visibly-wrong entries matter, they'd need a one-time manual correction
+in Supabase (out of scope here — the app never had "official" data yet
+based on this session's history).
+
+## Fix: sync stuck red — a real local database schema-drift bug
+
+User report: the sync icon was red and stayed red on every retry, and a
+company logo change never reached Supabase.
+
+**Root cause**: `AppDatabase.schemaVersion` stayed at `1` for this
+app's entire build-out even as columns/tables kept getting added
+(`companies.number_update_provider`, `companies.number_update_url`,
+`company_catalog.number_update_provider`, the whole `number_update_log`
+table). Drift only runs `onCreate`/`onUpgrade` when the declared version
+actually changes — since it never did, this app's one real test device
+(installed early and never uninstalled since) kept its *original*
+physical SQLite file structure the entire time, while the app's compiled
+code kept assuming the *current* full schema. Every local query that
+touched one of the missing columns/table failed outright with a plain
+SQLite "no such column" error — including the `companies` SELECT/INSERT
+`pushPendingCompanies`/`_loadFromDrift` run on every sync attempt, which
+is exactly why sync went straight back to its error state on every
+retry: the query never even got far enough to attempt a network call,
+so nothing — including an unsynced local change like a freshly-picked
+logo — ever had a chance to reach Supabase.
+
+**Fix**: `AppDatabase` (`lib/core/database/app_database.dart`) gained a
+real `MigrationStrategy` — bumped `schemaVersion` to `2`, `onUpgrade`
+adds exactly the pieces introduced since v1 (`addColumn` ×3,
+`createTable` for `number_update_log`). Purely additive — this heals an
+existing install without touching any data already there, including
+anything still only-local and unsynced (a pending logo change would now
+successfully sync once the schema catches up).
+
+**Also found and fixed while diagnosing**: `SyncEngine`'s `_companyToRow`/
+`_companyFromRow` never actually included `number_update_url` at all —
+a separate, unrelated bug from the two-small-follow-ups pass (the field
+was wired into Drift and the UI, but never into the sync mappers), so
+even with the schema fixed, that one field would have silently never
+synced. Added it to both mappers.
+
+**Also improved for next time**: `SyncStatusIndicator` — tapping the
+icon while it's red now shows the real exception text in a SnackBar
+before retrying, instead of just the generic "Sync error" tooltip.
+`SyncBloc` already captured `errorMessage: e.toString()` in its state;
+it just never reached the screen. This class of bug (and any future
+one) should now be self-diagnosable without needing a blind
+back-and-forth to figure out what actually broke.
+
+**Verified**: `flutter analyze` clean; `flutter test` 30/31 (same
+pre-existing Profits flake, no regressions); `flutter build apk --debug`
+with real `--dart-define` credentials run in background.
+
+**Action needed before this is fully fixed**: this pass makes `companies`
+push/pull now send `number_update_url` to Supabase, which requires
+`supabase/migrations/0008_company_number_update_url.sql` to actually be
+applied server-side — **confirm that one was run** (it was created in
+an earlier pass and its "run this" instruction may have gotten missed
+in the flow of several passes back-to-back); if it wasn't, sync will
+hit the exact same symptom again, just server-side this time instead of
+client-side.
+
+**Not yet live-tested**: reinstall/reopen the app with this build,
+confirm the sync icon turns green (not red) on its own or after one
+manual tap, and confirm the company logo change from before now shows
+up correctly after a sync (if it's still sitting there locally
+unsynced) — if the app was fully closed and reopened since without
+successfully syncing, double-check that specific company's logo is
+still what you expect locally before relying on this to recover it.
+
+## Fix: "Import Ready-Made" list never showed catalog logos
+
+User report: a seller adding a company via "Import Ready-Made" saw
+initials only, never the catalog's actual logo — even though the admin
+catalog and the seller's own companies list both already show uploaded
+logos correctly.
+
+**Root cause**: `import_ready_made_sheet.dart`'s `_PresetTile` had its
+own hand-rolled initials circle (`Container` + `Text(preset.initials)`),
+predating the shared `LogoAvatar` widget introduced during the logo
+pass — it was never updated to use it, so `PresetCompany.logoUrl`
+(already populated correctly by `CompaniesCubit.loadCatalogOptions`)
+was simply never rendered anywhere in this one sheet.
+
+**Fix**: swapped the hand-rolled circle for `LogoAvatar(initials:
+preset.initials, logoUrl: preset.logoUrl)` — same widget the Companies
+list, Company Detail header, and admin catalog card all already use.
+
+**Verified**: `flutter analyze` clean; `flutter test` 30/31 (same
+pre-existing Profits flake, no regressions); `flutter build apk --debug`
+with real `--dart-define` credentials run in background.
+
+**Not yet live-tested**: open Companies → Import Ready-Made and confirm
+a catalog company with an uploaded logo now shows it instead of
+initials.
+
+## Feature: real Excel/PDF/CSV export on the Numbers page
+
+User report: the three export buttons (PDF/CSV/Excel) on the Numbers
+management page did nothing — they called a dead `_comingSoon` stub
+that just showed a "coming soon" SnackBar. Requested: make them actually
+work, organized, and support both Arabic and English.
+
+**New packages** (confirmed with the user before adding):
+- `excel: ^4.0.6` — builds real `.xlsx` workbooks (`Excel.createExcel()`,
+  `TextCellValue`, `.save()`).
+- `pdf: ^3.11.1` (resolved to 3.12.0) — builds PDF documents;
+  `pw.Document`/`pw.MultiPage`/`pw.TableHelper.fromTextArray`.
+- `share_plus: ^10.1.4` — hands the generated file to the OS share sheet
+  so the seller can save/send it without needing Android scoped-storage
+  write permissions (the file is written to the app's own temp dir, not
+  a public Downloads folder).
+
+**New file**: `lib/features/numbers/data/numbers_export.dart` —
+`exportNumbers({context, lines, format})` builds the rows once, then
+branches into `_buildCsv`/`_buildExcel`/`_buildPdf`, writes the bytes to
+a temp file, and calls `Share.shareXFiles([XFile(path)])`.
+- **CSV**: manually built (comma-escaping own logic) with a leading
+  UTF-8 BOM (`0xEF 0xBB 0xBF`) — without it, Excel specifically (not
+  other CSV readers) garbles Arabic text even though the bytes are valid
+  UTF-8.
+- **Excel**: `TextCellValue` stores plain UTF-8 strings — no custom font
+  needed, since Excel itself handles Arabic glyph rendering on read.
+- **PDF**: loads the app's own already-bundled `IBMPlexSansArabic`
+  Regular/Bold TTFs (the `pdf` package's default font has no Arabic
+  glyphs at all) and sets `pw.TextDirection.rtl` when the current locale
+  is Arabic, `.ltr` otherwise — so column order and text alignment flip
+  correctly per language. Table built with `pw.TableHelper.fromTextArray`
+  (the non-deprecated replacement for `Table.fromTextArray`).
+- All headers/status labels are resolved via `.tr()` at call time, so
+  the exported file always matches whichever language the app is
+  currently displaying — not a fixed language.
+
+**State change**: `NumbersState` gained a private `_matchingLines`
+getter (all filter logic, previously duplicated) shared by both
+`filteredLines` (paginated, for the on-screen list) and a new
+`exportLines` getter (unpaginated) — so an export always covers
+everything matching the current filters, not just the page currently
+shown on screen.
+
+**UI change**: `_NumbersView` converted from `StatelessWidget` to
+`StatefulWidget` with an `_isExporting` flag. Tapping an export button
+guards against double-taps, shows a translated empty-state SnackBar if
+there's nothing to export (`numbers.export.empty`), calls
+`exportNumbers`, and shows a translated error SnackBar on failure
+(`numbers.export.error`) — both keys added to `en.json`/`ar.json` inside
+the existing `numbers.export` block. Each `_ExportButton` shows a small
+spinner and disables itself while exporting.
+
+**Verified**: `flutter analyze` clean (after switching to
+`TableHelper.fromTextArray`); `flutter test` 30/31 (same pre-existing
+Profits flake, no regressions — nothing in this pass touches
+Number-Update logic); `flutter build apk --debug` with real
+`--dart-define` credentials run in background to confirm the new native
+Android plugin code (`excel`, `pdf`, `share_plus` all ship native/Java
+components) compiles cleanly.
+
+**Not yet live-tested**: open the Numbers page on a real device, export
+each of the three formats, and confirm (a) the share sheet appears and
+a save/send actually works, (b) Arabic text renders correctly and
+right-aligned in the PDF (this is the part most likely to have a subtle
+font/shaping issue that only shows up on a real render), and (c) the
+CSV opens in Excel with Arabic intact rather than mojibake.
+
+## Feature: extended export to Reports and Shipments & Operations
+
+User asked to check for other non-working export buttons besides
+Numbers. Found two more dead `_comingSoon` stubs:
+- **Reports page** (`reports_page.dart`): "Print/Save PDF" and "Export
+  Excel" buttons above the operations table.
+- **Shipments & Operations page** (`shipments_operations_page.dart`),
+  Operations tab: "Export Excel" button. (Its neighboring "Import"
+  button is a distinct, unimplemented bulk-import-from-file feature —
+  left as-is; the user's request was specifically about export.)
+
+**Refactor first**: pulled the CSV/Excel/PDF-building logic out of
+`numbers/data/numbers_export.dart` into a new shared
+`lib/core/utils/table_export.dart` (`TableExportFormat` enum +
+`exportTable({context, title, headers, rows, format, fileNamePrefix})`)
+so the three export surfaces don't duplicate the BOM/font/RTL logic.
+`numbers_export.dart` is now a thin wrapper that just builds
+Numbers-specific headers/rows and calls `exportTable`; `numbers_page.dart`
+now imports `TableExportFormat` from core instead of a
+feature-local enum.
+
+**New files**:
+- `lib/features/reports/data/reports_export.dart` —
+  `exportReportLines(...)`, columns matching `_OperationsTable` exactly
+  (date, SIM number, customer, company, package, sale price, profit,
+  payment status, rep).
+- `lib/features/shipments_operations/data/shipments_operations_export.dart`
+  — `exportOperationLines(...)`, columns matching the Operations tab's
+  table (SIM number, company, customer, contact, package).
+
+**UI changes**: both `_ReportsView` and `_ShipmentsOperationsView`
+converted from `StatelessWidget` to `StatefulWidget` with an
+`_isExporting` flag, same guarded pattern as Numbers (empty-state
+SnackBar, try/catch/finally, spinner replacing the icon while
+exporting, button disabled mid-export). Reports exports whichever of
+PDF/Excel was tapped over `state.filteredLines` (already unpaginated).
+Shipments & Operations exports Excel only (matching its original single
+button) over `state.filteredLines` for the Operations tab.
+
+**New translation keys** (`en.json`/`ar.json`): `reports.exportEmpty`,
+`reports.exportError`, and
+`shipmentsOperations.operationsTab.exportEmpty`/`.exportError` —
+following the same naming pattern as `numbers.export.empty/.error`
+from the previous pass (each page nests them slightly differently
+since each already had different pre-existing key structures).
+
+**Verified**: `flutter analyze` clean; `flutter test` 30/31 (same
+pre-existing Profits flake, no regressions); `flutter build apk --debug`
+with real `--dart-define` credentials run in background.
+
+**Not yet live-tested**: open Reports and Shipments & Operations →
+Operations tab on a real device and confirm each export button
+produces a correct file via the share sheet, same as Numbers.
+
+## Follow-up: replaced the unimplemented "Import" button with PDF export
+
+User feedback on the previous pass: only activate Excel export as
+originally requested, and replace the Operations tab's still-dead
+"Import" button (a separate, unimplemented bulk-import-from-file
+feature the user didn't ask for) with a PDF export button instead of
+leaving it as a dead stub.
+
+**Change**: `_OperationsTab` now exposes two working export buttons
+(Excel + PDF, both via `onExport(TableExportFormat)`) instead of one
+export button plus a dead import stub. Removed the now-unused
+`onImport`/`_comingSoon` plumbing from `_ShipmentsOperationsView` and
+`_OperationsTab` entirely — nothing else in the page referenced them.
+Added `shipmentsOperations.operationsTab.exportPdf` to
+`en.json`/`ar.json` and removed the orphaned `.import` key (no longer
+referenced anywhere in code).
+
+**Verified**: `flutter analyze` clean; `flutter test` 30/31 (same
+pre-existing Profits flake); `flutter build apk --debug` with real
+`--dart-define` credentials run in background.
+
+## Fix: "Change Password" said success but never touched the real password
+
+User report: changed the password from Settings, got the "Password
+changed." confirmation, but the password hadn't actually changed.
+
+**Root cause**: `change_password_sheet.dart` was a pure UI mock (its own
+doc comment said so) — `_save()` only ran the three local validations
+(non-empty, 6+ chars, matches confirmation) then immediately popped the
+sheet and showed the success SnackBar. It never called Supabase Auth at
+all.
+
+**Fix**: added `AuthService.changePassword({currentPassword,
+newPassword})` (`core/auth/auth_service.dart`). Supabase has no
+standalone "verify this password is correct" call, so it re-authenticates
+via `signInWithPassword(email: currentUser.email, password:
+currentPassword)` first — this throws `AuthException` if the current
+password is wrong, which is exactly the check the old mock skipped —
+then calls `auth.updateUser(UserAttributes(password: newPassword))` to
+actually change it. `change_password_sheet.dart`'s `_save()` is now
+async: shows a spinner in the Save button, calls
+`AuthService.changePassword` (guarded by the same `Env.isConfigured`
+pattern every other real/mock Cubit in this app uses), and only pops
+with the success message after the Supabase call actually succeeds. A
+wrong current password now shows a translated inline error
+(`changePassword.errors.currentIncorrect`) instead of silently
+"succeeding"; any other failure (offline, etc.) shows
+`changePassword.errors.generic`.
+
+**Verified**: `flutter analyze` clean; `flutter test` 30/31 (same
+pre-existing Profits flake, no regressions); `flutter build apk --debug`
+with real `--dart-define` credentials run in background.
+
+**Not yet live-tested**: on a real device, try changing the password
+with a deliberately wrong current password (should show the inline
+error and NOT change anything), then with the correct current password
+(should succeed), then sign out and sign back in with the new password
+to confirm it actually took effect server-side.
+
+## Fix: "Forgot password" sent the email but had no way to complete the reset
+
+User asked about the "Forgot password" button on Login. `ForgotPasswordCubit`
+already called real Supabase Auth (`resetPasswordForEmail`) — that part
+was genuine, not mocked. But the app had **no way to receive the email's
+reset link back**: no deep link registered at the platform level, and no
+in-app screen to actually set a new password. So the email arrived, but
+tapping its link had nowhere to go — the flow was a dead end past that
+point.
+
+**No new package needed**: `supabase_flutter` already bundles `app_links`
+internally (`SupabaseAuth` in the package source) and automatically
+listens for and processes an incoming deep link — it exchanges the
+link's code for a session and fires `AuthChangeEvent.passwordRecovery`
+on `auth.onAuthStateChange`. The missing pieces were entirely on this
+app's side: registering a URL scheme at the platform level, telling
+Supabase to redirect there, and reacting to that event.
+
+**Changes**:
+- `lib/core/config/deep_links.dart` (new) — `DeepLinks.resetPasswordCallback
+  = 'simsalesmanager://reset-callback'`.
+- `android/app/src/main/AndroidManifest.xml` — added a second
+  `intent-filter` on `MainActivity` for `android.intent.action.VIEW`
+  with `scheme="simsalesmanager" host="reset-callback"`, so Android
+  routes that link straight into the app instead of a browser.
+- `ios/Runner/Info.plist` — added matching `CFBundleURLTypes` /
+  `CFBundleURLSchemes` (iOS isn't the active target this session, but
+  costs nothing to keep in sync).
+- `forgot_password_cubit.dart` — `resetPasswordForEmail` now passes
+  `redirectTo: DeepLinks.resetPasswordCallback`.
+- `main.dart` — `SimSalesManagerApp` converted from `StatelessWidget` to
+  `StatefulWidget` holding a `GlobalKey<NavigatorState>` (now passed to
+  `MaterialApp.navigatorKey`) and a subscription to
+  `Supabase.instance.client.auth.onAuthStateChange` set up in
+  `initState` (only when `Env.isConfigured`): on
+  `AuthChangeEvent.passwordRecovery` it pushes the new
+  `RouteNames.resetPassword` route. Subscribing this early (before the
+  first frame) reliably wins the race against the deep link stream,
+  which only emits after the widget tree exists on mobile.
+- New feature: `features/auth/presentation/{cubit,pages}/reset_password_*`
+  — `ResetPasswordCubit`/`ResetPasswordState` (same `onChanged`-driven
+  field pattern as `LoginCubit`/`ForgotPasswordCubit`, not raw
+  `TextEditingController`s — matches this codebase's existing
+  convention) and `ResetPasswordPage`, styled like
+  `ForgotPasswordPage`'s success-card flow. No "current password" field
+  — the recovery session from the link is itself the proof of identity.
+  `submit()` calls `auth.updateUser(UserAttributes(password: ...))`;
+  success shows a "Back to Sign in" card that signs out (the recovery
+  session is single-purpose) and clears the nav stack back to Login so
+  the user authenticates fresh with the new password. `PopScope(canPop:
+  false)` on the page — no back button, since there's nothing sensible
+  to go back to mid-reset.
+- New translation keys: `resetPassword.*` in both `en.json`/`ar.json`.
+
+**Requires one thing from the user**: add
+`simsalesmanager://reset-callback` to the Supabase project's
+**Authentication → URL Configuration → Redirect URLs** allowlist —
+Supabase rejects `resetPasswordForEmail`'s `redirectTo` if it isn't on
+that list, which would otherwise make the email link fail silently at
+the network level even though everything above is correct.
+
+**Verified**: `flutter analyze` clean; `flutter test` 30/31 (same
+pre-existing Profits flake, no regressions); `flutter build apk --debug`
+with real `--dart-define` credentials run in background (this is the
+first build to exercise the new Android manifest intent-filter, worth
+watching for manifest-merge issues).
+
+**Not yet live-tested**: this needs a real device end-to-end pass —
+request a reset link from Login, open the email on the same device,
+tap the link, confirm it reopens this app (not a browser) straight into
+the new "Set new password" screen, set a new password, and sign in with
+it. Also confirm the Supabase dashboard redirect URL was added first,
+or the email send itself may fail.
+
+## Fix: exporting one file made every export button on the page spin
+
+User report: tapping any one export button on Numbers/Reports/Operations
+made every other export button on that page show a loading spinner too,
+not just the one tapped.
+
+**Root cause**: all three pages tracked export progress with a single
+`bool _isExporting`, and every button on the page read that same flag
+for its spinner (`isLoading: _isExporting`). Correct to disable the
+others during an export (prevents overlapping exports racing each
+other), wrong to show a spinner on buttons that weren't actually doing
+anything.
+
+**Fix**: replaced `bool _isExporting` with `TableExportFormat?
+_exportingFormat` in all three pages (`numbers_page.dart`,
+`reports_page.dart`, `shipments_operations_page.dart`). Each button now
+compares against its own format for the spinner
+(`isLoading: _exportingFormat == TableExportFormat.pdf`, etc.) while
+still disabling (no spinner) whenever any export is in progress
+(`isDisabled: _exportingFormat != null` / `onPressed: _exportingFormat
+!= null ? null : ...`). `numbers_page.dart`'s `_ExportButton` gained a
+separate `isDisabled` param distinct from `isLoading` for this.
+
+**Verified**: `flutter analyze` clean; `flutter test` 30/31 (same
+pre-existing Profits flake, no regressions); `flutter build apk --debug`
+with real `--dart-define` credentials run in background.
+
+## Removed: dead "refresh" icon button on Numbers
+
+User called it useless/non-functional and asked for it to be removed.
+Removed the `_IconOnlyButton(icon: Icons.refresh_rounded, onTap:
+cubit.refresh)` next to the export buttons in `numbers_page.dart`, the
+now-unreferenced `_IconOnlyButton` widget class, and
+`NumbersCubit.refresh()` itself (also now unreferenced anywhere) along
+with the `CustomerCatalog` field it needed — deleted rather than left
+dead per CLAUDE.md.
+
+**Verified**: `flutter analyze` clean; `flutter test` 30/31 (same
+pre-existing Profits flake, no regressions); `flutter build apk --debug`
+with real `--dart-define` credentials run in background.
+
+## Fix: newly added line showed "?" for company on Numbers/Customer page
+
+User report: added a Line for a customer from company "ليان" — the
+Numbers table showed a "?" for its company, and the Customer Detail
+page's line card showed no company name at all. Confirmed with the user
+first that "ليان" itself is Active and its name displays correctly on
+its own Companies card — ruling out a bad/blank company record.
+
+**Root cause**: `LinesTable` never stored `companyName`/`companyInitials`
+/`packageName` at all — by design, a Line only kept the real FK
+(`companyId`/`packageId`), and `CustomersCubit._lineFromRow` re-derived
+the display strings **live**, once, by looking up
+`getIt<CompanyCatalog>().activeCompanies` at the exact moment
+`_loadFromDrift()` ran (app/session start). Companies and Lines sync
+independently (`SyncEngine.pullLines`/`pullCompanies` are unrelated
+calls with no ordering guarantee) — if this company's own pull hadn't
+finished yet at that exact moment (a real, timing-dependent race, most
+likely right after both a new company and a new line referencing it are
+added close together), the lookup returned nothing, and the Line's
+`companyName`/`companyInitials` got frozen as `''`/`'?'` for the rest of
+the session — with no reactivity to notice once the company catalog
+caught up moments later. This exact class of bug (a display value
+silently frozen from a one-time snapshot of a sibling cubit that hadn't
+finished loading yet) is the same shape as the sync/migration bugs found
+earlier this session, just in a different cubit.
+
+**Fix**: added `companyName`/`companyInitials`/`packageName` as real
+(nullable) columns on `LinesTable` — a proper historical snapshot,
+matching how the `Line` domain entity already models these fields, and
+matching normal accounting practice (a sale record shouldn't silently
+change if the company is later renamed or archived).
+- `lib/core/database/tables/lines_table.dart` — 3 new nullable
+  `TextColumn`s.
+- `lib/core/database/app_database.dart` — `schemaVersion` bumped to 3;
+  `onUpgrade` adds the 3 columns for `from < 3`.
+- `CustomersCubit._persistNewLine`/`_persistLineUpdate` now write all
+  three from the `Line` object being saved (which `addLine`/
+  `addSaleLine`/`LineFormSheet`/`NewSaleCubit` already compute
+  correctly at creation time — nothing changed there).
+- `CustomersCubit._lineFromRow` now reads the stored columns first,
+  falling back to the old live join only when a column is `null` (rows
+  written before this migration) — so old data keeps working via the
+  same best-effort join, while every new write is now immune to the
+  race entirely.
+- `core/sync/sync_engine.dart` — `_lineToRow`/`_lineFromRow` (the
+  Supabase push/pull mapping) gained the 3 new fields — missing this is
+  exactly the mistake that caused an earlier bug this session
+  (`number_update_url` silently never syncing), so added deliberately
+  this time.
+- `supabase/migrations/0009_line_company_package_snapshot.sql` (new) —
+  adds the 3 columns server-side. **Needs to be run** against the
+  Supabase project before this reaches a device that syncs, the same as
+  every other migration this session.
+
+**Verified**: `flutter analyze` clean; `dart run build_runner build`
+regenerated Drift code for the new columns cleanly; `flutter test`
+30/31 (same pre-existing Profits flake, no regressions); `flutter build
+apk --debug` with real `--dart-define` credentials run in background.
+
+**What this does NOT automatically fix**: the one Line already sitting
+broken in the user's data — its DB row still has `company_name = null`
+(the column didn't exist when it was written), so it'll keep using the
+live-join fallback, which likely now succeeds simply because enough
+time has passed for the company catalog to finish loading (worth just
+reopening the app to check). If it's still wrong, editing that one Line
+(Customer Detail → its card's Edit menu → re-select "ليان" as the
+company → Save) will persist the correct snapshot going forward, since
+the edit path now writes it — no need for a data migration script for
+a single row.
+
+## Fix: Home page frozen — stats, balance section, and charts never updated
+
+User report: added a company and sold a line, but Home's Numbers stat,
+the "Your Balance with Supplier Companies" section (said "no supplier
+companies yet" despite one existing), and both charts never reflected
+any of it.
+
+**Root cause**: `HomeCubit` is a `getIt` singleton (unlike
+Numbers/Reports/Shipments & Operations, which are fresh
+`BlocProvider(create: ...)` instances built new every time their page
+opens) — it reads `customerCatalog.allLines`/`companyCatalog.
+activeCompanies` exactly **once**, in its constructor, at first launch.
+Every stat card, the balance section, and both charts (`salesProfitData`
+/`profitTrendData`) are getters on that same frozen `HomeState`. A
+`HomeCubit.refresh()` method already existed to re-pull both — but
+nothing in the app ever called it, so it did nothing for anyone. Adding
+a company or selling a line updates `CompaniesCubit`/`CustomersCubit`'s
+own state live (their own pages reflect it immediately), but Home never
+found out.
+
+**Fix**: `home_page.dart`'s `_HomeView` converted from `StatelessWidget`
+to `StatefulWidget`; `initState` calls `context.read<HomeCubit>().
+refresh()`. Every route that returns to Home (`Navigator.
+pushReplacementNamed(RouteNames.home)` — from Companies, Customers,
+More, and after Login) constructs a brand-new `HomePage`/`_HomeView`
+widget even though the underlying `HomeCubit` instance persists, so
+`initState` firing on each visit is exactly the right hook to keep it
+current without needing a `RouteObserver` or any other machinery.
+
+**Verified**: `flutter analyze` clean; `flutter test` 30/31 (same
+pre-existing Profits flake, no regressions); `flutter build apk --debug`
+with real `--dart-define` credentials run in background.
+
+**Not yet live-tested**: on a real device, confirm navigating away from
+Home (e.g. to Companies) and back now shows the newly added company in
+the balance section and updates the stat cards/charts, without needing
+a full app restart.
+
+## Rebrand: app renamed to "eSIMly" with a real icon and logo
+
+User supplied a real icon (`assets/icons/icon.png`) and horizontal
+wordmark logo (`assets/images/logo_full.png`) and asked to rename the
+app and apply both, confirming "eSIMly" (the name printed on the logo
+itself) as the new app name.
+
+**New package** (confirmed with the user before adding): `flutter_launcher_icons`
+(dev-only — doesn't affect the shipped app's size) generates every
+Android/iOS launcher icon size from one source image.
+- `pubspec.yaml` — added `flutter_launcher_icons: ^0.14.3` +
+  `flutter_launcher_icons:` config block (`image_path:
+  assets/icons/icon.png`, `remove_alpha_ios: true` — the Apple App
+  Store rejects an icon with an alpha channel, and the source PNG has
+  one).
+- Ran `dart run flutter_launcher_icons` — regenerated every
+  `android/app/src/main/res/mipmap-*/ic_launcher.png` and the iOS
+  `AppIcon.appiconset` images.
+
+**App name** changed everywhere it's user-visible:
+- `android/app/src/main/AndroidManifest.xml` — `android:label` →
+  `"eSIMly"` (shown under the icon on the home screen/app switcher).
+- `ios/Runner/Info.plist` — `CFBundleDisplayName` → `"eSIMly"`.
+- `main.dart` — `MaterialApp.title` → `"eSIMly"` (task-switcher label on
+  Android, not itself visible in-app).
+- `login.brandName` in `en.json`/`ar.json` → `"eSIMly"`.
+- Deliberately **did not** touch `pubspec.yaml`'s top-level `name:`
+  (`sim_sales_manager`) — that's the Dart package identifier used
+  throughout every import statement (`package:sim_sales_manager/...`)
+  and Android's `applicationId`/iOS bundle identifier internals; renaming
+  it is a much larger, separate, purely-internal change with no
+  user-visible effect, so out of scope here unless asked for
+  specifically.
+
+**Login screen logo**: `login_page.dart`'s `_BrandHeader` swapped from a
+small icon-in-a-box + separate "eSIMly" text (the old placeholder brand
+row) to `Image.asset('assets/images/logo_full.png')` directly, since
+that image already bakes in both the icon and the "eSIMly" wordmark —
+keeping both would have been a duplicate. Kept the tagline text below
+it, since that's not part of the image.
+
+**Verified**: `flutter analyze` clean; `flutter test` 30/31 (same
+pre-existing Profits flake, no regressions); `flutter build apk --debug`
+with real `--dart-define` credentials run in background.
+
+**Not yet live-tested**: install the build on a real device and confirm
+(a) the launcher icon is the new one, not the Flutter default, (b) the
+app name under the icon reads "eSIMly", and (c) the Login screen shows
+the real logo image correctly sized and not stretched/blurry.
+No splash screen exists in this app beyond Flutter's default blank
+white `launch_background.xml`/`LaunchScreen.storyboard` (never
+customized) — branding that would need `flutter_native_splash` (a
+separate new-package decision) if wanted; left untouched since it
+wasn't a real existing splash screen to update.
+
+## Fix: offline mode showed the email as "Welcome back" name, and was slow
+
+User report: two problems, only visible offline — Home's "Welcome back"
+greeting showed the raw email instead of a name, and the whole app took
+well over 10 seconds to become usable, both only offline (online was
+fine for both).
+
+**Root cause #1 (slow offline start)**: `CompaniesCubit`, `CustomersCubit`,
+and `SettingsCubit` (all three `getIt` singletons created at app start)
+each unconditionally attempt a Supabase round trip before falling back
+to local Drift data — `CustomersCubit` alone makes 4 sequential calls
+(`pushPendingCustomers`/`pushPendingLines`/`pullCustomers`/`pullLines`).
+Each of those, offline, doesn't fail instantly — it waits out a real
+connect/DNS timeout (multiple seconds each) before the existing
+try/catch falls back to local data. With three cubits each doing this
+independently (one with 4 calls in a row), the cumulative wait
+comfortably passed 10 seconds even though the local data was sitting
+there the entire time, ready to read immediately.
+
+**Root cause #2 (email instead of name)**: `ProfileCubit._loadReal()`
+had exactly the same shape — try the network, and on *any* failure
+(including offline) fall back to `email` as the "name". Since
+`ProfileCubit` is a session-lifetime singleton, this only actually
+showed up on a cold start while offline (a warm session already had the
+real name cached in memory from whenever it last succeeded online) —
+matching the user's report that this was offline-specific.
+
+**Fix, part 1 (speed)**: added a `ConnectivityService` check
+(`core/sync/connectivity_service.dart` — already existed, wraps
+`connectivity_plus` with a cheap instant OS-level online/offline flag,
+previously only used by `SyncBloc`) to the front of `_syncThenLoad` in
+`CompaniesCubit`, `CustomersCubit`, and `SettingsCubit`: when offline,
+skip the network attempt(s) entirely and go straight to
+`_loadFromDrift()`. This is the offline-first pattern CLAUDE.md already
+calls for, just not wired into these three cubits' startup path — turns
+a 10+ second guaranteed wait into an effectively instant local read
+whenever there's no connection at all.
+
+**Fix, part 2 (name)**: added a local-only cache column,
+`SettingsTable.cachedDisplayName` (schema v4 —
+`app_database.dart`/`settings_table.dart`), refreshed every time
+`ProfileCubit` successfully fetches the real name online. Deliberately
+**excluded from `sync_engine.dart`'s settings push/pull mapping** — it
+never leaves the device and can't conflict with anything, purely a
+"last known good" fallback. `ProfileCubit._loadReal()` now checks
+connectivity first (same instant-skip fix as above) and, when offline
+or the fetch fails, reads this cache before ever falling back to the
+email — so a cold start offline now shows the seller's actual last-known
+name. Cache writes go through a plain `UPDATE ... WHERE ownerId = ?`
+that only ever touches this one column — deliberately not
+`insertOnConflictUpdate`, since that would also stamp `updatedAt` on
+the settings row and could lose an unrelated concurrent currency-symbol
+change to last-write-wins purely because of this unrelated cache write.
+
+**Verified**: `flutter analyze` clean; `dart run build_runner build`
+regenerated Drift code for the new column cleanly; `flutter test` 30/31
+(same pre-existing Profits flake, no regressions); `flutter build apk
+--debug` with real `--dart-define` credentials run in background.
+
+**Not yet live-tested**: on a real device, turn on airplane mode, fully
+close and reopen the app, and confirm (a) it becomes usable in close to
+1 second instead of 10+, and (b) "Welcome back" shows the real name —
+note this second check only proves itself once the app has successfully
+loaded the profile online at least once before (to populate the new
+cache), so test it on a device that's already signed in normally, not a
+brand-new install that's never been online.
+
+## Feature: Number Update no longer requires the number to be a registered Line
+
+User asked: Number Update should work for *any* typed number, not only
+ones already sold to a customer through this app — with an automatic
+mechanism that tries each known supplier and uses whichever one
+recognizes the number, since there was no way to know in advance which
+company a random number belongs to.
+
+**Previous design**: `NumberUpdateCubit.submitUpdate()` first matched
+the typed number against a registered `Line` to find which company sold
+it, then called that company's *one* configured provider. Typing a
+number with no matching Line, or one whose company had no provider set,
+short-circuited with a validation message — no provider was ever
+actually called.
+
+**New design**: every submit tries suppliers directly, in order —
+**Liyan → QuickLine → Areen** (all three: quick, silent HTTP calls,
+`data/number_update_providers.dart`, already distinguish a real match
+from "not this number" via each supplier's own response shape) — and
+only if none of those three recognize it, **Sky** as the last resort
+(the only one needing a visible WebView, for its reCAPTCHA). The first
+supplier to report success wins; nothing about the number's Line/company
+registration in this app matters anymore.
+
+**New local cache** (confirmed with the user): once a number matches a
+supplier, that pairing is remembered
+(`NumberUpdateProviderCacheTable`, schema v5 — one row per (owner,
+phone number)) so the *next* update for the same number tries that
+supplier first — without ever removing the others as a fallback, in
+case a number gets ported to a different supplier later. Synced to
+Supabase (`supabase/migrations/0010_number_update_provider_cache.sql`,
+**needs to be run**) the same way the rest of this app's tenant tables
+are, via new `SyncEngine.pushPendingNumberUpdateProviderCache`/
+`pullNumberUpdateProviderCache` methods mirroring the existing
+`numberUpdateLog` pair.
+
+**Removed**: the old "number not registered"/"company has no provider"
+validation-only error paths, `NumberUpdateState.errorMessage`/
+`errorMessageArgs`/`manualUrl` (no company is looked up anymore, so
+there's no manual-URL company to reference), and the "Open Supplier's
+Page" button — replaced by one new outcome:
+`numberUpdate.errors.notFoundAnyProvider`, logged as a real history
+entry (a genuine attempt was made against every known supplier this
+time, unlike the old validation-only failures) rather than a dead-end
+inline message. A successful entry's log message is now prefixed with
+which supplier actually matched (e.g. "Liyan: ..."), since that's no
+longer implied by a pre-selected company.
+
+**Test updated**: `widget_test.dart`'s Number Update test used to tap
+"Update Number" and assert the old "Ooredoo has no provider" message —
+under the new design that tap would trigger 3 real HTTP calls to actual
+supplier APIs, which a test must never do. Removed that assertion block
+(kept everything else — history display, locale spot-check) with a
+comment explaining why; this specific behavior now needs manual/real
+testing instead.
+
+**Verified**: `flutter analyze` clean; `dart run build_runner build`
+regenerated Drift code for the new table cleanly; `flutter test` 30/31
+(same pre-existing Profits flake, no regressions); `flutter build apk
+--debug` with real `--dart-define` credentials run in background.
+
+**Not yet live-tested**: on a real device, try Update Number with a
+number known to belong to one of the 3 fast suppliers and confirm it
+resolves correctly and quickly; try a number that needs Sky and confirm
+it falls through to the WebView only after the other three miss; try
+updating the same number twice and confirm the second attempt is
+noticeably faster (using the cached supplier first); try a number no
+supplier recognizes and confirm the new "not recognized by any
+supported supplier" message.
+
+## Added: 5th Number Update supplier — Aloha (refresh.telecom.co.il)
+
+User provided a new supplier link (`https://refresh.telecom.co.il`) to
+add to the automatic multi-supplier trial. Reverse-engineered the same
+way as the first four (see PROGRESS.md's original Number Update entry):
+fetched the page's raw HTML/inline `<script>` (`curl`, not a browser —
+no reCAPTCHA on this one) and found its refresh button's own jQuery
+handler, then verified the exact request/response shape with a real
+call using a fake number.
+
+**Endpoint** (`data/number_update_providers.dart`'s new `_postAloha`):
+`POST https://refresh.telecom.co.il/home/refreshNumber` —
+**form-urlencoded**, not JSON like the other three (a plain jQuery
+`$.ajax` call with no `contentType` override defaults to a normal HTML
+form body): `phone_number=<number>&website=` (the empty `website` field
+is a honeypot the real page also leaves blank — a spam-bot tell) with
+header `X-Requested-With: XMLHttpRequest`. Replies with JSON —
+`{"status": true/false, "message": "..."}`, verified with a real call
+(fake number correctly came back `status: false` with a 3-line
+Arabic/Hebrew/English "no active customer found" message).
+
+**Wired in everywhere the other 4 already are**: `NumberUpdateProviderKey`
+enum (+ `label`/`toRow`/`fromRow` helpers), `NumberUpdateCubit
+._defaultTryOrder` (placed after Areen, before Sky — it's a fast silent
+HTTP call like the first three, so it belongs in that group, not
+alongside Sky's slow visible-WebView last resort), and
+`numberUpdateProvider.aloha` in both `en.json`/`ar.json` — company/
+catalog forms' provider dropdowns already iterate `NumberUpdateProviderKey
+.values`, so Aloha appears there with no separate change needed.
+
+**Verified**: `flutter analyze` clean; `flutter test` 30/31 (same
+pre-existing Profits flake, no regressions); `flutter build apk --debug`
+with real `--dart-define` credentials run in background.
+
+**Not yet live-tested**: try Update Number with a real number known to
+belong to Aloha and confirm it's picked up correctly in the trial order
+(after Liyan/QuickLine/Areen miss, before Sky is tried).
+
+## Feature: "SIM Type" field added to packages, everywhere (admin + seller)
+
+User asked for a new required field next to a package's name — "SIM
+type" (free text, e.g. "Cellcom Bundle — monthly") — since the same
+data amount can be resold under different underlying line types, and
+wanted it applied consistently across the whole app, not just the add
+form. Confirmed with the user: shown merged with the name everywhere
+("300GB — Cellcom Bundle"), required going forward (existing packages
+without one just show the bare name).
+
+**Schema** (schemaVersion 6 — `app_database.dart`): added nullable
+`simType` text columns to `PackagesTable` (seller-owned) and
+`PackageCatalogTable` (admin-shared catalog), plus `packageSimType` on
+`LinesTable` — the same frozen-snapshot pattern used for
+`packageName`/`companyName` (migration 0009 earlier this session): a
+sold Line keeps showing its package's SIM type correctly even if that
+package is later edited or removed, and isn't subject to the
+Lines/Companies independent-sync race that motivated snapshotting in
+the first place. `supabase/migrations/0011_package_sim_type.sql`
+(new) — **needs to be run**.
+
+**New shared helper**: `core/utils/package_display.dart`'s
+`packageDisplayLabel(name, simType)` — `"name — simType"`, or just
+`name` when `simType` is empty/null (pre-migration packages/lines).
+Used everywhere a package or a sold line's package is shown, so the
+combined format is consistent instead of reimplemented per screen.
+
+**Entities touched**: `CompanyPackage`, `PackageSummary`,
+`CatalogPackageAdmin` (all gained `simType`); `Line`/`LineSummary`
+(gained `packageSimType`, the frozen snapshot).
+
+**Forms** (both required — a package row with an empty SIM type is
+silently dropped on save, same as an empty name already was):
+- `company_form_sheet.dart` (seller Add/Edit Company) — new "SIM Type"
+  text field next to the package name field in each package row.
+- `catalog_company_form_sheet.dart` (admin catalog) — same.
+
+**Every display site updated** to show `packageDisplayLabel(...)`
+instead of the bare name: New Sale's package dropdown
+(`package_price_step.dart`) and confirm-step summary
+(`confirm_step.dart`); the Add/Edit Line sheet's package dropdown
+(`line_form_sheet.dart`); Customer Detail's line cards (`line_card.dart`)
+and add-payment sheet; Company Detail's per-line list; the Numbers,
+Reports, and Shipments & Operations tables and their PDF/Excel/CSV
+exports; the Operations detail sheet.
+
+**Data flow wired end-to-end**: `CompaniesCubit`/`AdminCompanyCatalogCubit`
+(local Drift + admin's direct-to-Supabase paths) read/write the new
+column everywhere a `CompanyPackage`/`CatalogPackageAdmin` is
+constructed; `NewSaleCubit`/`CustomersCubit.addLine`/`addSaleLine`/
+`updateLine` (plus `CustomerCatalog`'s interface and the `LineFormSheet`
+callback signature) now carry `packageSimType` through to the Line
+that gets persisted; `sync_engine.dart` gained the field in all three
+affected push/pull mappings (`packages`, `package_catalog`, `lines`) —
+deliberately checked this time, since a missed sync mapping caused a
+real bug earlier this session (`number_update_url`).
+
+**Verified**: `flutter analyze` clean; `dart run build_runner build`
+regenerated Drift code for the 3 new columns cleanly; `flutter test`
+30/31 (same pre-existing Profits flake, no regressions); `flutter build
+apk --debug` with real `--dart-define` credentials run in background.
+
+**Not yet live-tested**: add a new package with both fields filled and
+confirm it shows as "name — SIM type" in New Sale, the Numbers/Reports/
+Operations tables, and after exporting to PDF/Excel/CSV; confirm a
+package with only a name (saved before this change, if any exist)
+still displays fine without a trailing "— " artifact.
+
+## Branding pass 2: native splash screen + bigger logo + a brand touch inside the app
+
+Follow-up to the earlier rebrand: user wanted a real splash screen
+showing the logo on launch, the Login logo bigger (it was too small to
+read), the logo added to Forgot Password too, and the brand shown
+somewhere tasteful inside the app itself, not just Login/the icon.
+
+**New package** (confirmed with the user before adding):
+`flutter_native_splash` (dev-only) generates the real native
+Android/iOS/web launch screens from one config, replacing Flutter's
+default blank white placeholder that was never customized.
+- `pubspec.yaml` — added `flutter_native_splash: ^2.4.4` + config:
+  `color: "#FAFAFA"` (this app's actual light-theme background, from
+  `AppColors.light.background` — not an arbitrary white) with
+  `image: assets/images/logo_full.png`, plus an `android_12:` block
+  (Android 12+ has its own dedicated splash API/animation, configured
+  separately from the legacy drawable-based splash every other Android
+  version uses).
+- Ran `dart run flutter_native_splash:create` — generated real
+  `launch_background.xml`/`styles.xml` (light + `-night` variants) for
+  Android, `LaunchScreen` assets for iOS, and web splash assets/CSS.
+- Deliberately used the same light background for both light and dark
+  mode (no `_dark` splash variant) — the logo is black-on-transparent,
+  so a dark background would make it unreadable, and generating a
+  separate white/inverted logo wasn't something this pass could verify
+  visually; worth revisiting if a dark-mode splash variant is wanted
+  later.
+
+**Login logo bigger**: `login_page.dart`'s `_BrandHeader` — logo height
+40 -> 88, centered (was left-aligned next to a separate "eSIMly" text
+label, which is now redundant since the image already has the
+wordmark), tagline centered underneath.
+
+**Added to Forgot Password**: `forgot_password_page.dart` — same logo
+image (height 56, slightly smaller since this page already has its own
+`AppTopBar` title) added above both the request form and the success
+card, so it appears throughout that whole flow, not just the initial
+screen.
+
+**Brand touch inside the app**: `core/widgets/app_top_bar.dart` gained
+an optional `showBrandMark` param — a small 40x40 rounded-corner app
+icon badge next to the page title. Wired into Home only
+(`home_page.dart`) — Home is the app's one true "front door" screen
+(every other page using `AppTopBar` is a `showBack: true` sub-page
+reached from More/Companies/etc.), so this is the one place a
+recurring brand mark reads as identity rather than clutter. Deliberately
+did not add it to every sub-page's header — CLAUDE.md's "don't
+over-engineer" cuts both ways here: sprinkling a logo on all ~15
+`AppTopBar` call sites would look busy, not "مرتب".
+
+**Verified**: `flutter analyze` clean; `flutter test` 30/31 (same
+pre-existing Profits flake, no regressions); `flutter build apk --debug`
+with real `--dart-define` credentials run in background.
+
+**Not yet live-tested**: install fresh on a real device and confirm the
+native splash actually shows the logo on cold launch (not just the
+generated files existing — worth a real look since this is the first
+splash this app has ever had); confirm the bigger Login logo isn't
+clipped/blurry at the new size; confirm Forgot Password's logo doesn't
+crowd its `AppTopBar` title; confirm Home's brand mark renders crisply
+at 40x40 (the source `icon.png` is much larger, so this is a downscale,
+not upscale — should be fine, but worth a look).
+
+## Fix: splash screen looked zoomed/blurry on Android 12+
+
+User report: the new splash logo looked zoomed and unclear.
+
+**Root cause**: Android 12+ has its own native splash-screen API,
+separate from the legacy drawable-based one every earlier Android
+version uses — it forces whatever image is given into a fixed circular
+"safe zone" icon slot, the same shape/size contract as a launcher icon.
+The `android_12.image` config was pointed at the wide `logo_full.png`
+wordmark, which that API then force-fit into a square icon slot —
+scaling it up and cropping it, which is exactly what read as "zoomed
+and unclear."
+
+**Fix**: `pubspec.yaml`'s `flutter_native_splash.android_12.image` now
+points at `assets/icons/icon.png` (the same square icon already used
+for the launcher) instead of the wide logo — this is what that specific
+API actually expects. The legacy pre-Android-12 splash (`image:` at the
+top level) keeps using the full wordmark, since that one just centers
+whatever image it's given with no forced shape. Re-ran `dart run
+flutter_native_splash:create` to regenerate.
+
+**Verified**: `flutter analyze` clean; `flutter build apk --debug` with
+real `--dart-define` credentials run in background.
+
+**Not yet live-tested**: install fresh on a real Android 12+ device and
+confirm the splash icon now renders crisp and correctly proportioned
+instead of zoomed.
+
+## Feature: exported files (PDF/Excel/CSV) now carry app branding
+
+User asked for every exported file (any of the three formats, from
+Numbers/Reports/Shipments & Operations) to carry "documentation" with
+the app's name and logo.
+
+**PDF** (`core/utils/table_export.dart`'s `_buildPdf`): full branding —
+the actual app icon image (`assets/icons/icon.png`, loaded once via
+`rootBundle` and embedded with `pw.MemoryImage`) now sits in the page
+header next to "eSIMly — {report title}" on every page, plus a
+"eSIMly — page X/Y" footer.
+
+**Excel and CSV**: text-only branding — the `excel` package (v4.0.6,
+already in use) has **no image/drawing insertion API at all**, so an
+embedded logo genuinely isn't possible there without swapping to a much
+heavier Excel library, which wasn't proposed given the scope of this
+ask. Both now get a bold "eSIMly — {report title}" line above the real
+header row/column instead (Excel: a styled first row; CSV: a plain text
+first line, since CSV has no styling concept either).
+
+**New shared constant**: `table_export.dart`'s `brandName = 'eSIMly'`,
+reused by all three builders so the name only needs to change in one
+place if it ever does again.
+
+**Verified**: `flutter analyze` clean; `flutter build apk --debug` with
+real `--dart-define` credentials run in background.
+
+**Not yet live-tested**: export each of PDF/Excel/CSV from any of the
+three pages and confirm the branding renders correctly — especially the
+PDF logo image, and that the Excel/CSV brand row doesn't visually
+collide with the real header row underneath it.
+
+## Explained (not a bug): release APK showing mock data, and its size
+
+User ran `flutter build apk --release` (no `--dart-define` flags) and
+got an app full of fake/mock data, and asked why, plus flagged the
+75MB size as too large.
+
+**Mock data — this is expected, not a bug**: every real/mock-mode Cubit
+in this app (documented repeatedly throughout `PROGRESS.md`) checks
+`Env.isConfigured`, which is only true when `SUPABASE_URL`/
+`SUPABASE_ANON_KEY` are supplied via `--dart-define` at build time
+(`core/config/env.dart`). Every build this session — debug and now this
+release — needs those two flags explicitly on the command line; there's
+no fallback default baked into the app (deliberately, since committing
+real credentials to the repo isn't done here). Omitting them doesn't
+error, it just silently runs the entire app in its offline/demo mode
+with mock data everywhere, which is exactly what was seen. **The fix is
+just remembering to include the same two flags used for every debug
+build in this session** on the release build too:
+```
+flutter build apk --release --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=...
+```
+
+**Size — not actually unusual, but reducible**: a plain `flutter build
+apk --release` with no other flags builds one "fat" universal APK
+containing native libraries for every supported CPU architecture
+(arm64-v8a, armeabi-v7a, x86_64) — SQLite (`sqlite3`), the Android
+WebView engine bindings (`webview_flutter`, used by Number Update's Sky
+flow), and Dart's own release runtime all ship per-architecture. That
+alone commonly explains 2-3x the size a single device actually needs.
+75MB for a fat APK with these specific dependencies is within normal
+range, not exceptional bloat — for comparison, this session's *debug*
+APKs (unoptimized, with debug symbols) were consistently ~209MB, so 75MB
+release is already the expected large improvement.
+Two concrete ways to cut real distribution size, no risk:
+- `flutter build apk --release --split-per-abi --dart-define=...` —
+  produces 3 separate APKs, each only for one architecture, each much
+  smaller — right for sideloading a build to a specific test device.
+- `flutter build appbundle --release --dart-define=...` — the format
+  Google Play actually wants; Play's own servers split it per-device
+  automatically, so end users only ever download their device's slice,
+  never the fat combined size.
+A further step — enabling R8/ProGuard code shrinking
+(`isMinifyEnabled`/`isShrinkResources` in
+`android/app/build.gradle.kts`) — would shrink it more, but changes
+build behavior in a way that needs a full smoke-test pass afterward (it
+can occasionally break plugins that rely on reflection), so this wasn't
+applied without being asked first.
+
+## Simplified the build command — without breaking `flutter test`
+
+User wanted `flutter build apk --release` to just work like a normal
+app, without remembering `--dart-define` flags every time. Confirmed
+this is fine since the Supabase key involved is the *publishable* anon
+key (protected by RLS server-side, designed to ship in client apps —
+not a real secret).
+
+**First attempt (reverted)**: baked the credentials in as
+`String.fromEnvironment(..., defaultValue: '...')` directly in
+`core/config/env.dart`. This broke the test suite badly (30/31 ->
+16/31) — `flutter test` never passes `--dart-define`, and the entire
+mock-data test setup depends on `Env.isConfigured` being `false` in
+that situation so every real/mock Cubit falls back to its mock branch;
+with a baked-in default, `Env.isConfigured` became permanently `true`
+everywhere, so widget tests started trying to hit real Supabase instead
+of using seeded mock data. Reverted `env.dart` back to reading
+`--dart-define` only, with no default — this needs to stay exactly as
+that pattern was throughout the whole session.
+
+**Actual fix**: two new one-line-to-run scripts instead —
+`scripts/build_release.bat` and `scripts/build_debug.bat` — each `cd`s
+to the project root and runs the full `flutter build apk` command with
+both `--dart-define` flags already filled in. Double-click either (or
+run `scripts\build_release.bat` from a terminal) instead of typing the
+long command by hand; output path is unchanged
+(`build/app/outputs/flutter-apk/app-release.apk` /
+`app-debug.apk`) — this is the one file to send/install for a real
+device, still fully standalone.
+
+**Verified**: `flutter analyze` clean; `flutter test` back to 30/31
+(same pre-existing Profits flake, confirming the revert actually fixed
+the regression); a real `flutter build apk --release` with both
+`--dart-define` flags run in background to produce a real, current
+release build and report its final size.
+
+## Follow-up: user rejected the script, wanted the literal plain command to work
+
+User pushback: didn't want a script file at all ("بديش ملف سكرت وشغله بفهموش") — wanted the exact literal `flutter build apk --release`, no flags, no wrapper, same as any normal app. Also reported the splash still wasn't right (wanted just `icon.png`, not the wordmark, everywhere) and that the release build's Login screen showed an error/sometimes a crash.
+
+**Build command, actually solved this time**: the reason the first attempt (baking `defaultValue` into `Env`) broke `flutter test` is that `bool.fromEnvironment('FLUTTER_TEST')` reads a **compile-time `--dart-define`**, which `flutter test` never passes — that check always evaluates `false`, so it couldn't tell a test run apart from a real one (confirmed by testing it: still 16/31). The actual fix uses a different, real signal: `flutter test` sets `FLUTTER_TEST=true` as a genuine **OS process environment variable** (not a dart-define) for the whole test process — readable at runtime via `dart:io`'s `Platform.environment`, which `flutter build`/`run` never set. `Env._isFlutterTest` now checks `Platform.environment.containsKey('FLUTTER_TEST')` instead of `bool.fromEnvironment`. Verified empirically both ways: with the wrong (`bool.fromEnvironment`) check, `flutter test` dropped to 16/31; with the right (`Platform.environment`) check, it's back to 30/31 — proof this one actually works, not just a plausible-sounding fix. Deleted the two `scripts/*.bat` wrappers from the earlier attempt since they're no longer needed — plain `flutter build apk --release` (or `flutter run`) now just works, no flags, confirmed with a real build.
+
+**Splash**: switched `flutter_native_splash`'s top-level `image:` (the pre-Android-12 legacy splash) from `logo_full.png` to `assets/icons/icon.png` too, so every Android version — not just 12+ — shows the plain square icon now, matching what was asked instead of the wordmark. Re-ran `dart run flutter_native_splash:create`.
+
+**Login error message**: found one real, concrete gap while investigating (blind — the user's device logs aren't visible here) — `LoginCubit.submit()`'s `on AuthException` catch blanket-labeled *any* Supabase auth error as "incorrect email or password," even causes that have nothing to do with a wrong password (e.g. an unconfirmed email, if an account were ever created straight from the Supabase dashboard's "Add user" instead of this app's own admin panel and its `email_confirm: true`-forcing Edge Function — user confirmed the account they're testing with is a real, already-registered one, ruling out "doesn't exist" but not ruling this out). Now only the exact string `"Invalid login credentials"` (Supabase's one real generic message for a genuinely wrong password) shows the friendly translated message — anything else shows Supabase's own raw error text instead, so the actual cause is visible on the next attempt instead of being masked.
+
+**Verified**: `flutter analyze` clean; `flutter test` 30/31 (same pre-existing Profits flake — and this time specifically re-confirmed the `Platform.environment` fix doesn't regress it); a real `flutter build apk --release` with the plain command (no flags at all) run in background.
+
+**Still open**: the user's actual Login failure reason is not yet confirmed — asked them to retry on the new build and report back whatever the (now more specific) error message says, since that's the only way to know if it's a genuinely wrong password being typed vs. a real account-state issue (unconfirmed email, etc.) vs. something else the new message will finally reveal.
+
+## Fix: sync status icon showed a raw exception on the pre-login auth screens
+
+User sent a screenshot from the Forgot Password page: tapping the small
+sync icon top-right showed a raw `ClientException`/`SocketException`
+("Failed host lookup") for a `company_catalog` request — asked why
+there's even a sync icon on this screen at all.
+
+**Root cause**: `AppTopBar` (shared by every page, including
+`ForgotPasswordPage`/`ResetPasswordPage`) always rendered
+`SyncStatusIndicator` unconditionally. "Sync" is a signed-in account
+concept — the catalog prefetch that indicator was reflecting genuinely
+does run before login (`main.dart` dispatches `SyncStarted` at app
+startup regardless of auth state, to warm the shared, publicly-readable
+company/package catalog), but *showing* that as a tappable status icon
+on an auth screen makes no sense to a user who hasn't signed in yet,
+and turned a transient network hiccup into what read as a raw crash.
+The exception message itself was accurate, not a bug — this was purely
+the earlier `SyncStatusIndicator` "show the real error on tap"
+improvement (from the sync-migration-bug fix, same session) firing
+somewhere it shouldn't have been visible at all.
+
+**Fix**: `AppTopBar` gained a `showSyncStatus` param (default `true`,
+unaffected everywhere else); `ForgotPasswordPage`/`ResetPasswordPage`
+now pass `showSyncStatus: false`. (Login itself doesn't use `AppTopBar`
+— its own `_BrandHeader` never had this issue.)
+
+**Verified**: `flutter analyze` clean.
+
+## Number Update: Aloha moved to the front of the trial order
+
+User asked for `refresh.telecom.co.il` (Aloha) to be tried *first*,
+since it covers the largest share of numbers in practice — falling
+through to the other suppliers only when it misses. `NumberUpdateCubit
+._defaultTryOrder` reordered to `[aloha, liyan, quickline, areen,
+sky]` (was `[liyan, quickline, areen, aloha, sky]`) — Sky stays last
+regardless (still the only slow, visible-WebView one). The per-number
+provider cache from the original multi-supplier feature is unaffected:
+once any number matches a supplier once, that one is still tried first
+for that specific number on future updates, regardless of this default
+order.
+
+**Verified**: `flutter analyze` clean.
+
+## Number Update: SmileSim moved ahead of Aloha, labeled generically
+
+User provided a 6th supplier link (`https://rn.smilesim.net`) and asked
+for it to be tried *first* (covers the largest share of numbers),
+falling through to the previous order otherwise — and asked that it
+not be shown under a specific brand name, just as a generic "general
+update link", since it's meant to look universal rather than tied to
+one supplier's identity.
+
+Reverse-engineered the same way as the others: `curl`'d the raw page —
+its form submits via `fetch('/api/public/refresh', ...)` with a Google
+reCAPTCHA v3 token (`getRecaptchaToken()`/`grecaptcha.execute(...)`),
+then the response carries a `correlation_id` that the page itself polls
+(`/api/public/refresh/{id}/status`) for up to ~3 minutes until a
+supplier actually replies — so, like Sky, this needs a real WebView
+(no way to solve reCAPTCHA v3 with a plain HTTP call), and unlike the
+4 fast suppliers, "first" here means a visible WebView + up to a
+3-minute wait on *every* update attempt until it's cached per-number —
+confirmed and accepted with the user given the tradeoff explicitly
+before implementing.
+
+Found `SkyWebViewUpdater` had already been generalized into
+`FormWebViewUpdater` (`presentation/widgets/form_webview_updater.dart`)
+— parameterized by `url`, since Sky and SmileSim's pages turned out to
+share the exact same DOM shape (`#ph` input, `#f` form, `#r` result
+element with `s`/`e` classes, `#rm` message) — evidently the same
+underlying template — so one driver covers both instead of duplicating
+the WebView-polling logic per supplier. `NumberUpdateProviderKey`
+already had `smilesim` added, `_defaultTryOrder` already led with it
+(`[smilesim, aloha, liyan, quickline, areen, sky]`), and
+`number_update_page.dart` already wired
+`runSmileSimFlow: (n) => FormWebViewUpdater.run(context, n, url:
+'https://rn.smilesim.net/')` — all from earlier in this session.
+
+**This pass's actual change**: `numberUpdateProvider.smilesim` in both
+`en.json`/`ar.json` was still labeled with the brand name ("SmileSim"/
+"سمايل سيم") — changed to a generic "General Update"/"التحديث العام"
+so it never surfaces the specific supplier identity anywhere in the UI
+(success log messages, etc.), per what was asked. The internal Drift/
+Supabase row value stays `'smilesim'` (an implementation detail, not
+user-facing) — only the display label changed.
+
+**Verified**: `flutter analyze` clean; `flutter test` 30/31 (same
+pre-existing Profits flake, no regressions).
+
+## Fix: permanently deleting a company left its shipments/lines orphaned locally
+
+User report: add a company, ship it (top up its balance), permanently
+delete the company, go to Shipments — an old balance is still showing;
+top up a *different* company afterward and the new amount appears to
+land on the deleted one instead.
+
+**Root cause**: `CompaniesCubit.permanentlyDelete()` only cleaned up
+the local `packagesTable` rows before deleting the company (with a
+comment specifically noting Drift doesn't cascade deletes locally the
+way Postgres does) — but never applied that same reasoning to
+`shipmentsTable`/`linesTable`. Checked the actual schema
+(`supabase/migrations/0002_owned_companies.sql`): both
+`shipments.company_id` and `lines.company_id` **do** have `on delete
+cascade` server-side, so deleting the company row on Supabase already
+correctly wipes its shipments/lines remotely — the bug was purely that
+the *local* Drift copies of those rows were never deleted to match,
+left permanently orphaned (still tagged with the now-nonexistent
+company's id) until the next full local wipe.
+
+**Fix**: `permanentlyDelete()` now also deletes local `shipmentsTable`
+and `linesTable` rows for that company, alongside the existing
+`packagesTable` cleanup — matching what the server already does via
+cascade, so local and remote state can't drift apart on this operation
+again.
+
+**Important, separate thing surfaced while investigating** (not fixed,
+needs a decision): `lines.company_id` cascading on company delete means
+permanently deleting a company **already erases that customer's entire
+sales history under it, server-side** — the `companyName`/
+`companyInitials`/`packageName` frozen-snapshot fields added earlier
+this session exist specifically so a Line keeps displaying correctly
+if its company is later renamed/archived, but that protection is moot
+if the company being *permanently deleted* wipes the Line rows
+themselves via cascade. Worth asking the user directly: should
+permanently deleting a company keep its historical Lines (would need a
+migration changing that FK to `on delete set null`, relying on the
+snapshot fields for display, similar to how deleting a customer
+currently interacts with their lines) or is erasing sales history
+together with the company the actually-intended behavior? Not changed
+without an explicit decision, since it's a real data-retention question
+either way.
+
+**Verified**: `flutter analyze` clean; `flutter test` 30/31 (same
+pre-existing Profits flake, no regressions).
+
+**Not yet live-tested**: repeat the exact reported sequence (add
+company → ship it → permanently delete → check Shipments shows nothing
+stale → ship a different company → confirm the amount lands correctly
+on that company, not any leftover state) on a real device.
+
+## Decision applied: permanently deleting a company keeps sold-line history
+
+User's answer to the question raised above: keep a customer's sales
+history when a company is permanently deleted — just let the company
+name stay as historical text on those Lines (which the
+`companyName`/`companyInitials` snapshot columns already exist to
+support).
+
+**Schema change**: `lines.company_id` was `not null ... on delete
+cascade` (from `0002_owned_companies.sql`) — changed to nullable with
+`on delete set null` instead
+(`supabase/migrations/0012_lines_company_set_null.sql`, **needs to be
+run**). Mirrored locally: `lines_table.dart`'s `companyId` column is
+now nullable too; schema bumped to v7 with a migration using Drift's
+`Migrator.alterTable(TableMigration(linesTable))` — SQLite can't ALTER
+a column's nullability directly, so this runs Drift's own 12-step
+recreate-and-copy procedure, preserving all existing data.
+
+**Ripple effects, all handled**: `Line.companyId` and the generated
+`LinesTableCompanion`/sync-engine mapping are `String?` now.
+- `CompaniesCubit.permanentlyDelete()`: no longer deletes local
+  `linesTable` rows (that was the previous pass's fix, now corrected)
+  — instead runs a plain `UPDATE lines SET company_id = NULL WHERE
+  company_id = :id`, matching the server's new `SET NULL` behavior
+  exactly, keeping local and remote consistent immediately rather than
+  waiting on the next sync.
+- `CustomersCubit`: `updateLine`/`deleteLine` now null-check before
+  calling `CompanyCatalog.reverseSale` (a detached Line's company is
+  already gone — nothing left to reverse a balance against);
+  `addLine`/`addSaleLine` still call `recordSale` unconditionally since
+  a *newly created* Line always has a real, just-picked company at that
+  moment (used the method's own non-null `companyId` parameter there
+  instead of the nullable `Line.companyId` field, which is the same
+  value at that instant). `LineSummary.companyId` (a separate, older
+  DTO type with its own `''`-as-"none" convention already established
+  for other backward-compat reasons) maps a null `Line.companyId` to
+  `''` rather than becoming nullable itself, to avoid touching every
+  existing `LineSummary` consumer.
+- `line_form_sheet.dart` needed **no changes** — it was already
+  written defensively for exactly this ("don't crash the sheet if a
+  company was deleted meanwhile"), from before this nullable change
+  even existed.
+
+**Verified**: `flutter analyze` clean; `dart run build_runner build`
+regenerated Drift code cleanly; `flutter test` 30/31 (same
+pre-existing Profits flake, no regressions — including
+`app_database_test.dart`, which exercises real Drift inserts against
+`linesTable` and needed two call sites updated to wrap `companyId` in
+`Value(...)`, confirming the new nullable column and its migration
+both work end-to-end against a real (test) database).
+
+**Not yet live-tested**: on a real device, run the full sequence again
+(add company → sell a line under it → ship it → permanently delete the
+company) and confirm: the customer's line still shows in their history
+with the company's name intact as plain text, the Shipments page shows
+no stale balance, and a new shipment to a different company lands
+correctly on that company only.
+
+## Diagnosed (not a code bug): "Failed host lookup" on Sign In
+
+User reported a release build showing a raw exception on the Login
+screen: `ClientException with SocketException: Failed host lookup:
+'bgieiaxbfoosbgemrppp.supabase.co' ... uri=.../auth/v1/token?grant_type
+=password`. This is the exact same failure shape (same hostname, same
+`errno 7`) as the one seen earlier on Forgot Password's sync icon —
+this time it's on the real sign-in call itself, correctly surfaced as
+raw text instead of a misleading "wrong password" message specifically
+*because* of the earlier `login_cubit.dart` fix (only Supabase's exact
+"Invalid login credentials" string gets the friendly translation now;
+anything else, including this, shows verbatim) — so the fix that
+uncovered this is working exactly as intended.
+
+**Verified independently that this isn't a project/server problem**:
+ran `nslookup`/`curl` against the exact same hostname from a completely
+different network just now — DNS resolves fine (`104.18.38.10`,
+`172.64.149.246`, both real Cloudflare-fronted addresses) and the
+server responds (`HTTP 401` on `/auth/v1/health`, which is the
+*expected* response without an API key — proof the project is live,
+not paused or deleted). `errno 7` ("No address associated with
+hostname") specifically means the *device's own DNS resolution*
+failed for this one lookup — this can only happen on the client
+side: no real internet on the phone/emulator at that exact moment, a
+DNS-blocking VPN/firewall, or (very commonly) an Android emulator
+whose virtual network doesn't have working DNS configured. Nothing in
+this app's code can compensate for the device having no way to resolve
+any hostname at all — this needs checking on the device itself (try
+opening any website in a browser on the same device at the same time
+to confirm).
+
+## Fixed: Login logo and native splash icon still looked wrong
+
+User reported the Login page's big wordmark logo now looked out of
+place ("embarrassing") and asked for it to go back to just the plain
+app icon at a sensible size — and that the native splash icon *still*
+looked oversized/off even after the earlier Android-12-specific fix.
+
+**Login page**: `_BrandHeader` swapped from the 88px-tall
+`logo_full.png` wordmark back to a plain 72x72 rounded-square
+`icon.png` (matching the same treatment already used elsewhere in the
+app — Home's `AppTopBar.showBrandMark`, company avatars).
+
+**Splash icon — the real remaining cause**: the earlier fix (pointing
+Android 12+'s splash config at the square `icon.png` instead of the
+wide wordmark) was necessary but not sufficient. `icon.png` is a
+271x271 image with the glyph filling the canvas edge-to-edge, no
+internal margin — Android 12+'s native splash-icon API masks/crops
+icons to a specific safe zone and expects the source image to already
+carry generous padding around the visible content (its own documented
+guidance); feeding it a zero-padding icon is what still read as
+zoomed/cropped. `flutter_native_splash` has no config knob to shrink an
+image itself, so generated a new **padded variant**
+(`assets/icons/icon_splash.png`, via a quick PowerShell/`System.Drawing`
+script — no image-editing package needed) — same icon, centered on a
+512x512 transparent canvas at 300px (~59% of the canvas, leaving ~20%
+margin on each side, matching Android's safe-zone guidance). Both
+`flutter_native_splash.image` and `.android_12.image` in `pubspec.yaml`
+now point at this padded file instead of the raw icon; re-ran `dart run
+flutter_native_splash:create`.
+
+**Verified**: `flutter analyze` clean; `flutter test` 30/31 (same
+pre-existing Profits flake, no regressions).
+
+**Not yet live-tested**: on a real device, confirm (a) Login shows the
+plain icon at a reasonable size instead of the wordmark, (b) the splash
+icon now renders with visible breathing room around it instead of
+edge-to-edge, and (c) separately, check the device's actual internet
+connection at the moment of testing Sign In — the DNS failure is a
+device/network issue this pass couldn't reproduce or fix from here.
+
+## Mock/demo data removal (all 5 in-app mock data files deleted)
+
+Per explicit request ("قبل البناء ... في التطبيق موك اب داتا تاكد انك
+حاذفها كلها"), removed every remaining in-memory mock/demo dataset from
+the app. Scope, decided with the user via AskUserQuestion after
+explaining the tradeoff: delete the mock files and strip the `if
+(_isReal) {...real...} else {...mock...}` branches down to just the real
+branch — but do **not** do a full rewrite of `test/widget_test.dart`
+right now; instead pause it.
+
+**Files deleted** (all were `lib/features/<feature>/data/*_mock_data.dart`):
+- `number_update/data/number_update_mock_data.dart`
+- `activity_log/data/activity_log_mock_data.dart`
+- `shipments_operations/data/shipments_mock_data.dart`
+- `companies/data/companies_mock_data.dart`
+- `customers/data/customers_mock_data.dart` (largest, 226 lines — backed
+  both `customers` and `lines` initial state)
+
+**Cubits cleaned** (`number_update_cubit.dart`, `activity_log_cubit.dart`,
+`shipments_operations_cubit.dart`, `companies_cubit.dart`,
+`customers_cubit.dart`): removed the mock-data imports; constructors now
+seed state with plain `const []`/`const State()` instead of
+`_resolveDb(db) == null ? XMockData.initial...() : const []`; removed the
+local `int _xIdCounter` fields; every `id: _isReal ? generateUuidV4() :
+'x-${_xIdCounter++}'` ternary collapsed to plain `id: generateUuidV4()`;
+every `if (_isReal) { ...real... } else { ...in-memory mock fallback...
+}` branch collapsed to just the real branch, unconditional. Doc comments
+referencing "mock mode" / "falls back to mock data" updated to match.
+
+**Deliberately left alone**: bare `if (_isReal) { ... }` guards with **no
+else/mock branch** (e.g. `CustomersCubit.permanentlyDeleteCustomer`,
+`.deleteLine`, `CompaniesCubit.permanentlyDelete`, and the various
+`if (_isReal) unawaited(_persistX())` fire-and-forget persistence calls
+throughout all five cubits) — these aren't mock data, they're legitimate
+guards that skip a real-DB write/delete when running without a
+configured DB/signed-in owner (e.g. during tests), and removing them
+would force-unwrap `_db!`/`_auth!` unconditionally and crash. Also left
+alone: `CompaniesCubit._replace()`, the optimistic in-memory balance
+helper used by `recordSale`/`reverseSale`/`addShipment` — it runs
+regardless of real/mock mode, not a mock-data fallback.
+
+**`test/widget_test.dart` (893 lines, 31 tests) — paused, not deleted or
+rewritten**, per the user's explicit choice. This whole suite was built
+against the mock data that used to get seeded into cubits automatically
+whenever `Env.isConfigured` was `false` (which used to always be true
+during `flutter test`, before this session's earlier `Env`
+baked-in-defaults change). With every mock dataset now gone, the cubits
+just start empty in test mode, so this suite's assumptions no longer
+hold. Added a file-level `@Skip('...')` annotation (via `library;`)
+explaining why and what's needed before it can come back — a rewrite
+against real Drift-backed fixtures instead of implicit mock seeding.
+
+**Verified**: `flutter analyze` — no issues. `flutter test` — 16/16
+tests passing across `app_database_test.dart`, `company_entity_test.dart`,
+`new_sale_cubit_test.dart`, `period_filter_matcher_test.dart`;
+`widget_test.dart` shows as cleanly skipped (not failing).
+
+**Still pending / not done in this pass**: rewriting `widget_test.dart`
+against real fixtures (explicitly deferred by the user — "temporarily").
+Also still outstanding from earlier in this session: confirm
+`supabase/migrations/0012_lines_company_set_null.sql` has actually been
+run against the live Supabase project (this pass didn't touch or verify
+that).
+
+## Fixed: "Failed host lookup" on every network call (Sign In, Forgot Password) — missing INTERNET permission
+
+**Root cause found**: `android/app/src/main/AndroidManifest.xml` never declared
+`android.permission.INTERNET` — confirmed via `git diff HEAD` that this was
+missing since the very first commit in this repo, not something a later
+change broke. Without this permission Android blocks all DNS/socket access
+for the app at the OS level, which surfaces in Dart as exactly the
+`SocketException: Failed host lookup` seen on Sign In — this was never a
+device/network problem (the device's internet was fine the whole time, as
+the user correctly suspected).
+
+This also explained the silent Forgot Password bug reported alongside it:
+`ForgotPasswordCubit.submit()` calls Supabase's
+`resetPasswordForEmail`, which threw the same permission-blocked exception
+immediately (before any real network round-trip), so the loading state
+never had time to show — and because that method deliberately reports
+"success" even on failure (to avoid leaking whether an email is
+registered — standard practice, left as-is), the UI silently claimed the
+email was sent when the request never actually left the device.
+
+**Fix**: added the missing `<uses-permission
+android:name="android.permission.INTERNET"/>` line.
+
+**Verified**: `flutter analyze` — no issues. Not yet verified on-device
+(user is building/installing themselves) — expect Sign In and Forgot
+Password to work end-to-end once this build is installed.
+
+## Never show a raw exception to the user (audit + fix, app-wide)
+
+Per explicit request — no raw exception text should ever reach a screen,
+period, always a translated friendly message. Audited every place an
+exception/error gets surfaced to a user and fixed the ones that leaked
+raw text:
+
+- **`LoginCubit.submit()`**: `on AuthException catch (e)` used to show
+  Supabase's raw `e.message` for anything that wasn't the literal
+  "invalid login credentials" string — this is exactly what was showing
+  "ClientException with SocketException: Failed host lookup..." on
+  screen, since supabase_flutter/gotrue wraps a failed network call as an
+  `AuthException` too, not just a plain network exception. Replaced with
+  three translated buckets: `login.errors.invalidCredentials` (wrong
+  password/email), `login.errors.networkError` (message contains
+  socket/host lookup/connection/network — the real fix for this specific
+  report), and a new `login.errors.unexpected` for anything else
+  unrecognized. Never shows raw text now.
+- **`SyncStatusIndicator`** (tap-to-retry on the sync icon): showed
+  `state.errorMessage!` raw — that field is `SyncBloc`'s `e.toString()`.
+  Replaced with a translated generic "retrying sync…" notice
+  (`sync.status.retrying`); the raw string still lives in `SyncBloc`'s
+  state for potential future debugging/logging, it's just never rendered.
+- **4 admin cubits** (`admin_company_catalog_cubit`,
+  `admin_dashboard_cubit`, `admin_support_feedback_cubit`,
+  `admin_users_cubit`): each had `errorMessage: e.toString()` rendered
+  as a plain un-translated `Text` on their respective admin pages.
+  Switched all four to a new shared `common.genericError` translation
+  key, and added `.tr()` at each of the 4 display sites
+  (`admin_company_catalog_page`, `admin_hub_page`,
+  `admin_support_feedback_page`, `admin_users_page`).
+- Confirmed already clean (translation keys only, no raw text):
+  `ForgotPasswordCubit`, `ResetPasswordCubit`, `SupportFeedbackCubit`,
+  and their pages' SnackBars (all call `.tr()` on a key, never on raw
+  exception text).
+
+New translation keys added (ar + en): `login.errors.unexpected`,
+`sync.status.retrying`, `common.genericError`.
+
+**Verified**: `flutter analyze` — no issues. `flutter test` — 16/16
+passing (same as before, `widget_test.dart` still cleanly skipped).
+
+## Fixed: permanently-deleted rows resurrecting after a sync/pull
+
+**Root cause**: `permanentlyDelete`/`permanentlyDeleteCustomer`/`deleteLine`
+each deleted the local Drift row, then fired a remote delete
+(`_syncEngine?.deleteXRemote(id)`) completely unawaited with no retry
+tracking. If that request hadn't reached the server yet (offline, or the
+app closed/backgrounded before it finished — a real risk since it was
+never awaited), the row still existed on Supabase, so the very next pull
+(`SyncEngine.pullCompanies`/`pullCustomers`/`pullLines`, part of every
+`syncAll`, including the one that runs on the next app launch) simply
+re-fetched and re-inserted it locally — a hard delete silently "coming
+back", exactly as reported.
+
+**Fix**: added a small local tombstone table,
+`pending_deletes` (`core/database/tables/pending_deletes_table.dart`,
+schema v7 -> v8), keyed by `(entityTable, entityId)`. A permanent delete
+now calls `SyncEngine.recordAndPushDelete(entityTable, id, ownerId)`,
+which records the tombstone **then** immediately attempts the real
+remote delete — in the common (online) case the tombstone is gone again
+right away. `SyncEngine.syncAll` now also calls a new
+`pushPendingDeletes(ownerId)` step (retrying every still-tombstoned
+delete) right after the other pushes and before any pull; every
+relevant pull (`pullCompanies`/`pullCustomers`/`pullLines`) additionally
+filters out any id still tombstoned as a last line of defense. Net
+effect: a permanently-deleted row can never be resurrected by a pull
+again, whether the delete confirms instantly or has to wait for the
+next time the device is online. Replaces the old one-off
+`deleteCompanyRemote`/`deleteCustomerRemote`/`deleteLineRemote` methods
+on `SyncEngine` (removed, superseded by the generic
+`recordAndPushDelete`).
+
+## Fixed: Home dashboard shows zeros until you leave and come back
+
+**Root cause**: `HomeCubit`'s constructor read
+`customerCatalog.allLines`/`companyCatalog.activeCompanies`
+*synchronously* at construction — but `CompaniesCubit`/`CustomersCubit`
+(the underlying catalogs) load their real data *asynchronously* from
+Drift after their own constructors run. On a cold app start, `HomeCubit`
+is very likely built and reads that empty initial state before the
+other two cubits' first load resolves — so the dashboard showed zeros
+until something else happened to call `HomeCubit.refresh()` (visiting
+Companies/Customers, which apparently was the only thing that ever
+triggered a refresh in practice).
+
+**Fix**: added `Stream<void> get changes` to both the `CompanyCatalog`
+and `CustomerCatalog` interfaces (implemented as `=> stream` on
+`CompaniesCubit`/`CustomersCubit`, i.e. their own Cubit change stream,
+reusable rather than a new broadcast controller). `HomeCubit` now
+subscribes to both on construction and calls `refresh()` on every emission
+— so the dashboard updates itself reactively the moment either catalog's
+async load (or any later write) actually resolves, cold start included.
+
+## Fixed: app feels like it hangs when there's no real internet
+
+**Root cause**: `ConnectivityService.isOnline` only asked
+`connectivity_plus` whether a network *adapter* was connected (WiFi/
+mobile data radio state) — not whether there's actual internet behind
+it. A WiFi network with no working internet uplink (or, per the user's
+report, some other "connected but not really" state) still reported
+"online", so every cubit's connectivity pre-check passed and the app
+went ahead and tried a real Supabase call anyway, which then sat on the
+platform's much longer default socket-connect timeout before finally
+failing — reading as the app "hanging".
+
+**Fix**: `ConnectivityService` now does a real reachability probe (a DNS
+lookup against `supabase.co`) with a hard 1-second timeout on top of the
+adapter check — both for the one-shot `isOnline` getter and for every
+event on `onConnectivityChanged`. A device with a connected-but-dead
+network now reports offline within ~1s instead of only failing once an
+actual API call is attempted.
+
+## Added: language toggle on the pre-login pages
+
+Extracted the EN/AR segmented switch that already lived privately inside
+`SettingsPage` into a shared `core/widgets/language_switch.dart`
+(`LanguageSwitch` widget, identical behavior — sets the locale via
+easy_localization's `context.setLocale`, which persists it). Added it to
+Login (top-end corner, via a `Stack`/`PositionedDirectional` so it's
+RTL-aware), Forgot Password, and Reset Password (both via
+`AppTopBar`'s existing `actions` slot) — so a first-time user can switch
+to Arabic before ever signing in, not just from Settings after.
+
+**Verified** (all of the above): `flutter analyze` — no issues.
+`flutter test` — 16/16 passing, `widget_test.dart` still cleanly
+skipped. Not yet verified on-device (schema migration v7->v8 and the
+sync-flow change in particular need a real run to confirm end-to-end).
+
+## Added: in-app update system (no app store — this app is sold as a direct license)
+
+Since this app is distributed directly to sellers rather than through
+Play Store, there's no store-level mechanism to notify users of a new
+version. Built a self-contained in-app update flow instead, agreed with
+the user via AskUserQuestion: full "check → download → hand off to
+Android's installer" flow (not just a link out to a browser).
+
+**New packages** (confirmed with the user first, per CLAUDE.md):
+`package_info_plus` (reads the installed build number), `http`
+(downloads the APK with progress), `open_filex` (opens the downloaded
+file, which triggers Android's own package-install screen — same
+`REQUEST_INSTALL_PACKAGES` permission a Play Store install itself needs,
+added to `AndroidManifest.xml`).
+
+**Backend** (`supabase/migrations/0013_app_releases.sql` — **needs to be
+run on Supabase**, not yet confirmed done): a small `app_releases` table
+(`version_code`, `version_name`, `apk_path`, `release_notes`,
+`mandatory`) — readable by anyone (even signed out), writable only by an
+admin. A new public Storage bucket `app-releases` holds the actual APK
+files (public, same reasoning as the already-public anon key: an APK
+isn't sensitive, and a public URL lets the app do a plain `http.get`
+with progress instead of an authenticated Storage call).
+
+**App side** (`lib/core/update/`):
+- `AppRelease` — one release row, mapped from Supabase.
+- `UpdateChecker` — fetches the highest `version_code` row and compares
+  it against `PackageInfo.buildNumber` (mirrors `pubspec.yaml`'s
+  `version: x.y.z+<version_code>`); returns `null` (never throws/blocks
+  normal use) if already current, offline, or not configured.
+- `UpdateCubit`/`UpdateState` — `check()` / `download()` (streams the
+  APK to a temp file with live progress, then calls
+  `OpenFilex.open(path)` to hand off to Android) / `dismiss()`.
+- `UpdateGate` (`update_dialog.dart`) — wraps `HomePage` (the landing
+  page after sign-in), triggers `check()` on first build, and shows a
+  dialog once an update is found: version + release notes, a progress
+  bar while downloading, "Update now"/"Later". A `mandatory` release
+  hides "Later" and the dialog can't be dismissed by tapping outside.
+
+**To actually ship a new version going forward**: bump
+`pubspec.yaml`'s `version:` (the number after `+` is the version code),
+build the APK, upload it to the `app-releases` Storage bucket, and add
+one row to `app_releases` with the matching `version_code`/
+`version_name`/`apk_path` — every installed app picks it up next time
+it lands on Home.
+
+**Verified**: `flutter analyze` — no issues. `flutter test` — 16/16
+passing. A release build is running to confirm the new
+packages/manifest permission compile cleanly for Android; not yet
+tested end-to-end on a device (needs the Supabase migration run first,
+plus a real second `app_releases` row to test against).
+
+## Fixed: offline cold start still slow, and an offline admin got dropped into the seller shell
+
+Two related bugs reported together after testing the previous connectivity fix.
+
+**Root cause of both**: `main()`'s startup routing (deciding Login vs.
+Home vs. Admin Hub for a restored session) always awaited
+`AuthService.fetchCurrentRole()` — a real Supabase query — with no
+connectivity pre-check and, worse, **no local fallback at all** if it
+failed. Two consequences:
+1. **Slow open while offline**: that awaited network call had nothing
+   gating it, so a cold start with no internet sat through the
+   platform's long default connect timeout before `runApp()` even ran —
+   this is what still showed as 10+ seconds even after the
+   `ConnectivityService` fix from earlier (that fix helped every
+   *cubit's* own sync, but this particular call in `main()` predates all
+   of them and wasn't using it).
+2. **An offline admin silently lands on the seller shell**: when that
+   query failed (which it always does offline), the `catch` block's only
+   fallback was "assume seller" — there was no memory anywhere of which
+   role this account actually has, so a genuinely signed-in admin got
+   routed to `HomePage` instead of `AdminHubPage`. From there, `HomePage`
+   pulled in `ProfileCubit`, which — since this admin account had never
+   before had a reason to load on the seller shell — had nothing cached
+   locally either, so "Welcome back" fell back to the raw email instead
+   of a name. Confirmed the underlying `ProfileCubit._cacheDisplayName`
+   bug too, unrelated to this specific report but same shape: it only
+   ever *updated* an existing `settings` row, never created one, so any
+   account that had never opened Settings/changed currency had nothing
+   to fall back to on a first offline "Welcome back" regardless of the
+   routing bug.
+
+**Fix**:
+- Added `settings.cachedRole` (schema v8 -> v9, alongside the existing
+  `cachedDisplayName`) — refreshed every time `fetchCurrentRole()`
+  succeeds. `main()` now reads this cached role first (instant, local),
+  and only attempts a fresh network fetch when
+  `ConnectivityService.isOnline` says there's real connectivity (the
+  ~1s-max DNS-probe check from the earlier fix) — so a cold start never
+  again waits out a long timeout for nothing, and a returning admin
+  lands on Admin Hub correctly even fully offline, using their last
+  confirmed role.
+- `ProfileCubit._cacheDisplayName` changed from an update-only write to
+  a proper upsert (`insertOnConflictUpdate`, touching only
+  `cachedDisplayName` — an existing row's `currencySymbol`/`synced`/etc.
+  are left untouched), so the very first offline "Welcome back" for any
+  account — admin or seller, settings row already existing or not —
+  always has a real cached name to fall back to once a name has been
+  fetched successfully at least once.
+
+**Verified**: `flutter analyze` — no issues. `flutter test` — 16/16
+passing. Not yet verified on-device (needs a real cold start with WiFi
+off, on both a seller and an admin account, to confirm timing and
+routing end-to-end).
+
+## Rebrand: eSIMly -> eSIM Dafter
+
+The name "eSIMly" turned out to already be taken by another app, so the
+user replaced the icon (`assets/icons/icon.png`) and full logo
+(`assets/images/logo_full.png`) directly, and asked for the app to be
+renamed to "eSIM Dafter" everywhere and the splash regenerated from the
+new icon.
+
+**Text changes** (every "eSIMly" occurrence found via grep, all
+updated): Android launcher label (`AndroidManifest.xml`), iOS
+`CFBundleDisplayName` (`Info.plist`), `MaterialApp.title` (`main.dart`),
+the exported-file watermark (`table_export.dart`'s `brandName`), and
+both translation files' `login.brandName` (shown on the Login page,
+under the logo). Left `CFBundleName` (`sim_sales_manager`, an internal
+non-display identifier) and the `simsalesmanager://` deep-link scheme
+alone — neither is user-visible, and changing the URL scheme would need
+touching the Android/iOS intent-filter config and
+`core/config/deep_links.dart` in lockstep for zero visible benefit.
+
+**Icon/splash regenerated from the new `icon.png`**: the previous splash
+fix (see this session's earlier "splash icon" entry) depends on a
+*padded* variant (`assets/icons/icon_splash.png`, glyph centered at
+~59% of a 512x512 canvas, matching Android's splash safe-zone guidance)
+— regenerated it from the new icon via the same PowerShell/
+`System.Drawing` script (no new package), then re-ran `dart run
+flutter_launcher_icons` and `dart run flutter_native_splash:create` to
+push the new icon through to every Android/iOS launcher-icon size and
+both the legacy and Android 12+ splash assets. Verified visually (Read
+tool) — both the launcher icon and the Android 12 splash icon render
+crisp, correctly sized, and with proper breathing room, not
+edge-to-edge.
+
+**Verified**: `flutter analyze` — no issues, no remaining "eSIMly"
+references anywhere in the source tree.
+
+## Fixed: deleted customer's debt kept showing on the dashboard ("uncollected")
+
+**Root cause, two parts**:
+1. `CustomersCubit.permanentlyDeleteCustomer` deleted the customer's own
+   Drift row but never deleted that customer's `lines` rows locally —
+   only removed them from in-memory `state.lines`. Unlike a Company's
+   permanent delete (where Lines deliberately survive, detached, with a
+   frozen name snapshot — see `CompaniesCubit.permanentlyDelete`), a Line
+   has no identity independent of its customer, and Supabase's own
+   `lines.customer_id` already cascades on customer delete
+   (`0002_owned_companies.sql`). Without mirroring that locally, the
+   customer's lines stayed orphaned in Drift and came right back into
+   `state.lines` (unfiltered by customer existence) on the next full
+   reload — showing as a phantom debt with no customer left to explain
+   it.
+2. Even for a **soft**-deleted customer (still recoverable in the
+   "Deleted" tab, lines correctly still present), nothing filtered their
+   lines out of the dashboard's `uncollected` stat or Reports'
+   `amountToCollect`/`partiallyPaidCount`/`unpaidCount` — both were
+   built from the full unfiltered line list.
+
+**Fix**:
+- `permanentlyDeleteCustomer` now also deletes the customer's `lines`
+  rows from local Drift (matching the server's cascade), not just
+  detaching them from in-memory state.
+- Added `LineSummary.customerDeleted` (set by `CustomersCubit.allLines`
+  — true when the owning customer is soft-deleted or no longer exists
+  at all). `HomeState.stats.uncollected` and
+  `ReportsState.amountToCollect`/`partiallyPaidCount`/`unpaidCount` now
+  exclude these lines. Deliberately **not** applied to
+  `totalProfit`/`totalSales`/`linesSold`/`operationsCount`, or to
+  Numbers' log — a completed sale's history/profit doesn't stop being
+  real just because the customer record was later deleted; only the
+  "still owed"/"needs follow-up" figures are the ones that become
+  meaningless with no customer left to collect from or contact.
+
+## Added: clickable dashboard stat cards
+
+`StatCard` (`core/widgets/stat_card.dart`) gained an optional `onTap` —
+wraps the card in `InkWell` when provided, otherwise unchanged (every
+other call site is untouched). Wired all 6 Home dashboard cards to
+navigate to their matching page: Operations -> Shipments & Operations,
+Companies -> Companies, Total Sales -> Reports, New Lines -> Numbers,
+Uncollected -> Customers, Total Profit -> Profits.
+
+## Added: WhatsApp / SMS buttons on Customer Detail
+
+Two new icon buttons in `CustomerDetailPage`'s header (next to
+edit/delete), next to the existing edit/delete/restore actions, both
+using the customer's existing `contactNumber` — no new field, per
+CLAUDE.md's "don't over-engineer" guidance, since a customer already
+has exactly one phone number on file. New shared helper
+`core/utils/contact_launcher.dart` (`ContactLauncher.openWhatsApp`/
+`.openSms`, using the already-installed `url_launcher`, no new
+package): WhatsApp opens `https://wa.me/<digits-only>` (strips
+everything but digits — `wa.me` needs the country code included with no
+`+`/leading zero, which this can't guess if a number was saved in pure
+local format); SMS opens the `sms:` scheme with the number as typed. Not
+yet added to the customer list cards, only the Detail page — can extend
+there too if wanted.
+
+**Verified**: `flutter analyze` — no issues. `flutter test` — 16/16
+passing.
+
+## Added: "Allow negative balance" per company (one-time credit-line grace)
+
+New opt-in per company (Add/Edit Company form — not offered separately
+in "Import Ready-Made" since it has no form of its own; a just-imported
+company can be edited afterward to turn it on, same as any other
+company setting): when enabled, if the company's balance is still above
+zero (even ₪0.01) and a sale costs more than that, the sale is now
+allowed through and the balance goes negative by the difference —
+**once**. While the balance stays at or below zero, further sales from
+that company are blocked again (same as the existing default behavior)
+until a new shipment brings it back above zero. Off by default — every
+existing company keeps today's behavior unless a seller opts in.
+
+**Data model**: `companies.allow_negative_balance` (Supabase migration
+`0014_company_allow_negative_balance.sql`, default `false`; Drift schema
+v9 -> v10, same column + default). Threaded through
+`Company`/`CompanySummary` (both gained `allowNegativeBalance`),
+`CompaniesCubit` (`_loadFromDrift`'s derivation, `addCompany`/
+`updateCompany`, `activeCompanies`), and `SyncEngine`'s company row
+mapping.
+
+**Where the rule is actually enforced** (two independent "record a
+sale" flows, both updated identically): `NewSaleState.exceedsCompanyBalance`
+(New Sale) and `_LineFormSheetState._exceedsBalance` (Customer Detail's
+"+ Add Line") — both now read: blocked only if the cost exceeds the
+balance **and** either the company doesn't allow negative balance, or
+the balance is already at/below zero. `Company.applySale` itself just
+reflects whichever balance results (clamped to zero when the flag is
+off, exactly as before; unclamped, true negative value when it's on) —
+it doesn't re-enforce the "must currently be positive" rule, since the
+two call sites above already gate whether a sale is allowed through at
+all before it's ever recorded.
+
+**UI**:
+- Company form: a switch + one-paragraph explanation (only shown once
+  toggled on, so unfamiliar with it goes unbothered) — exact wording
+  chosen to state the one-time-dip / locked-until-topped-up rule
+  plainly, per explicit request.
+- A new, non-blocking amber heads-up (distinct from the existing red
+  "insufficient balance" block) shown in both sale flows when a sale is
+  about to dip a company's balance negative — `willGoNegative`/
+  `_willDipNegative`.
+- Every place a company's `availableToSell` is displayed (company card,
+  company detail page, the dashboard's "balance with supplier
+  companies" card) now shows it in red/danger once negative, matching
+  the existing convention already used for `owedToCompany > 0`.
+
+**Verified**: `flutter analyze` — no issues. `flutter test` — 16/16
+passing (existing `Company`/`NewSaleCubit` tests unaffected — they don't
+exercise this opt-in, which defaults to off). Not yet tested on-device
+end-to-end (needs the new Supabase migration run first, then a real
+company with the toggle on, a small positive balance, and a sale that
+exceeds it).

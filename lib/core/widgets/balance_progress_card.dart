@@ -87,7 +87,11 @@ class BalanceProgressCard extends StatelessWidget {
           Row(
             children: [
               _DataColumn(label: 'companies.card.consumed'.tr(), value: formatCurrency(consumed), color: colors.textPrimary),
-              _DataColumn(label: 'companies.card.availableToSell'.tr(), value: formatCurrency(availableToSell), color: colors.textPrimary),
+              _DataColumn(
+                label: 'companies.card.availableToSell'.tr(),
+                value: formatCurrency(availableToSell),
+                color: availableToSell < 0 ? colors.danger : colors.textPrimary,
+              ),
               _DataColumn(
                 label: 'companies.card.owedToCompany'.tr(),
                 value: formatCurrency(owedToCompany),

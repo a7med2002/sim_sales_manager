@@ -12,6 +12,8 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
+import '../../../../core/utils/package_display.dart';
+import '../../../../core/utils/table_export.dart';
 import '../../../../core/widgets/app_top_bar.dart';
 import '../../../../core/widgets/company_filter_dropdown.dart';
 import '../../../../core/widgets/empty_state.dart';
@@ -19,6 +21,7 @@ import '../../../../core/widgets/period_filter_row.dart';
 import '../../../../core/widgets/stat_card.dart';
 import '../../../../core/widgets/status_badge.dart';
 import '../../../profile/presentation/cubit/profile_cubit.dart';
+import '../../data/reports_export.dart';
 import '../cubit/reports_cubit.dart';
 import '../cubit/reports_state.dart';
 
@@ -43,13 +46,37 @@ class ReportsPage extends StatelessWidget {
   }
 }
 
-class _ReportsView extends StatelessWidget {
+class _ReportsView extends StatefulWidget {
   const _ReportsView();
 
-  void _comingSoon(BuildContext context) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text('common.comingSoon'.tr())));
+  @override
+  State<_ReportsView> createState() => _ReportsViewState();
+}
+
+class _ReportsViewState extends State<_ReportsView> {
+  TableExportFormat? _exportingFormat;
+
+  Future<void> _export(ReportsState state, TableExportFormat format) async {
+    if (_exportingFormat != null) return;
+    final lines = state.filteredLines;
+    if (lines.isEmpty) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text('reports.exportEmpty'.tr())));
+      return;
+    }
+    setState(() => _exportingFormat = format);
+    try {
+      await exportReportLines(context: context, lines: lines, repName: state.repName, format: format);
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(SnackBar(content: Text('reports.exportError'.tr())));
+      }
+    } finally {
+      if (mounted) setState(() => _exportingFormat = null);
+    }
   }
 
   @override
@@ -90,8 +117,10 @@ class _ReportsView extends StatelessWidget {
                   runSpacing: AppSpacing.sm,
                   children: [
                     OutlinedButton.icon(
-                      onPressed: () => _comingSoon(context),
-                      icon: Icon(Icons.picture_as_pdf_outlined, size: 16, color: colors.textPrimary),
+                      onPressed: _exportingFormat != null ? null : () => _export(state, TableExportFormat.pdf),
+                      icon: _exportingFormat == TableExportFormat.pdf
+                          ? SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: colors.textSecondary))
+                          : Icon(Icons.picture_as_pdf_outlined, size: 16, color: colors.textPrimary),
                       label: Text('reports.printSavePdf'.tr(), style: AppTextStyles.body(colors.textPrimary)),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: colors.textPrimary,
@@ -100,8 +129,10 @@ class _ReportsView extends StatelessWidget {
                       ),
                     ),
                     OutlinedButton.icon(
-                      onPressed: () => _comingSoon(context),
-                      icon: Icon(Icons.table_chart_outlined, size: 16, color: colors.textPrimary),
+                      onPressed: _exportingFormat != null ? null : () => _export(state, TableExportFormat.excel),
+                      icon: _exportingFormat == TableExportFormat.excel
+                          ? SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: colors.textSecondary))
+                          : Icon(Icons.table_chart_outlined, size: 16, color: colors.textPrimary),
                       label: Text('reports.exportExcel'.tr(), style: AppTextStyles.body(colors.textPrimary)),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: colors.textPrimary,
@@ -256,7 +287,7 @@ class _OperationsTable extends StatelessWidget {
                 DataCell(Text(line.simNumber)),
                 DataCell(Text(line.customerName)),
                 DataCell(Text(line.companyName)),
-                DataCell(Text(line.packageName)),
+                DataCell(Text(packageDisplayLabel(line.packageName, line.packageSimType))),
                 DataCell(Text(formatCurrency(line.retailPrice))),
                 DataCell(Text(formatCurrency(line.profit), style: AppTextStyles.body(colors.success).copyWith(fontWeight: FontWeight.w600))),
                 DataCell(_paymentBadge(line.paymentStatus)),

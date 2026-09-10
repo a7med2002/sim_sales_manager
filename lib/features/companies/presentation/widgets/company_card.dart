@@ -7,6 +7,7 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../domain/entities/company.dart';
+import '../../../../core/widgets/logo_avatar.dart';
 
 /// Company card for the Companies list: avatar/name/pin, packages &
 /// operations count, profit generated, a 3-dot actions menu, balance-usage
@@ -53,20 +54,7 @@ class CompanyCard extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: colors.background,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: colors.border),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    company.initials,
-                    style: AppTextStyles.cardTitle(colors.textPrimary),
-                  ),
-                ),
+                LogoAvatar(initials: company.initials, logoUrl: company.logoUrl),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Column(
@@ -165,7 +153,7 @@ class CompanyCard extends StatelessWidget {
                 _DataColumn(
                   label: 'companies.card.availableToSell'.tr(),
                   value: formatCurrency(company.availableToSell),
-                  color: colors.textPrimary,
+                  color: company.availableToSell < 0 ? colors.danger : colors.textPrimary,
                 ),
                 _DataColumn(
                   label: 'companies.card.owedToCompany'.tr(),

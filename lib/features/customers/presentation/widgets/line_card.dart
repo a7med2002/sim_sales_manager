@@ -7,6 +7,7 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
+import '../../../../core/utils/package_display.dart';
 import '../../../../core/widgets/status_badge.dart';
 import '../../domain/entities/line.dart';
 
@@ -58,7 +59,7 @@ class LineCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(line.packageName, style: AppTextStyles.cardTitle(colors.textPrimary)),
+                    Text(packageDisplayLabel(line.packageName, line.packageSimType), style: AppTextStyles.cardTitle(colors.textPrimary)),
                     Text('${line.companyName} · ${line.simNumber}', style: AppTextStyles.body(colors.textSecondary)),
                   ],
                 ),

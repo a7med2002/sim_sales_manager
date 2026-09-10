@@ -15,6 +15,8 @@ class PresetCompany extends Equatable {
   final String initials;
   final List<CompanyPackage> defaultPackages;
   final NumberUpdateProviderKey? numberUpdateProvider;
+  final String? logoUrl;
+  final String? numberUpdateUrl;
 
   const PresetCompany({
     required this.id,
@@ -22,8 +24,10 @@ class PresetCompany extends Equatable {
     required this.initials,
     required this.defaultPackages,
     this.numberUpdateProvider,
+    this.logoUrl,
+    this.numberUpdateUrl,
   });
 
   @override
-  List<Object?> get props => [id, name, initials, defaultPackages, numberUpdateProvider];
+  List<Object?> get props => [id, name, initials, defaultPackages, numberUpdateProvider, logoUrl, numberUpdateUrl];
 }

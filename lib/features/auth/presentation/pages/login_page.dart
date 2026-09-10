@@ -7,6 +7,7 @@ import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/navigation/route_names.dart';
+import '../../../../core/widgets/language_switch.dart';
 import '../cubit/login_cubit.dart';
 import '../cubit/login_state.dart';
 import '../widgets/auth_text_field.dart';
@@ -31,150 +32,172 @@ class _LoginView extends StatelessWidget {
     return Scaffold(
       backgroundColor: colors.background,
       body: SafeArea(
-        child: BlocConsumer<LoginCubit, LoginState>(
-          listener: (context, state) {
-            if (state.status == LoginStatus.success) {
-              Navigator.of(context).pushReplacementNamed(state.isAdmin ? RouteNames.adminHub : RouteNames.home);
-            } else if (state.status == LoginStatus.failure &&
-                state.errorMessage != null) {
-              _showCredentialsError(context, state.errorMessage!.tr());
-            }
-          },
-          builder: (context, state) {
-            return LayoutBuilder(
-              builder: (context, constraints) {
-                return SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.pageHorizontal,
-                    vertical: AppSpacing.md,
-                  ),
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minHeight: constraints.maxHeight,
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const _BrandHeader(),
-                        const SizedBox(height: AppSpacing.xl),
-                        Text(
-                          'login.title'.tr(),
-                          style: AppTextStyles.pageTitle(colors.textPrimary),
+        child: Stack(
+          children: [
+            BlocConsumer<LoginCubit, LoginState>(
+              listener: (context, state) {
+                if (state.status == LoginStatus.success) {
+                  Navigator.of(context).pushReplacementNamed(
+                    state.isAdmin ? RouteNames.adminHub : RouteNames.home,
+                  );
+                } else if (state.status == LoginStatus.failure &&
+                    state.errorMessage != null) {
+                  _showCredentialsError(context, state.errorMessage!.tr());
+                }
+              },
+              builder: (context, state) {
+                return LayoutBuilder(
+                  builder: (context, constraints) {
+                    return SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.pageHorizontal,
+                        vertical: AppSpacing.md,
+                      ),
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minHeight: constraints.maxHeight,
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'login.subtitle'.tr(),
-                          style: AppTextStyles.body(colors.textSecondary),
-                        ),
-                        const SizedBox(height: AppSpacing.lg),
-                        AuthTextField(
-                          label: 'login.usernameLabel'.tr(),
-                          placeholder: 'login.usernamePlaceholder'.tr(),
-                          icon: Icons.alternate_email_rounded,
-                          keyboardType: TextInputType.emailAddress,
-                          onChanged: context.read<LoginCubit>().usernameChanged,
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-                        AuthTextField(
-                          label: 'login.passwordLabel'.tr(),
-                          placeholder: '********'.tr(),
-                          icon: Icons.lock_outline_rounded,
-                          obscureText: true,
-                          onChanged: context.read<LoginCubit>().passwordChanged,
-                        ),
-                        const SizedBox(height: AppSpacing.sm),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Flexible(
-                              child: GestureDetector(
-                                onTap: () => context
-                                    .read<LoginCubit>()
-                                    .toggleRememberMe(),
-                                behavior: HitTestBehavior.opaque,
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    _RememberMeCheckbox(
-                                      checked: state.rememberMe,
-                                    ),
-                                    const SizedBox(width: AppSpacing.xs),
-                                    Flexible(
-                                      child: Text(
-                                        'login.rememberMe'.tr(),
-                                        style: AppTextStyles.body(
-                                          colors.textSecondary,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                            const _BrandHeader(),
+                            const SizedBox(height: AppSpacing.xl),
+                            Text(
+                              'login.title'.tr(),
+                              style: AppTextStyles.pageTitle(
+                                colors.textPrimary,
                               ),
                             ),
-                            const SizedBox(width: AppSpacing.sm),
-                            GestureDetector(
-                              onTap: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) => const ForgotPasswordPage(),
+                            const SizedBox(height: 4),
+                            Text(
+                              'login.subtitle'.tr(),
+                              style: AppTextStyles.body(colors.textSecondary),
+                            ),
+                            const SizedBox(height: AppSpacing.lg),
+                            AuthTextField(
+                              label: 'login.usernameLabel'.tr(),
+                              placeholder: 'login.usernamePlaceholder'.tr(),
+                              icon: Icons.alternate_email_rounded,
+                              keyboardType: TextInputType.emailAddress,
+                              onChanged: context
+                                  .read<LoginCubit>()
+                                  .usernameChanged,
+                            ),
+                            const SizedBox(height: AppSpacing.md),
+                            AuthTextField(
+                              label: 'login.passwordLabel'.tr(),
+                              placeholder: '********'.tr(),
+                              icon: Icons.lock_outline_rounded,
+                              obscureText: true,
+                              onChanged: context
+                                  .read<LoginCubit>()
+                                  .passwordChanged,
+                            ),
+                            const SizedBox(height: AppSpacing.sm),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Flexible(
+                                  child: GestureDetector(
+                                    onTap: () => context
+                                        .read<LoginCubit>()
+                                        .toggleRememberMe(),
+                                    behavior: HitTestBehavior.opaque,
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        _RememberMeCheckbox(
+                                          checked: state.rememberMe,
+                                        ),
+                                        const SizedBox(width: AppSpacing.xs),
+                                        Flexible(
+                                          child: Text(
+                                            'login.rememberMe'.tr(),
+                                            style: AppTextStyles.body(
+                                              colors.textSecondary,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                );
-                              },
-                              child: Text(
-                                'login.forgotPassword'.tr(),
-                                style: AppTextStyles.cardTitle(
-                                  colors.textPrimary,
                                 ),
+                                const SizedBox(width: AppSpacing.sm),
+                                GestureDetector(
+                                  onTap: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            const ForgotPasswordPage(),
+                                      ),
+                                    );
+                                  },
+                                  child: Text(
+                                    'login.forgotPassword'.tr(),
+                                    style: AppTextStyles.cardTitle(
+                                      colors.textPrimary,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: AppSpacing.lg),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 52,
+                              child: ElevatedButton(
+                                onPressed:
+                                    state.status == LoginStatus.submitting
+                                    ? null
+                                    : () => context.read<LoginCubit>().submit(),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: colors.primaryAction,
+                                  foregroundColor: colors.onPrimaryAction,
+                                  disabledBackgroundColor: colors.primaryAction
+                                      .withValues(alpha: 0.6),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadii.button,
+                                    ),
+                                  ),
+                                  elevation: 0,
+                                ),
+                                child: state.status == LoginStatus.submitting
+                                    ? SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: colors.onPrimaryAction,
+                                        ),
+                                      )
+                                    : Text(
+                                        'login.signIn'.tr(),
+                                        style: AppTextStyles.cardTitle(
+                                          colors.onPrimaryAction,
+                                        ),
+                                      ),
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: AppSpacing.lg),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 52,
-                          child: ElevatedButton(
-                            onPressed: state.status == LoginStatus.submitting
-                                ? null
-                                : () => context.read<LoginCubit>().submit(),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: colors.primaryAction,
-                              foregroundColor: colors.onPrimaryAction,
-                              disabledBackgroundColor: colors.primaryAction
-                                  .withValues(alpha: 0.6),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                  AppRadii.button,
-                                ),
-                              ),
-                              elevation: 0,
-                            ),
-                            child: state.status == LoginStatus.submitting
-                                ? SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: colors.onPrimaryAction,
-                                    ),
-                                  )
-                                : Text(
-                                    'login.signIn'.tr(),
-                                    style: AppTextStyles.cardTitle(
-                                      colors.onPrimaryAction,
-                                    ),
-                                  ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                      ),
+                    );
+                  },
                 );
               },
-            );
-          },
+            ),
+            PositionedDirectional(
+              top: 0,
+              end: 0,
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                child: LanguageSwitch(),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -244,40 +267,18 @@ class _BrandHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
 
-    return Row(
+    return Column(
       children: [
-        Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: colors.primaryAction,
-            borderRadius: BorderRadius.circular(AppRadii.button),
-          ),
-          alignment: Alignment.center,
-          child: Icon(
-            Icons.signal_cellular_alt_rounded,
-            color: colors.onPrimaryAction,
-            size: 22,
-          ),
+        Image.asset(
+          'assets/images/logo_full.png',
+          height: 88,
+          fit: BoxFit.contain,
         ),
-        const SizedBox(width: AppSpacing.sm),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'login.brandName'.tr(),
-                style: AppTextStyles.cardTitle(
-                  colors.textPrimary,
-                ).copyWith(fontSize: 17),
-              ),
-              Text(
-                'login.brandTagline'.tr(),
-                style: AppTextStyles.body(colors.textSecondary),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
+        const SizedBox(height: AppSpacing.sm),
+        Text(
+          'login.brandTagline'.tr(),
+          textAlign: TextAlign.center,
+          style: AppTextStyles.body(colors.textSecondary),
         ),
       ],
     );

@@ -15,6 +15,7 @@ import '../settings/settings_cubit.dart';
 import '../sync/bloc/sync_bloc.dart';
 import '../sync/connectivity_service.dart';
 import '../sync/sync_engine.dart';
+import '../update/update_cubit.dart';
 
 /// Composition root: this is the one place in `core/` allowed to know
 /// about concrete feature Cubits — it wires them up as app-lifetime
@@ -44,6 +45,7 @@ void setupServiceLocator() {
   );
 
   getIt.registerLazySingleton<ActivityLogger>(() => ActivityLogger());
+  getIt.registerLazySingleton<UpdateCubit>(() => UpdateCubit());
 
   getIt.registerLazySingleton<CompaniesCubit>(() => CompaniesCubit());
   getIt.registerLazySingleton<CustomersCubit>(() => CustomersCubit());

@@ -12,6 +12,7 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/cubit/theme_cubit.dart';
 import '../../../../core/widgets/app_top_bar.dart';
+import '../../../../core/widgets/language_switch.dart';
 import '../../../../core/widgets/list_row.dart';
 import '../../../profile/domain/entities/profile.dart';
 import '../../../profile/presentation/cubit/profile_cubit.dart';
@@ -53,7 +54,9 @@ class _SettingsViewState extends State<_SettingsView> {
     final profile = context.read<ProfileCubit>().state;
     _nameController = TextEditingController(text: profile.name);
     _emailController = TextEditingController(text: profile.email);
-    _currencyController = TextEditingController(text: context.read<SettingsCubit>().state.currencySymbol);
+    _currencyController = TextEditingController(
+      text: context.read<SettingsCubit>().state.currencySymbol,
+    );
   }
 
   @override
@@ -79,7 +82,9 @@ class _SettingsViewState extends State<_SettingsView> {
   }
 
   void _saveCurrencySymbol() {
-    context.read<SettingsCubit>().updateCurrencySymbol(_currencyController.text);
+    context.read<SettingsCubit>().updateCurrencySymbol(
+      _currencyController.text,
+    );
     _showSavedSnackBar('settings.currencyUpdated'.tr());
   }
 
@@ -91,10 +96,9 @@ class _SettingsViewState extends State<_SettingsView> {
       backgroundColor: colors.background,
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.pageHorizontal).copyWith(
-            top: AppSpacing.md,
-            bottom: AppSpacing.xl,
-          ),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.pageHorizontal,
+          ).copyWith(top: AppSpacing.md, bottom: AppSpacing.xl),
           children: [
             AppTopBar(
               title: 'settings.title'.tr(),
@@ -103,7 +107,10 @@ class _SettingsViewState extends State<_SettingsView> {
               onThemeToggle: () => context.read<ThemeCubit>().toggle(),
             ),
             const SizedBox(height: AppSpacing.lg),
-            Text('settings.profileSectionTitle'.tr(), style: AppTextStyles.overline(colors.textSecondary)),
+            Text(
+              'settings.profileSectionTitle'.tr(),
+              style: AppTextStyles.overline(colors.textSecondary),
+            ),
             const SizedBox(height: AppSpacing.sm),
             _SectionCard(
               child: Column(
@@ -114,14 +121,24 @@ class _SettingsViewState extends State<_SettingsView> {
                       builder: (context, profile) => Container(
                         width: 56,
                         height: 56,
-                        decoration: BoxDecoration(color: colors.background, shape: BoxShape.circle, border: Border.all(color: colors.border)),
+                        decoration: BoxDecoration(
+                          color: colors.background,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: colors.border),
+                        ),
                         alignment: Alignment.center,
-                        child: Text(_initialsFor(profile.name), style: AppTextStyles.pageTitle(colors.textPrimary)),
+                        child: Text(
+                          _initialsFor(profile.name),
+                          style: AppTextStyles.pageTitle(colors.textPrimary),
+                        ),
                       ),
                     ),
                   ),
                   const SizedBox(height: AppSpacing.md),
-                  Text('settings.name'.tr(), style: AppTextStyles.body(colors.textSecondary)),
+                  Text(
+                    'settings.name'.tr(),
+                    style: AppTextStyles.body(colors.textSecondary),
+                  ),
                   const SizedBox(height: AppSpacing.xs),
                   TextField(
                     controller: _nameController,
@@ -129,7 +146,10 @@ class _SettingsViewState extends State<_SettingsView> {
                     decoration: _fieldDecoration(colors),
                   ),
                   const SizedBox(height: AppSpacing.md),
-                  Text('settings.email'.tr(), style: AppTextStyles.body(colors.textSecondary)),
+                  Text(
+                    'settings.email'.tr(),
+                    style: AppTextStyles.body(colors.textSecondary),
+                  ),
                   const SizedBox(height: AppSpacing.xs),
                   TextField(
                     controller: _emailController,
@@ -146,16 +166,24 @@ class _SettingsViewState extends State<_SettingsView> {
                       style: OutlinedButton.styleFrom(
                         foregroundColor: colors.textPrimary,
                         side: BorderSide(color: colors.border),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.button)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadii.button),
+                        ),
                       ),
-                      child: Text('settings.saveChanges'.tr(), style: AppTextStyles.cardTitle(colors.textPrimary)),
+                      child: Text(
+                        'settings.saveChanges'.tr(),
+                        style: AppTextStyles.cardTitle(colors.textPrimary),
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
-            Text('settings.appPreferencesSectionTitle'.tr(), style: AppTextStyles.overline(colors.textSecondary)),
+            Text(
+              'settings.appPreferencesSectionTitle'.tr(),
+              style: AppTextStyles.overline(colors.textSecondary),
+            ),
             const SizedBox(height: AppSpacing.sm),
             _SectionCard(
               child: Column(
@@ -163,13 +191,18 @@ class _SettingsViewState extends State<_SettingsView> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('settings.darkMode'.tr(), style: AppTextStyles.cardTitle(colors.textPrimary)),
+                      Text(
+                        'settings.darkMode'.tr(),
+                        style: AppTextStyles.cardTitle(colors.textPrimary),
+                      ),
                       BlocBuilder<ThemeCubit, ThemeMode>(
                         builder: (context, mode) => Switch(
                           value: mode == ThemeMode.dark,
                           onChanged: (_) => context.read<ThemeCubit>().toggle(),
                           activeTrackColor: colors.primaryAction,
-                          thumbColor: WidgetStateProperty.all(colors.onPrimaryAction),
+                          thumbColor: WidgetStateProperty.all(
+                            colors.onPrimaryAction,
+                          ),
                         ),
                       ),
                     ],
@@ -180,14 +213,20 @@ class _SettingsViewState extends State<_SettingsView> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('settings.language'.tr(), style: AppTextStyles.cardTitle(colors.textPrimary)),
-                      const _LanguageSwitch(),
+                      Text(
+                        'settings.language'.tr(),
+                        style: AppTextStyles.cardTitle(colors.textPrimary),
+                      ),
+                      const LanguageSwitch(),
                     ],
                   ),
                   const SizedBox(height: AppSpacing.md),
                   Container(height: 1, color: colors.border),
                   const SizedBox(height: AppSpacing.md),
-                  Text('settings.currencySymbol'.tr(), style: AppTextStyles.cardTitle(colors.textPrimary)),
+                  Text(
+                    'settings.currencySymbol'.tr(),
+                    style: AppTextStyles.cardTitle(colors.textPrimary),
+                  ),
                   const SizedBox(height: AppSpacing.xs),
                   Row(
                     children: [
@@ -204,10 +243,20 @@ class _SettingsViewState extends State<_SettingsView> {
                         style: OutlinedButton.styleFrom(
                           foregroundColor: colors.textPrimary,
                           side: BorderSide(color: colors.border),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.button)),
-                          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                              AppRadii.button,
+                            ),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.md,
+                            vertical: 12,
+                          ),
                         ),
-                        child: Text('settings.save'.tr(), style: AppTextStyles.body(colors.textPrimary)),
+                        child: Text(
+                          'settings.save'.tr(),
+                          style: AppTextStyles.body(colors.textPrimary),
+                        ),
                       ),
                     ],
                   ),
@@ -215,7 +264,10 @@ class _SettingsViewState extends State<_SettingsView> {
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
-            Text('settings.accountSectionTitle'.tr(), style: AppTextStyles.overline(colors.textSecondary)),
+            Text(
+              'settings.accountSectionTitle'.tr(),
+              style: AppTextStyles.overline(colors.textSecondary),
+            ),
             const SizedBox(height: AppSpacing.sm),
             _SectionCard(
               padding: EdgeInsets.zero,
@@ -227,7 +279,10 @@ class _SettingsViewState extends State<_SettingsView> {
             ),
             const SizedBox(height: AppSpacing.lg),
             Center(
-              child: Text('${AppConstants.appName} ${AppConstants.appVersion}', style: AppTextStyles.body(colors.textSecondary)),
+              child: Text(
+                '${AppConstants.appName} ${AppConstants.appVersion}',
+                style: AppTextStyles.body(colors.textSecondary),
+              ),
             ),
             const SizedBox(height: AppSpacing.lg),
             SizedBox(
@@ -238,9 +293,14 @@ class _SettingsViewState extends State<_SettingsView> {
                 style: OutlinedButton.styleFrom(
                   foregroundColor: colors.danger,
                   side: BorderSide(color: colors.danger),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.button)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadii.button),
+                  ),
                 ),
-                child: Text('settings.logout'.tr(), style: AppTextStyles.cardTitle(colors.danger)),
+                child: Text(
+                  'settings.logout'.tr(),
+                  style: AppTextStyles.cardTitle(colors.danger),
+                ),
               ),
             ),
           ],
@@ -253,9 +313,18 @@ class _SettingsViewState extends State<_SettingsView> {
     return InputDecoration(
       filled: true,
       fillColor: colors.surface,
-      contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 12),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadii.button), borderSide: BorderSide(color: colors.border)),
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadii.button), borderSide: BorderSide(color: colors.border)),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: 12,
+      ),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppRadii.button),
+        borderSide: BorderSide(color: colors.border),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppRadii.button),
+        borderSide: BorderSide(color: colors.border),
+      ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppRadii.button),
         borderSide: BorderSide(color: colors.primaryAction, width: 1.5),
@@ -264,10 +333,15 @@ class _SettingsViewState extends State<_SettingsView> {
   }
 
   String _initialsFor(String name) {
-    final words = name.trim().split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
+    final words = name
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((w) => w.isNotEmpty)
+        .toList();
     if (words.isEmpty) return '?';
     if (words.length == 1) return words.first.substring(0, 1).toUpperCase();
-    return (words.first.substring(0, 1) + words[1].substring(0, 1)).toUpperCase();
+    return (words.first.substring(0, 1) + words[1].substring(0, 1))
+        .toUpperCase();
   }
 }
 
@@ -275,7 +349,10 @@ class _SectionCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry padding;
 
-  const _SectionCard({required this.child, this.padding = const EdgeInsets.all(AppSpacing.cardPadding)});
+  const _SectionCard({
+    required this.child,
+    this.padding = const EdgeInsets.all(AppSpacing.cardPadding),
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -289,57 +366,6 @@ class _SectionCard extends StatelessWidget {
         border: Border.all(color: colors.border),
       ),
       child: child,
-    );
-  }
-}
-
-/// EN / AR segmented toggle — sets the app-wide locale directly via
-/// easy_localization's `context.setLocale`, which also persists the choice
-/// (shared_preferences, handled internally by the package) so it survives
-/// app restarts without needing its own field on `AppSettings`.
-class _LanguageSwitch extends StatelessWidget {
-  const _LanguageSwitch();
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-    final isArabic = context.locale.languageCode == 'ar';
-
-    return Container(
-      padding: const EdgeInsets.all(2),
-      decoration: BoxDecoration(color: colors.background, borderRadius: BorderRadius.circular(AppRadii.button)),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _LanguageOption(label: 'EN', isSelected: !isArabic, onTap: () => context.setLocale(const Locale('en'))),
-          _LanguageOption(label: 'AR', isSelected: isArabic, onTap: () => context.setLocale(const Locale('ar'))),
-        ],
-      ),
-    );
-  }
-}
-
-class _LanguageOption extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const _LanguageOption({required this.label, required this.isSelected, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 6),
-        decoration: BoxDecoration(
-          color: isSelected ? colors.primaryAction : Colors.transparent,
-          borderRadius: BorderRadius.circular(AppRadii.button),
-        ),
-        child: Text(label, style: AppTextStyles.badge(isSelected ? colors.onPrimaryAction : colors.textSecondary)),
-      ),
     );
   }
 }

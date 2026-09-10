@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -53,6 +55,7 @@ class AdminCompanyCatalogCubit extends Cubit<AdminCompanyCatalogState> {
             .map((p) => CatalogPackageAdmin(
                   id: p['id'] as String,
                   name: p['name'] as String,
+                  simType: p['sim_type'] as String?,
                   wholesaleCost: (p['wholesale_cost'] as num).toDouble(),
                   suggestedRetailPrice: (p['suggested_retail_price'] as num).toDouble(),
                 ))
@@ -63,6 +66,7 @@ class AdminCompanyCatalogCubit extends Cubit<AdminCompanyCatalogState> {
           notes: (c['notes'] as String?) ?? '',
           numberUpdateUrl: (c['number_update_url'] as String?) ?? '',
           numberUpdateProvider: numberUpdateProviderFromRow(c['number_update_provider'] as String?),
+          logoUrl: c['logo_url'] as String?,
           status: c['status'] == 'archived' ? CatalogStatus.archived : CatalogStatus.active,
           packages: packages,
         );
@@ -70,7 +74,7 @@ class AdminCompanyCatalogCubit extends Cubit<AdminCompanyCatalogState> {
 
       emit(state.copyWith(companies: companies, isLoading: false));
     } catch (e) {
-      emit(state.copyWith(isLoading: false, errorMessage: e.toString()));
+      emit(state.copyWith(isLoading: false, errorMessage: 'common.genericError'));
     }
   }
 
@@ -79,11 +83,13 @@ class AdminCompanyCatalogCubit extends Cubit<AdminCompanyCatalogState> {
     required String notes,
     required String numberUpdateUrl,
     NumberUpdateProviderKey? numberUpdateProvider,
+    String? logoLocalPath,
     required List<CatalogPackageAdmin> packages,
   }) async {
     final id = generateUuidV4();
     final now = DateTime.now().toIso8601String();
     final createdBy = _client.auth.currentUser?.id;
+    final logoUrl = logoLocalPath == null ? null : await _uploadLogo(id, logoLocalPath);
 
     await _client.from('company_catalog').insert({
       'id': id,
@@ -91,6 +97,7 @@ class AdminCompanyCatalogCubit extends Cubit<AdminCompanyCatalogState> {
       'notes': notes.isEmpty ? null : notes,
       'number_update_url': numberUpdateUrl.isEmpty ? null : numberUpdateUrl,
       'number_update_provider': numberUpdateProvider == null ? null : numberUpdateProviderToRow(numberUpdateProvider),
+      'logo_url': logoUrl,
       'created_by': createdBy,
       'created_at': now,
       'updated_at': now,
@@ -101,6 +108,7 @@ class AdminCompanyCatalogCubit extends Cubit<AdminCompanyCatalogState> {
                 'id': generateUuidV4(),
                 'company_catalog_id': id,
                 'name': p.name,
+                'sim_type': p.simType,
                 'wholesale_cost': p.wholesaleCost,
                 'suggested_retail_price': p.suggestedRetailPrice,
                 'created_at': now,
@@ -117,16 +125,24 @@ class AdminCompanyCatalogCubit extends Cubit<AdminCompanyCatalogState> {
     required String notes,
     required String numberUpdateUrl,
     NumberUpdateProviderKey? numberUpdateProvider,
+    String? logoLocalPath,
+    bool removeLogo = false,
     required List<CatalogPackageAdmin> packages,
   }) async {
     final now = DateTime.now().toIso8601String();
-    await _client.from('company_catalog').update({
+    final update = <String, dynamic>{
       'name': name,
       'notes': notes.isEmpty ? null : notes,
       'number_update_url': numberUpdateUrl.isEmpty ? null : numberUpdateUrl,
       'number_update_provider': numberUpdateProvider == null ? null : numberUpdateProviderToRow(numberUpdateProvider),
       'updated_at': now,
-    }).eq('id', id);
+    };
+    if (logoLocalPath != null) {
+      update['logo_url'] = await _uploadLogo(id, logoLocalPath);
+    } else if (removeLogo) {
+      update['logo_url'] = null;
+    }
+    await _client.from('company_catalog').update(update).eq('id', id);
 
     // Packages have no stable identity worth diffing (same reasoning as
     // the seller-facing CompanyFormSheet) — replace wholesale.
@@ -137,6 +153,7 @@ class AdminCompanyCatalogCubit extends Cubit<AdminCompanyCatalogState> {
                 'id': generateUuidV4(),
                 'company_catalog_id': id,
                 'name': p.name,
+                'sim_type': p.simType,
                 'wholesale_cost': p.wholesaleCost,
                 'suggested_retail_price': p.suggestedRetailPrice,
                 'created_at': now,
@@ -145,6 +162,24 @@ class AdminCompanyCatalogCubit extends Cubit<AdminCompanyCatalogState> {
           .toList());
     }
     await load();
+  }
+
+  /// Uploads a catalog company's logo to the public `company-logos`
+  /// bucket's shared `catalog/` folder (see
+  /// `supabase/migrations/0007_company_logos_storage.sql`'s admin-only
+  /// RLS policy for that folder) and returns its public URL. Returns
+  /// null and swallows the error on failure — a logo that fails to
+  /// upload just leaves the catalog entry without one for now.
+  Future<String?> _uploadLogo(String catalogCompanyId, String localPath) async {
+    try {
+      final ext = localPath.contains('.') ? localPath.split('.').last : 'jpg';
+      final objectPath = 'catalog/$catalogCompanyId.$ext';
+      final bytes = await File(localPath).readAsBytes();
+      await _client.storage.from('company-logos').uploadBinary(objectPath, bytes, fileOptions: const FileOptions(upsert: true));
+      return _client.storage.from('company-logos').getPublicUrl(objectPath);
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<void> setStatus(String id, CatalogStatus status) async {

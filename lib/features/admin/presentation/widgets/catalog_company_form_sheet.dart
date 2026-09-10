@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/number_update/number_update_provider.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -13,6 +16,8 @@ typedef CatalogCompanySaveCallback = void Function(
   String notes,
   String numberUpdateUrl,
   NumberUpdateProviderKey? numberUpdateProvider,
+  String? logoLocalPath,
+  bool removeLogo,
   List<CatalogPackageAdmin> packages,
 );
 
@@ -42,12 +47,14 @@ class CatalogCompanyFormSheet extends StatefulWidget {
 class _PackageRow {
   final String id;
   final TextEditingController nameController;
+  final TextEditingController simTypeController;
   final TextEditingController costController;
   final TextEditingController priceController;
 
-  _PackageRow({String? id, String name = '', String cost = '', String price = ''})
+  _PackageRow({String? id, String name = '', String simType = '', String cost = '', String price = ''})
       : id = id ?? UniqueKey().toString(),
         nameController = TextEditingController(text: name),
+        simTypeController = TextEditingController(text: simType),
         costController = TextEditingController(text: cost),
         priceController = TextEditingController(text: price);
 }
@@ -58,6 +65,10 @@ class _CatalogCompanyFormSheetState extends State<CatalogCompanyFormSheet> {
   late final TextEditingController _urlController;
   late final List<_PackageRow> _packageRows;
   NumberUpdateProviderKey? _numberUpdateProvider;
+  String? _existingLogoUrl;
+  String? _newLogoPath;
+  bool _removeLogo = false;
+  final _imagePicker = ImagePicker();
 
   bool get _isEditing => widget.company != null;
 
@@ -69,10 +80,12 @@ class _CatalogCompanyFormSheetState extends State<CatalogCompanyFormSheet> {
     _notesController = TextEditingController(text: company?.notes ?? '');
     _urlController = TextEditingController(text: company?.numberUpdateUrl ?? '');
     _numberUpdateProvider = company?.numberUpdateProvider;
+    _existingLogoUrl = company?.logoUrl;
     _packageRows = company?.packages
             .map((p) => _PackageRow(
                   id: p.id,
                   name: p.name,
+                  simType: p.simType ?? '',
                   cost: _fmt(p.wholesaleCost),
                   price: _fmt(p.suggestedRetailPrice),
                 ))
@@ -91,6 +104,7 @@ class _CatalogCompanyFormSheetState extends State<CatalogCompanyFormSheet> {
     _urlController.dispose();
     for (final row in _packageRows) {
       row.nameController.dispose();
+      row.simTypeController.dispose();
       row.costController.dispose();
       row.priceController.dispose();
     }
@@ -102,19 +116,45 @@ class _CatalogCompanyFormSheetState extends State<CatalogCompanyFormSheet> {
 
   bool get _canSave => _nameController.text.trim().isNotEmpty;
 
+  Future<void> _pickLogo() async {
+    final file = await _imagePicker.pickImage(source: ImageSource.gallery, imageQuality: 85, maxWidth: 512, maxHeight: 512);
+    if (file == null) return;
+    setState(() {
+      _newLogoPath = file.path;
+      _removeLogo = false;
+    });
+  }
+
+  void _removeLogoTapped() {
+    setState(() {
+      _newLogoPath = null;
+      _existingLogoUrl = null;
+      _removeLogo = true;
+    });
+  }
+
   void _save() {
     if (!_canSave) return;
     final packages = _packageRows
-        .where((row) => row.nameController.text.trim().isNotEmpty)
+        .where((row) => row.nameController.text.trim().isNotEmpty && row.simTypeController.text.trim().isNotEmpty)
         .map((row) => CatalogPackageAdmin(
               id: row.id,
               name: row.nameController.text.trim(),
+              simType: row.simTypeController.text.trim(),
               wholesaleCost: double.tryParse(row.costController.text.trim()) ?? 0,
               suggestedRetailPrice: double.tryParse(row.priceController.text.trim()) ?? 0,
             ))
         .toList();
 
-    widget.onSave(_nameController.text.trim(), _notesController.text.trim(), _urlController.text.trim(), _numberUpdateProvider, packages);
+    widget.onSave(
+      _nameController.text.trim(),
+      _notesController.text.trim(),
+      _urlController.text.trim(),
+      _numberUpdateProvider,
+      _newLogoPath,
+      _removeLogo,
+      packages,
+    );
     Navigator.of(context).pop();
   }
 
@@ -143,6 +183,41 @@ class _CatalogCompanyFormSheetState extends State<CatalogCompanyFormSheet> {
                 ],
               ),
               const SizedBox(height: AppSpacing.lg),
+              Center(
+                child: Column(
+                  children: [
+                    GestureDetector(
+                      onTap: _pickLogo,
+                      child: Container(
+                        width: 72,
+                        height: 72,
+                        decoration: BoxDecoration(color: colors.surface, shape: BoxShape.circle, border: Border.all(color: colors.border)),
+                        clipBehavior: Clip.antiAlias,
+                        child: _newLogoPath != null
+                            ? Image.file(File(_newLogoPath!), fit: BoxFit.cover)
+                            : (_existingLogoUrl != null
+                                ? Image.network(_existingLogoUrl!, fit: BoxFit.cover)
+                                : Icon(Icons.apartment_rounded, color: colors.textSecondary, size: 28)),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextButton(onPressed: _pickLogo, child: Text('companies.form.logoChoose'.tr())),
+                        if (_newLogoPath != null || _existingLogoUrl != null) ...[
+                          const SizedBox(width: AppSpacing.xs),
+                          TextButton(
+                            onPressed: _removeLogoTapped,
+                            child: Text('companies.form.logoRemove'.tr(), style: TextStyle(color: colors.danger)),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
               Text('admin.catalogForm.nameLabel'.tr(), style: AppTextStyles.body(colors.textSecondary)),
               const SizedBox(height: AppSpacing.xs),
               TextField(controller: _nameController, style: AppTextStyles.cardTitle(colors.textPrimary), decoration: _decoration(colors)),
@@ -258,6 +333,14 @@ class _PackageRowFields extends StatelessWidget {
                   controller: row.nameController,
                   style: AppTextStyles.body(colors.textPrimary),
                   decoration: decoration.copyWith(hintText: 'admin.catalogForm.packageNamePlaceholder'.tr()),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              Expanded(
+                child: TextField(
+                  controller: row.simTypeController,
+                  style: AppTextStyles.body(colors.textPrimary),
+                  decoration: decoration.copyWith(hintText: 'admin.catalogForm.simTypePlaceholder'.tr()),
                 ),
               ),
               IconButton(

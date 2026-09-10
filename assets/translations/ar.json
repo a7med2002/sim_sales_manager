@@ -4,7 +4,19 @@
       "offline": "غير متصل — التغييرات رح تتزامن لما يرجع النت",
       "syncing": "جارٍ المزامنة…",
       "idle": "تمت المزامنة",
-      "error": "خطأ بالمزامنة — اضغط لإعادة المحاولة"
+      "error": "خطأ بالمزامنة — اضغط لإعادة المحاولة",
+      "retrying": "جارٍ إعادة محاولة المزامنة…"
+    }
+  },
+  "update": {
+    "title": "تحديث جديد متوفر",
+    "mandatoryTitle": "تحديث مطلوب",
+    "versionLabel": "الإصدار {version}",
+    "updateNow": "تحديث الآن",
+    "later": "لاحقًا",
+    "downloading": "جارٍ تنزيل التحديث…",
+    "errors": {
+      "downloadFailed": "تعذر تنزيل التحديث. تحقق من اتصالك وحاول مجددًا."
     }
   },
   "common": {
@@ -15,6 +27,7 @@
     "show": "عرض",
     "balanceUsedPercent": "{percent}% من الرصيد مستخدم",
     "comingSoon": "قريبًا",
+    "genericError": "حدث خطأ. تحقق من اتصالك وحاول مجددًا.",
     "am": "ص",
     "pm": "م",
     "months": {
@@ -68,11 +81,11 @@
     "newSale": "بيع جديد"
   },
   "login": {
-    "brandName": "SIM Manager",
+    "brandName": "eSIM Dafter",
     "brandTagline": "مبيعات الشرائح، الأرصدة والأرباح",
     "title": "تسجيل الدخول",
     "subtitle": "أدر مبيعات شرائحك، أرصدتك وأرباحك.",
-    "usernameLabel": "اسم المستخدم أو البريد الإلكتروني",
+    "usernameLabel": "البريد الإلكتروني",
     "usernamePlaceholder": "owner@simmanager.app",
     "passwordLabel": "كلمة المرور",
     "rememberMe": "تذكرني",
@@ -86,7 +99,8 @@
       "usernameRequired": "أدخل اسم مستخدم أو بريدًا إلكترونيًا.",
       "passwordTooShort": "يجب أن تتكوّن كلمة المرور من 6 أحرف على الأقل.",
       "invalidCredentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
-      "networkError": "تعذر الوصول للخادم. تحقق من اتصالك وحاول مجددًا."
+      "networkError": "تعذر الوصول للخادم. تحقق من اتصالك وحاول مجددًا.",
+      "unexpected": "حدث خطأ غير متوقع. حاول مرة أخرى لاحقًا."
     }
   },
   "forgotPassword": {
@@ -101,6 +115,22 @@
     "backToSignIn": "العودة لتسجيل الدخول",
     "errors": {
       "invalidEmail": "أدخل بريدًا إلكترونيًا صحيحًا."
+    }
+  },
+  "resetPassword": {
+    "title": "تعيين كلمة مرور جديدة",
+    "description": "اختر كلمة مرور جديدة لحسابك.",
+    "newPasswordLabel": "كلمة المرور الجديدة",
+    "confirmNewPasswordLabel": "تأكيد كلمة المرور الجديدة",
+    "save": "حفظ كلمة المرور الجديدة",
+    "successTitle": "تم تحديث كلمة المرور",
+    "successDescription": "تم تغيير كلمة المرور. سجّل الدخول بكلمة المرور الجديدة.",
+    "backToSignIn": "العودة لتسجيل الدخول",
+    "errors": {
+      "tooShort": "يجب أن تتكوّن كلمة المرور الجديدة من 6 أحرف على الأقل.",
+      "mismatch": "كلمة المرور الجديدة والتأكيد غير متطابقتين.",
+      "expiredLink": "انتهت صلاحية رابط إعادة التعيين. اطلب رابطًا جديدًا.",
+      "generic": "تعذر إعادة تعيين كلمة المرور. تحقق من الاتصال وحاول مرة أخرى."
     }
   },
   "home": {
@@ -128,7 +158,6 @@
     "profits": "الأرباح",
     "reports": "التقارير",
     "supportFeedback": "الدعم والملاحظات",
-    "trustedDevices": "الأجهزة الموثوقة",
     "activityLog": "سجل النشاط",
     "settings": "الإعدادات",
     "logout": "تسجيل الخروج"
@@ -193,6 +222,7 @@
       "packagesSection": "الباقات",
       "addPackage": "إضافة باقة",
       "packageNamePlaceholder": "اسم الباقة",
+      "simTypePlaceholder": "نوع الشريحة، مثال: حزمة سيليكوم",
       "wholesaleCostPlaceholder": "سعر الجملة",
       "retailPricePlaceholder": "سعر البيع",
       "save": "حفظ"
@@ -252,7 +282,9 @@
     "errors": {
       "currentRequired": "أدخل كلمة المرور الحالية.",
       "tooShort": "يجب أن تتكوّن كلمة المرور الجديدة من 6 أحرف على الأقل.",
-      "mismatch": "كلمة المرور الجديدة والتأكيد غير متطابقتين."
+      "mismatch": "كلمة المرور الجديدة والتأكيد غير متطابقتين.",
+      "currentIncorrect": "كلمة المرور الحالية غير صحيحة.",
+      "generic": "تعذر تغيير كلمة المرور. تحقق من الاتصال وحاول مرة أخرى."
     }
   },
   "periodFilter": {
@@ -321,11 +353,17 @@
       "editSubtitle": "تحديث تفاصيل هذه الشركة.",
       "addSubtitle": "اختر علامة تجارية جاهزة بباقات افتراضية، أو أضف باقاتك الخاصة.",
       "nameLabel": "اسم الشركة",
+      "logoChoose": "اختيار شعار",
+      "logoRemove": "إزالة",
       "notesLabel": "ملاحظات (اختياري)",
       "numberUpdateProviderLabel": "مزوّد تحديث الأرقام (اختياري)",
+      "numberUpdateUrlLabel": "رابط تحديث الأرقام (اختياري)",
+      "allowNegativeBalanceLabel": "السماح برصيد سالب",
+      "allowNegativeBalanceExplanation": "إذا كان معك رصيد بسيط (مثلاً 0.01 ₪) وبعت شريحة أغلى منه، رح تنسمح لك العملية ويصير رصيد الشركة سالبًا حسب الفرق — بس هاد بيصير مرة وحدة بس: طالما الرصيد سالب أو صفر، ما رح تقدر تبيع من هاي الشركة إلا بعد ما تضيف شحنة جديدة ترجّع الرصيد فوق الصفر.",
       "packagesSection": "الباقات (اختياري)",
       "addPackage": "إضافة باقة",
       "packageNamePlaceholder": "اسم الباقة، مثال: شهري 3 جيجابايت",
+      "simTypePlaceholder": "نوع الشريحة، مثال: حزمة سيليكوم",
       "wholesaleCostPlaceholder": "سعر الجملة",
       "retailPricePlaceholder": "سعر البيع للعميل",
       "save": "حفظ"
@@ -441,6 +479,7 @@
       "noCompaniesDescription": "أضف شركة أولاً (من تبويب الشركات) قبل ما تقدر تضيف خط.",
       "availableBalance": "الرصيد المتاح: {amount}",
       "insufficientBalance": "سعر الجملة أكبر من الرصيد المتاح لهذه الشركة — أضف شحنة أولاً.",
+      "willGoNegative": "سيتحول رصيد هذه الشركة إلى سالب بعد هذه العملية.",
       "simLabel": "رقم الشريحة / الهاتف",
       "wholesaleCostLabel": "سعر الجملة",
       "retailSalePriceLabel": "سعر البيع للعميل",
@@ -486,7 +525,8 @@
       "purchaseDateLabel": "تاريخ الشراء",
       "expiryDateLabel": "تاريخ الانتهاء",
       "availableBalance": "الرصيد المتاح: {amount}",
-      "insufficientBalance": "سعر الجملة أكبر من الرصيد المتاح لهذه الشركة — أضف شحنة أولاً."
+      "insufficientBalance": "سعر الجملة أكبر من الرصيد المتاح لهذه الشركة — أضف شحنة أولاً.",
+      "willGoNegative": "سيتحول رصيد هذه الشركة إلى سالب بعد هذه العملية."
     },
     "paymentStep": {
       "amountPaidNowLabel": "المبلغ المدفوع الآن",
@@ -517,7 +557,9 @@
     "export": {
       "pdf": "PDF",
       "csv": "CSV",
-      "excel": "Excel"
+      "excel": "Excel",
+      "empty": "لا توجد أرقام مطابقة للفلاتر الحالية للتصدير.",
+      "error": "تعذر إنشاء الملف. حاول مرة أخرى."
     },
     "searchHint": "ابحث برقم الهاتف",
     "matchCount": "{count} رقم",
@@ -555,26 +597,6 @@
       "edit": "تعديل",
       "delete": "حذف",
       "fullCollection": "تحصيل كامل"
-    }
-  },
-  "trustedDevices": {
-    "title": "الأجهزة الموثوقة",
-    "description": "تتخطى هذه الأجهزة رمز التحقق حتى تنتهي جلستها. إلغاء الثقة بجهاز سيتطلب رمز تحقق جديدًا في تسجيل الدخول القادم.",
-    "empty": {
-      "title": "لا توجد أجهزة موثوقة",
-      "description": "الأجهزة التي تسجل الدخول منها ستظهر هنا."
-    },
-    "thisDevice": "هذا الجهاز",
-    "revokeDialog": {
-      "title": "إلغاء الثقة بـ {name}؟",
-      "message": "سيحتاج هذا الجهاز رمز تحقق جديدًا في تسجيل الدخول القادم.",
-      "confirm": "إلغاء الثقة"
-    },
-    "info": {
-      "ipAddress": "عنوان IP",
-      "firstLogin": "أول تسجيل دخول",
-      "lastLogin": "آخر تسجيل دخول",
-      "lastVerification": "آخر تحقق"
     }
   },
   "supportFeedback": {
@@ -640,6 +662,8 @@
     "partiallyPaid": "مدفوع جزئيًا",
     "unpaid": "غير مدفوع",
     "operationsSection": "العمليات",
+    "exportEmpty": "لا توجد عمليات مطابقة للفلاتر الحالية للتصدير.",
+    "exportError": "تعذر إنشاء الملف. حاول مرة أخرى.",
     "empty": {
       "title": "لا توجد عمليات بعد",
       "description": "ستظهر العمليات هنا فور بيع شريحة SIM/eSIM لعميل."
@@ -705,7 +729,9 @@
       "searchHint": "ابحث برقم الشريحة أو رقم العملية",
       "addOperation": "إضافة عملية",
       "exportExcel": "تصدير Excel",
-      "import": "استيراد",
+      "exportPdf": "تصدير PDF",
+      "exportEmpty": "لا توجد عمليات مطابقة للفلاتر الحالية للتصدير.",
+      "exportError": "تعذر إنشاء الملف. حاول مرة أخرى.",
       "empty": {
         "title": "لا توجد عمليات بعد",
         "description": "ستظهر العمليات هنا فور بيع شريحة SIM/eSIM."
@@ -754,7 +780,7 @@
   },
   "numberUpdate": {
     "title": "تحديث الأرقام",
-    "subtitle": "حدّث حالة أي رقم مباشرة من منصات الشركات الموردة.",
+    "subtitle": "أدخل أي رقم — يتم فحصه تلقائيًا مقابل كل شركة موردة مدعومة.",
     "enterNumberLabel": "أدخل رقم الهاتف",
     "numberHint": "05xxxxxxxx",
     "updateButton": "تحديث الرقم",
@@ -774,16 +800,14 @@
       "failed": "فشل"
     },
     "errors": {
-      "numberNotRegistered": "هذا الرقم مش مسجّل على أي خط زبون بالتطبيق بعد.",
-      "companyNotSupported": "{company} ما إلها مزوّد تحديث أرقام آلي مفعّل.",
       "providerRejected": "الشركة رفضت هذا الرقم.",
       "providerUnreachable": "تعذر الوصول لمنصة الشركة. حاول لاحقًا.",
-      "skyUnavailable": "خاصية تحديث سكاي مش متاحة من هالشاشة هلأ."
+      "notFoundAnyProvider": "هذا الرقم غير معروف لدى أي شركة مدعومة (ليان، كويك لاين، عرين، ألوها، سكاي)."
     },
-    "skyDialog": {
-      "title": "جارٍ التحديث عبر سكاي…",
+    "webviewDialog": {
+      "title": "جارٍ التحديث…",
       "subtitle": "ممكن ياخذ لعدة دقائق. لا تقفل هالنافذة.",
-      "timeout": "سكاي ما ردّت بالوقت المحدد. حاول لاحقًا."
+      "timeout": "الشركة ما ردّت بالوقت المحدد. حاول لاحقًا."
     }
   },
   "numberUpdateProvider": {
@@ -791,6 +815,8 @@
     "liyan": "ليان",
     "areen": "عرين",
     "quickline": "كويك لاين",
+    "aloha": "ألوها",
+    "smilesim": "التحديث العام",
     "sky": "سكاي"
   }
 }

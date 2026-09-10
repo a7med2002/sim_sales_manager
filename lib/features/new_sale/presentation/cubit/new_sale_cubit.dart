@@ -138,6 +138,7 @@ class NewSaleCubit extends Cubit<NewSaleState> {
       companyInitials: company.initials,
       packageId: package.id,
       packageName: package.name,
+      packageSimType: package.simType,
       purchaseDate: state.purchaseDate,
       expiryDate: state.expiryDate,
       wholesaleCost: state.wholesaleCost,

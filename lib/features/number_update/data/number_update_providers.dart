@@ -36,12 +36,15 @@ Future<NumberUpdateResult> callNumberUpdateProvider(NumberUpdateProviderKey prov
       );
     case NumberUpdateProviderKey.areen:
       return _postAreen(phoneNumber);
+    case NumberUpdateProviderKey.aloha:
+      return _postAloha(phoneNumber);
+    case NumberUpdateProviderKey.smilesim:
     case NumberUpdateProviderKey.sky:
-      // Sky needs a real browser context (reCAPTCHA v3) — handled by
-      // `SkyWebViewUpdater` instead, which `NumberUpdateCubit.submitUpdate`
-      // routes to directly. This case only exists so the switch stays
-      // exhaustive; it's never actually reached.
-      throw UnsupportedError('Sky is handled via SkyWebViewUpdater, not callNumberUpdateProvider.');
+      // Both need a real browser context (reCAPTCHA v3) — handled by
+      // `FormWebViewUpdater` instead, which `NumberUpdateCubit._callProvider`
+      // routes to directly. These cases only exist so the switch stays
+      // exhaustive; neither is ever actually reached.
+      throw UnsupportedError('$provider is handled via FormWebViewUpdater, not callNumberUpdateProvider.');
   }
 }
 
@@ -67,6 +70,41 @@ Future<NumberUpdateResult> _postPlainTextResponse({
       return NumberUpdateResult(status: NumberUpdateStatus.success, message: text.trim().isEmpty ? 'numberUpdate.status.success'.tr() : text.trim());
     }
     return NumberUpdateResult(status: NumberUpdateStatus.notFound, message: text.trim().isEmpty ? 'numberUpdate.errors.providerRejected'.tr() : text.trim());
+  } catch (_) {
+    return NumberUpdateResult(status: NumberUpdateStatus.failed, message: 'numberUpdate.errors.providerUnreachable'.tr());
+  } finally {
+    client.close(force: true);
+  }
+}
+
+/// Aloha's form (not JSON — a plain jQuery `$.ajax` POST with no
+/// `contentType` override, so it's `application/x-www-form-urlencoded`
+/// like a normal HTML form) also carries a `website` honeypot field —
+/// left empty here, same as a real visitor never fills it in. Replies
+/// with JSON — `{"status": true/false, "message": "..."}`, `message`
+/// itself already a 3-line Arabic/Hebrew/English string on failure
+/// (verified with a real call).
+Future<NumberUpdateResult> _postAloha(String phoneNumber) async {
+  final client = HttpClient();
+  try {
+    final body = 'phone_number=${Uri.encodeQueryComponent(phoneNumber)}&website=';
+    final request = await client.postUrl(Uri.parse('https://refresh.telecom.co.il/home/refreshNumber'));
+    request.headers.set(HttpHeaders.contentTypeHeader, 'application/x-www-form-urlencoded');
+    request.headers.set('X-Requested-With', 'XMLHttpRequest');
+    request.write(body);
+    final response = await request.close();
+    final text = await response.transform(utf8.decoder).join();
+
+    final decoded = jsonDecode(text);
+    if (decoded is! Map<String, dynamic>) {
+      return NumberUpdateResult(status: NumberUpdateStatus.failed, message: 'numberUpdate.errors.providerUnreachable'.tr());
+    }
+    final success = decoded['status'] == true;
+    final message = (decoded['message'] as String?) ?? '';
+    if (success) {
+      return NumberUpdateResult(status: NumberUpdateStatus.success, message: message.isEmpty ? 'numberUpdate.status.success'.tr() : message);
+    }
+    return NumberUpdateResult(status: NumberUpdateStatus.notFound, message: message.isEmpty ? 'numberUpdate.errors.providerRejected'.tr() : message);
   } catch (_) {
     return NumberUpdateResult(status: NumberUpdateStatus.failed, message: 'numberUpdate.errors.providerUnreachable'.tr());
   } finally {

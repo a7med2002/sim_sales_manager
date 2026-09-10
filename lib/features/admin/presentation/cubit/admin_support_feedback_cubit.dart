@@ -58,7 +58,7 @@ class AdminSupportFeedbackCubit extends Cubit<AdminSupportFeedbackState> {
           message: row['body'] as String,
           attachmentUrl: row['attachment_url'] as String?,
           voiceNoteUrl: row['voice_note_url'] as String?,
-          createdAt: DateTime.parse(row['created_at'] as String),
+          createdAt: DateTime.parse(row['created_at'] as String).toLocal(),
           senderId: ownerId,
           senderName: (profile?['display_name'] as String?) ?? '',
           senderEmail: (profile?['email'] as String?) ?? '',
@@ -68,7 +68,7 @@ class AdminSupportFeedbackCubit extends Cubit<AdminSupportFeedbackState> {
 
       emit(state.copyWith(requests: requests, isLoading: false));
     } catch (e) {
-      emit(state.copyWith(isLoading: false, errorMessage: e.toString()));
+      emit(state.copyWith(isLoading: false, errorMessage: 'common.genericError'));
     }
   }
 

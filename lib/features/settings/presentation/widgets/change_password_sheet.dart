@@ -1,15 +1,19 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../../core/auth/auth_service.dart';
+import '../../../../core/config/env.dart';
+import '../../../../core/di/service_locator.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
 
-/// Mock-only "Change password" sheet — no Supabase Auth call yet.
 /// Validates current password is non-empty and the new password is 6+
 /// characters and matches its confirmation (same rule as Login/Forgot
-/// password's demo validation).
+/// password's demo validation), then calls `AuthService.changePassword`
+/// for a real Supabase Auth update.
 class ChangePasswordSheet extends StatefulWidget {
   const ChangePasswordSheet({super.key});
 
@@ -31,6 +35,7 @@ class _ChangePasswordSheetState extends State<ChangePasswordSheet> {
   final _newController = TextEditingController();
   final _confirmController = TextEditingController();
   String? _errorMessage;
+  bool _isSaving = false;
 
   @override
   void dispose() {
@@ -40,7 +45,7 @@ class _ChangePasswordSheetState extends State<ChangePasswordSheet> {
     super.dispose();
   }
 
-  void _save() {
+  Future<void> _save() async {
     if (_currentController.text.trim().isEmpty) {
       setState(() => _errorMessage = 'changePassword.errors.currentRequired'.tr());
       return;
@@ -54,10 +59,36 @@ class _ChangePasswordSheetState extends State<ChangePasswordSheet> {
       return;
     }
 
-    Navigator.of(context).pop();
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text('changePassword.passwordChanged'.tr())));
+    setState(() {
+      _errorMessage = null;
+      _isSaving = true;
+    });
+
+    try {
+      if (Env.isConfigured) {
+        await getIt<AuthService>().changePassword(
+          currentPassword: _currentController.text,
+          newPassword: _newController.text,
+        );
+      }
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text('changePassword.passwordChanged'.tr())));
+    } on AuthException {
+      if (!mounted) return;
+      setState(() {
+        _isSaving = false;
+        _errorMessage = 'changePassword.errors.currentIncorrect'.tr();
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isSaving = false;
+        _errorMessage = 'changePassword.errors.generic'.tr();
+      });
+    }
   }
 
   @override
@@ -102,14 +133,16 @@ class _ChangePasswordSheetState extends State<ChangePasswordSheet> {
                 width: double.infinity,
                 height: 52,
                 child: ElevatedButton(
-                  onPressed: _save,
+                  onPressed: _isSaving ? null : _save,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: colors.primaryAction,
                     foregroundColor: colors.onPrimaryAction,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.button)),
                     elevation: 0,
                   ),
-                  child: Text('changePassword.save'.tr(), style: AppTextStyles.cardTitle(colors.onPrimaryAction)),
+                  child: _isSaving
+                      ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: colors.onPrimaryAction))
+                      : Text('changePassword.save'.tr(), style: AppTextStyles.cardTitle(colors.onPrimaryAction)),
                 ),
               ),
             ],

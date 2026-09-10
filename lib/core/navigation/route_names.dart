@@ -5,6 +5,7 @@ class RouteNames {
   RouteNames._();
 
   static const String login = '/login';
+  static const String resetPassword = '/reset-password';
   static const String home = '/home';
   static const String companies = '/companies';
   static const String customers = '/customers';
@@ -12,7 +13,6 @@ class RouteNames {
   static const String settings = '/settings';
   static const String numbers = '/numbers';
   static const String activityLog = '/activity-log';
-  static const String trustedDevices = '/trusted-devices';
   static const String supportFeedback = '/support-feedback';
   static const String profits = '/profits';
   static const String reports = '/reports';

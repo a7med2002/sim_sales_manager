@@ -21,6 +21,9 @@ class _FakeCompanyCatalog implements CompanyCatalog {
   List<CompanySummary> get activeCompanies => companies;
 
   @override
+  Stream<void> get changes => const Stream.empty();
+
+  @override
   void recordSale({required String companyId, required double wholesaleCost, required double profit}) {
     recordedSales.add((companyId: companyId, wholesaleCost: wholesaleCost, profit: profit));
   }
@@ -67,6 +70,9 @@ class _FakeCustomerCatalog implements CustomerCatalog {
   List<LineSummary> get allLines => [];
 
   @override
+  Stream<void> get changes => const Stream.empty();
+
+  @override
   String quickAddCustomer({required String name, required String contactNumber}) {
     quickAddedName = name;
     quickAddedContact = contactNumber;
@@ -84,6 +90,7 @@ class _FakeCustomerCatalog implements CustomerCatalog {
     required String companyInitials,
     String? packageId,
     required String packageName,
+    String? packageSimType,
     required DateTime purchaseDate,
     required DateTime expiryDate,
     required double wholesaleCost,

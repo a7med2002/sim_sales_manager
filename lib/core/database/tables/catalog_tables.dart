@@ -29,6 +29,7 @@ class PackageCatalogTable extends Table {
   TextColumn get id => text()();
   TextColumn get companyCatalogId => text().references(CompanyCatalogTable, #id)();
   TextColumn get name => text()();
+  TextColumn get simType => text().nullable()();
   RealColumn get wholesaleCost => real().withDefault(const Constant(0))();
   RealColumn get suggestedRetailPrice => real().withDefault(const Constant(0))();
   TextColumn get status => text().withDefault(const Constant('active'))();

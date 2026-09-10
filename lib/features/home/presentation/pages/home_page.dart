@@ -10,6 +10,8 @@ import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/cubit/theme_cubit.dart';
+import '../../../../core/update/update_cubit.dart';
+import '../../../../core/update/update_dialog.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/app_top_bar.dart';
 import '../../../../core/widgets/balance_progress_card.dart';
@@ -29,15 +31,36 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider.value(
-      value: getIt<HomeCubit>(),
-      child: const _HomeView(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider.value(value: getIt<HomeCubit>()),
+        BlocProvider.value(value: getIt<UpdateCubit>()),
+      ],
+      child: const UpdateGate(child: _HomeView()),
     );
   }
 }
 
-class _HomeView extends StatelessWidget {
+class _HomeView extends StatefulWidget {
   const _HomeView();
+
+  @override
+  State<_HomeView> createState() => _HomeViewState();
+}
+
+class _HomeViewState extends State<_HomeView> {
+  @override
+  void initState() {
+    super.initState();
+    // `HomeCubit` is a `getIt` singleton that only loads once, at app
+    // start — every navigation back to Home (New Sale confirm, adding a
+    // company, etc. all `pushReplacementNamed` here) re-creates this
+    // widget, so re-pulling here is what actually keeps stats/balance/
+    // charts current instead of frozen at whatever existed on first
+    // launch. `HomeCubit.refresh()` already existed for exactly this but
+    // was never wired up to anything.
+    context.read<HomeCubit>().refresh();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,6 +81,7 @@ class _HomeView extends StatelessWidget {
                 AppTopBar(
                   title: 'home.welcomeBack'.tr(namedArgs: {'name': state.userName}),
                   subtitle: 'home.tagline'.tr(),
+                  showBrandMark: true,
                   isDarkMode: Theme.of(context).brightness == Brightness.dark,
                   onThemeToggle: () => context.read<ThemeCubit>().toggle(),
                 ),
@@ -157,6 +181,7 @@ class _StatsGrid extends StatelessWidget {
                 iconColor: colors.textPrimary,
                 title: 'home.stats.operations'.tr(),
                 value: '${stats.operations}',
+                onTap: () => Navigator.of(context).pushNamed(RouteNames.shipmentsOperations),
               ),
             ),
             const SizedBox(width: AppSpacing.cardGap),
@@ -166,6 +191,7 @@ class _StatsGrid extends StatelessWidget {
                 iconColor: colors.textPrimary,
                 title: 'home.stats.companies'.tr(),
                 value: '${stats.companies}',
+                onTap: () => Navigator.of(context).pushNamed(RouteNames.companies),
               ),
             ),
           ],
@@ -179,6 +205,7 @@ class _StatsGrid extends StatelessWidget {
                 iconColor: colors.warning,
                 title: 'home.stats.totalSales'.tr(),
                 value: formatCurrency(stats.totalSales),
+                onTap: () => Navigator.of(context).pushNamed(RouteNames.reports),
               ),
             ),
             const SizedBox(width: AppSpacing.cardGap),
@@ -188,6 +215,7 @@ class _StatsGrid extends StatelessWidget {
                 iconColor: colors.textPrimary,
                 title: 'home.stats.newLines'.tr(),
                 value: '${stats.newLines}',
+                onTap: () => Navigator.of(context).pushNamed(RouteNames.numbers),
               ),
             ),
           ],
@@ -202,6 +230,7 @@ class _StatsGrid extends StatelessWidget {
                 title: 'home.stats.uncollected'.tr(),
                 value: formatCurrency(stats.uncollected),
                 valueColor: stats.uncollected > 0 ? colors.danger : null,
+                onTap: () => Navigator.of(context).pushNamed(RouteNames.customers),
               ),
             ),
             const SizedBox(width: AppSpacing.cardGap),
@@ -212,6 +241,7 @@ class _StatsGrid extends StatelessWidget {
                 title: 'home.stats.totalProfit'.tr(),
                 value: formatCurrency(stats.totalProfit),
                 valueColor: colors.success,
+                onTap: () => Navigator.of(context).pushNamed(RouteNames.profits),
               ),
             ),
           ],

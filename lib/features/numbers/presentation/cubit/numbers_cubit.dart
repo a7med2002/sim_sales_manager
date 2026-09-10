@@ -12,19 +12,12 @@ import 'numbers_state.dart';
 /// instead of importing Customers/Companies directly (see
 /// core/catalog/ for why). No writes happen here.
 class NumbersCubit extends Cubit<NumbersState> {
-  final CustomerCatalog _customerCatalog;
-
   NumbersCubit({required CustomerCatalog customerCatalog, required CompanyCatalog companyCatalog})
-      : _customerCatalog = customerCatalog,
-        super(NumbersState(
+      : super(NumbersState(
           lines: customerCatalog.allLines,
           companies: companyCatalog.activeCompanies,
           now: DateTime.now(),
         ));
-
-  void refresh() {
-    emit(state.copyWith(lines: _customerCatalog.allLines));
-  }
 
   void periodChanged(PeriodFilter period) => emit(state.copyWith(period: period));
 

@@ -7,6 +7,7 @@ import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/utils/package_display.dart';
 import '../../../../core/widgets/status_badge.dart';
 import '../cubit/new_sale_state.dart';
 
@@ -58,7 +59,8 @@ class ConfirmStep extends StatelessWidget {
           Container(height: 1, color: colors.border),
           const SizedBox(height: AppSpacing.sm),
           _row(context, 'newSale.confirmStep.companyLabel'.tr(), state.selectedCompany?.name ?? ''),
-          _row(context, 'newSale.confirmStep.packageLabel'.tr(), state.selectedPackage?.name ?? ''),
+          _row(context, 'newSale.confirmStep.packageLabel'.tr(),
+              packageDisplayLabel(state.selectedPackage?.name ?? '', state.selectedPackage?.simType)),
           _row(context, 'newSale.confirmStep.simLabel'.tr(), state.simNumber),
           _row(context, 'newSale.confirmStep.expiryDateLabel'.tr(), _formatDate(state.expiryDate)),
           _row(context, 'newSale.confirmStep.wholesaleCostLabel'.tr(), formatCurrency(state.wholesaleCost)),

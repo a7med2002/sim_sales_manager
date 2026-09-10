@@ -42,7 +42,10 @@ class HomeState extends Equatable {
       companies: matching.map((l) => l.companyId).where((id) => id.isNotEmpty).toSet().length,
       totalSales: matching.fold(0.0, (sum, l) => sum + l.retailPrice),
       newLines: matching.length,
-      uncollected: matching.fold(0.0, (sum, l) => sum + l.amountRemaining),
+      // Excludes deleted customers' lines — see LineSummary.customerDeleted's
+      // doc comment: that debt is no longer collectible/actionable
+      // through the app once its customer is gone.
+      uncollected: matching.where((l) => !l.customerDeleted).fold(0.0, (sum, l) => sum + l.amountRemaining),
       totalProfit: matching.fold(0.0, (sum, l) => sum + l.profit),
     );
   }

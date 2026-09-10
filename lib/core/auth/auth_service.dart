@@ -22,6 +22,18 @@ class AuthService {
 
   Future<void> signOut() => _client.auth.signOut();
 
+  /// Re-authenticates with [currentPassword] to verify it's correct
+  /// (Supabase has no standalone "verify password" call — signing in
+  /// again is the standard way), then updates to [newPassword]. Throws
+  /// an `AuthException` from the re-auth step if the current password
+  /// is wrong, before ever touching the real password.
+  Future<void> changePassword({required String currentPassword, required String newPassword}) async {
+    final email = _client.auth.currentUser?.email;
+    if (email == null) throw StateError('No signed-in user');
+    await _client.auth.signInWithPassword(email: email, password: currentPassword);
+    await _client.auth.updateUser(UserAttributes(password: newPassword));
+  }
+
   /// `'seller'` or `'admin'` — read fresh from `profiles` rather than
   /// cached, since an admin can change a role while this session is
   /// still active.

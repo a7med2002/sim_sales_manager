@@ -18,8 +18,8 @@ class CustomersState extends Equatable {
   final String? tagFilter;
 
   const CustomersState({
-    required this.customers,
-    required this.lines,
+    this.customers = const [],
+    this.lines = const [],
     this.tab = CustomersTab.active,
     this.searchQuery = '',
     this.statusFilter,

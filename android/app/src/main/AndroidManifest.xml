@@ -1,4 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- In-app update system (core/update/) — downloads a new APK from
+         Supabase Storage and hands it to open_filex, which opens
+         Android's own package-install screen for it. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
     <!-- Support & Feedback: attach a photo (image_picker) and record a
          short voice note (record). -->
     <uses-permission android:name="android.permission.CAMERA"/>
@@ -7,7 +12,7 @@
     <uses-feature android:name="android.hardware.camera.autofocus" android:required="false"/>
     <uses-feature android:name="android.hardware.microphone" android:required="false"/>
     <application
-        android:label="sim_sales_manager"
+        android:label="eSIM Dafter"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
@@ -30,6 +35,15 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+            <!-- Supabase Auth "reset password" email link deep link — see
+                 core/config/deep_links.dart. autoVerify is left off since
+                 this is a custom scheme, not an https App Link. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="simsalesmanager" android:host="reset-callback"/>
             </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.

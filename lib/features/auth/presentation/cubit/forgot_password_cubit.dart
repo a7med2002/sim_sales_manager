@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../../core/config/deep_links.dart';
 import '../../../../core/config/env.dart';
 import 'forgot_password_state.dart';
 
@@ -36,7 +37,10 @@ class ForgotPasswordCubit extends Cubit<ForgotPasswordState> {
     }
 
     try {
-      await Supabase.instance.client.auth.resetPasswordForEmail(state.email.trim());
+      await Supabase.instance.client.auth.resetPasswordForEmail(
+        state.email.trim(),
+        redirectTo: DeepLinks.resetPasswordCallback,
+      );
       emit(state.copyWith(status: ForgotPasswordStatus.success));
     } catch (_) {
       // Deliberately still reports success on failure too: never reveal

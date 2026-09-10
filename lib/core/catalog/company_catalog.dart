@@ -8,6 +8,14 @@ import 'company_summary.dart';
 abstract class CompanyCatalog {
   List<CompanySummary> get activeCompanies;
 
+  /// Fires whenever [activeCompanies] may have changed — including the
+  /// cubit's own async initial load finishing (Drift/Supabase reads
+  /// resolve after construction), so a reader built before that load
+  /// completed (Home, on a cold app start) can react instead of staying
+  /// stuck on an empty/zeroed snapshot until something else happens to
+  /// call it again.
+  Stream<void> get changes;
+
   /// Records a sale against a company's shipment balance: increases
   /// consumed, decreases available-to-sell, bumps operations count and
   /// profit generated.

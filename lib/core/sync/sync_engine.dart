@@ -41,6 +41,12 @@ class SyncEngine {
     await pushPendingLines(ownerId);
     await pushPendingShipments(ownerId);
     await pushPendingSettings(ownerId);
+    // Flush any permanent deletes still waiting on their remote
+    // counterpart *before* pulling — otherwise a delete that hadn't
+    // reached the server yet gets resurrected by the pull below re-
+    // fetching a row that (from this device's perspective) is already
+    // gone. See pending_deletes_table.dart.
+    await pushPendingDeletes(ownerId);
     await pullCompanies(ownerId);
     await pullPackages(ownerId);
     await pullCustomers(ownerId);
@@ -53,6 +59,49 @@ class SyncEngine {
     await pullActivityLog(ownerId);
     await pullSupportRequests(ownerId);
     await pullNumberUpdateLog(ownerId);
+  }
+
+  /// Tombstones a permanent local delete of [id] from [entityTable] and
+  /// immediately attempts the matching remote delete — most of the time
+  /// the tombstone is gone again by the time this returns. It only
+  /// lingers when the attempt fails (offline/transient), in which case
+  /// [pushPendingDeletes] retries it on the next sync; either way, a
+  /// pull can never resurrect the row in between, since every pull here
+  /// filters out ids still tombstoned. Callers: a permanent delete in
+  /// `CompaniesCubit`/`CustomersCubit` (companies, customers, lines).
+  Future<void> recordAndPushDelete({required String entityTable, required String id, required String ownerId}) async {
+    await _db.into(_db.pendingDeletesTable).insertOnConflictUpdate(
+          PendingDeletesTableCompanion.insert(entityTable: entityTable, entityId: id, ownerId: ownerId),
+        );
+    await _flushOneDelete(entityTable, id);
+  }
+
+  /// Retries every delete still waiting on server confirmation — called
+  /// as part of [syncAll], before any pull.
+  Future<void> pushPendingDeletes(String ownerId) async {
+    final tombstones = await (_db.select(_db.pendingDeletesTable)..where((t) => t.ownerId.equals(ownerId))).get();
+    for (final t in tombstones) {
+      await _flushOneDelete(t.entityTable, t.entityId);
+    }
+  }
+
+  Future<void> _flushOneDelete(String entityTable, String id) async {
+    try {
+      await _client.from(entityTable).delete().eq('id', id);
+      await (_db.delete(_db.pendingDeletesTable)
+            ..where((t) => t.entityTable.equals(entityTable) & t.entityId.equals(id)))
+          .go();
+    } catch (_) {
+      // Still offline or a transient failure — tombstone stays, retried
+      // by the next `pushPendingDeletes` call.
+    }
+  }
+
+  Future<Set<String>> _tombstonedIds(String ownerId, String entityTable) async {
+    final rows = await (_db.select(_db.pendingDeletesTable)
+          ..where((t) => t.ownerId.equals(ownerId) & t.entityTable.equals(entityTable)))
+        .get();
+    return rows.map((r) => r.entityId).toSet();
   }
 
   /// Pulls the full company/package catalog. Small, shared, admin-edited
@@ -95,17 +144,13 @@ class SyncEngine {
   Future<void> pullCompanies(String ownerId) async {
     final rows = await _client.from('companies').select().eq('owner_id', ownerId);
     if (rows.isEmpty) return;
+    final tombstoned = await _tombstonedIds(ownerId, 'companies');
+    final fresh = tombstoned.isEmpty ? rows : rows.where((r) => !tombstoned.contains(r['id'])).toList();
+    if (fresh.isEmpty) return;
     await _db.batch((batch) {
-      batch.insertAllOnConflictUpdate(_db.companiesTable, rows.map(_companyFromRow).toList());
+      batch.insertAllOnConflictUpdate(_db.companiesTable, fresh.map(_companyFromRow).toList());
     });
   }
-
-  /// Deletes a company on the server directly (not via the `synced`
-  /// queue — a permanent delete removes the local row entirely, so
-  /// there'd be nothing left to "push"). Packages cascade automatically
-  /// server-side (`ON DELETE CASCADE`); the caller is responsible for
-  /// deleting the local package rows too, since Drift doesn't cascade.
-  Future<void> deleteCompanyRemote(String id) => _client.from('companies').delete().eq('id', id);
 
   Map<String, dynamic> _companyToRow(CompaniesTableData c) => {
         'id': c.id,
@@ -117,7 +162,9 @@ class SyncEngine {
         'pinned': c.pinned,
         'catalog_company_id': c.catalogCompanyId,
         'number_update_provider': c.numberUpdateProvider,
-        'updated_at': c.updatedAt.toIso8601String(),
+        'number_update_url': c.numberUpdateUrl,
+        'allow_negative_balance': c.allowNegativeBalance,
+        'updated_at': c.updatedAt.toUtc().toIso8601String(),
       };
 
   CompaniesTableCompanion _companyFromRow(Map<String, dynamic> row) {
@@ -131,7 +178,9 @@ class SyncEngine {
       pinned: Value(row['pinned'] as bool? ?? false),
       catalogCompanyId: Value(row['catalog_company_id'] as String?),
       numberUpdateProvider: Value(row['number_update_provider'] as String?),
-      updatedAt: DateTime.parse(row['updated_at'] as String),
+      numberUpdateUrl: Value(row['number_update_url'] as String?),
+      allowNegativeBalance: Value(row['allow_negative_balance'] as bool? ?? false),
+      updatedAt: DateTime.parse(row['updated_at'] as String).toLocal(),
     );
   }
 
@@ -164,9 +213,10 @@ class SyncEngine {
         'owner_id': p.ownerId,
         'company_id': p.companyId,
         'name': p.name,
+        'sim_type': p.simType,
         'wholesale_cost': p.wholesaleCost,
         'retail_price': p.retailPrice,
-        'updated_at': p.updatedAt.toIso8601String(),
+        'updated_at': p.updatedAt.toUtc().toIso8601String(),
       };
 
   PackagesTableCompanion _packageFromRow(Map<String, dynamic> row) {
@@ -175,9 +225,10 @@ class SyncEngine {
       ownerId: row['owner_id'] as String,
       companyId: row['company_id'] as String,
       name: row['name'] as String,
+      simType: Value(row['sim_type'] as String?),
       wholesaleCost: Value((row['wholesale_cost'] as num).toDouble()),
       retailPrice: Value((row['retail_price'] as num).toDouble()),
-      updatedAt: DateTime.parse(row['updated_at'] as String),
+      updatedAt: DateTime.parse(row['updated_at'] as String).toLocal(),
     );
   }
 
@@ -200,12 +251,13 @@ class SyncEngine {
   Future<void> pullCustomers(String ownerId) async {
     final rows = await _client.from('customers').select().eq('owner_id', ownerId);
     if (rows.isEmpty) return;
+    final tombstoned = await _tombstonedIds(ownerId, 'customers');
+    final fresh = tombstoned.isEmpty ? rows : rows.where((r) => !tombstoned.contains(r['id'])).toList();
+    if (fresh.isEmpty) return;
     await _db.batch((batch) {
-      batch.insertAllOnConflictUpdate(_db.customersTable, rows.map(_customerFromRow).toList());
+      batch.insertAllOnConflictUpdate(_db.customersTable, fresh.map(_customerFromRow).toList());
     });
   }
-
-  Future<void> deleteCustomerRemote(String id) => _client.from('customers').delete().eq('id', id);
 
   Map<String, dynamic> _customerToRow(CustomersTableData c) => {
         'id': c.id,
@@ -220,7 +272,7 @@ class SyncEngine {
         'pinned': c.pinned,
         'notes': c.notes,
         'deleted': c.deleted,
-        'updated_at': c.updatedAt.toIso8601String(),
+        'updated_at': c.updatedAt.toUtc().toIso8601String(),
       };
 
   CustomersTableCompanion _customerFromRow(Map<String, dynamic> row) {
@@ -235,7 +287,7 @@ class SyncEngine {
       pinned: Value(row['pinned'] as bool? ?? false),
       notes: Value(row['notes'] as String?),
       deleted: Value(row['deleted'] as bool? ?? false),
-      updatedAt: DateTime.parse(row['updated_at'] as String),
+      updatedAt: DateTime.parse(row['updated_at'] as String).toLocal(),
     );
   }
 
@@ -258,29 +310,34 @@ class SyncEngine {
   Future<void> pullLines(String ownerId) async {
     final rows = await _client.from('lines').select().eq('owner_id', ownerId);
     if (rows.isEmpty) return;
+    final tombstoned = await _tombstonedIds(ownerId, 'lines');
+    final fresh = tombstoned.isEmpty ? rows : rows.where((r) => !tombstoned.contains(r['id'])).toList();
+    if (fresh.isEmpty) return;
     await _db.batch((batch) {
-      batch.insertAllOnConflictUpdate(_db.linesTable, rows.map(_lineFromRow).toList());
+      batch.insertAllOnConflictUpdate(_db.linesTable, fresh.map(_lineFromRow).toList());
     });
   }
-
-  Future<void> deleteLineRemote(String id) => _client.from('lines').delete().eq('id', id);
 
   Map<String, dynamic> _lineToRow(LinesTableData l) => {
         'id': l.id,
         'owner_id': l.ownerId,
         'customer_id': l.customerId,
         'company_id': l.companyId,
+        'company_name': l.companyName,
+        'company_initials': l.companyInitials,
         'package_id': l.packageId,
+        'package_name': l.packageName,
+        'package_sim_type': l.packageSimType,
         'sim_number': l.simNumber,
-        'purchase_date': l.purchaseDate.toIso8601String(),
-        'expiry_date': l.expiryDate.toIso8601String(),
+        'purchase_date': l.purchaseDate.toUtc().toIso8601String(),
+        'expiry_date': l.expiryDate.toUtc().toIso8601String(),
         'wholesale_cost': l.wholesaleCost,
         'retail_price': l.retailPrice,
         'profit': l.profit,
         'payment_status': l.paymentStatus,
         'amount_paid': l.amountPaid,
         'amount_remaining': l.amountRemaining,
-        'updated_at': l.updatedAt.toIso8601String(),
+        'updated_at': l.updatedAt.toUtc().toIso8601String(),
       };
 
   LinesTableCompanion _lineFromRow(Map<String, dynamic> row) {
@@ -288,18 +345,22 @@ class SyncEngine {
       id: row['id'] as String,
       ownerId: row['owner_id'] as String,
       customerId: row['customer_id'] as String,
-      companyId: row['company_id'] as String,
+      companyId: Value(row['company_id'] as String?),
+      companyName: Value(row['company_name'] as String?),
+      companyInitials: Value(row['company_initials'] as String?),
       packageId: Value(row['package_id'] as String?),
+      packageName: Value(row['package_name'] as String?),
+      packageSimType: Value(row['package_sim_type'] as String?),
       simNumber: row['sim_number'] as String,
-      purchaseDate: DateTime.parse(row['purchase_date'] as String),
-      expiryDate: DateTime.parse(row['expiry_date'] as String),
+      purchaseDate: DateTime.parse(row['purchase_date'] as String).toLocal(),
+      expiryDate: DateTime.parse(row['expiry_date'] as String).toLocal(),
       wholesaleCost: Value((row['wholesale_cost'] as num).toDouble()),
       retailPrice: Value((row['retail_price'] as num).toDouble()),
       profit: Value((row['profit'] as num).toDouble()),
       paymentStatus: Value(row['payment_status'] as String? ?? 'unpaid'),
       amountPaid: Value((row['amount_paid'] as num).toDouble()),
       amountRemaining: Value((row['amount_remaining'] as num).toDouble()),
-      updatedAt: DateTime.parse(row['updated_at'] as String),
+      updatedAt: DateTime.parse(row['updated_at'] as String).toLocal(),
     );
   }
 
@@ -337,9 +398,9 @@ class SyncEngine {
         'amount_remaining': s.amountRemaining,
         'payment_method': s.paymentMethod,
         'reference_number': s.referenceNumber,
-        'shipment_date': s.shipmentDate.toIso8601String(),
+        'shipment_date': s.shipmentDate.toUtc().toIso8601String(),
         'notes': s.notes,
-        'updated_at': s.updatedAt.toIso8601String(),
+        'updated_at': s.updatedAt.toUtc().toIso8601String(),
       };
 
   ShipmentsTableCompanion _shipmentFromRow(Map<String, dynamic> row) {
@@ -353,9 +414,9 @@ class SyncEngine {
       amountRemaining: Value((row['amount_remaining'] as num).toDouble()),
       paymentMethod: Value(row['payment_method'] as String?),
       referenceNumber: Value(row['reference_number'] as String?),
-      shipmentDate: DateTime.parse(row['shipment_date'] as String),
+      shipmentDate: DateTime.parse(row['shipment_date'] as String).toLocal(),
       notes: Value(row['notes'] as String?),
-      updatedAt: DateTime.parse(row['updated_at'] as String),
+      updatedAt: DateTime.parse(row['updated_at'] as String).toLocal(),
     );
   }
 
@@ -385,7 +446,7 @@ class SyncEngine {
         'owner_id': s.ownerId,
         'currency_symbol': s.currencySymbol,
         'theme_preference': s.themePreference,
-        'updated_at': s.updatedAt.toIso8601String(),
+        'updated_at': s.updatedAt.toUtc().toIso8601String(),
       };
 
   SettingsTableCompanion _settingsFromRow(Map<String, dynamic> row) {
@@ -393,7 +454,7 @@ class SyncEngine {
       ownerId: row['owner_id'] as String,
       currencySymbol: Value(row['currency_symbol'] as String? ?? '₪'),
       themePreference: Value(row['theme_preference'] as String? ?? 'system'),
-      updatedAt: DateTime.parse(row['updated_at'] as String),
+      updatedAt: DateTime.parse(row['updated_at'] as String).toLocal(),
     );
   }
 
@@ -434,8 +495,8 @@ class SyncEngine {
         'body': s.body,
         'attachment_url': s.attachmentUrl,
         'voice_note_url': s.voiceNoteUrl,
-        'created_at': s.createdAt.toIso8601String(),
-        'updated_at': s.updatedAt.toIso8601String(),
+        'created_at': s.createdAt.toUtc().toIso8601String(),
+        'updated_at': s.updatedAt.toUtc().toIso8601String(),
       };
 
   SupportRequestsTableCompanion _supportRequestFromRow(Map<String, dynamic> row) {
@@ -446,8 +507,8 @@ class SyncEngine {
       body: row['body'] as String,
       attachmentUrl: Value(row['attachment_url'] as String?),
       voiceNoteUrl: Value(row['voice_note_url'] as String?),
-      createdAt: DateTime.parse(row['created_at'] as String),
-      updatedAt: DateTime.parse(row['updated_at'] as String),
+      createdAt: DateTime.parse(row['created_at'] as String).toLocal(),
+      updatedAt: DateTime.parse(row['updated_at'] as String).toLocal(),
     );
   }
 
@@ -482,20 +543,20 @@ class SyncEngine {
   Map<String, dynamic> _activityLogToRow(ActivityLogTableData a) => {
         'id': a.id,
         'owner_id': a.ownerId,
-        'occurred_at': a.occurredAt.toIso8601String(),
+        'occurred_at': a.occurredAt.toUtc().toIso8601String(),
         'action_type': a.actionType,
         'details': a.details,
-        'updated_at': a.updatedAt.toIso8601String(),
+        'updated_at': a.updatedAt.toUtc().toIso8601String(),
       };
 
   ActivityLogTableCompanion _activityLogFromRow(Map<String, dynamic> row) {
     return ActivityLogTableCompanion.insert(
       id: row['id'] as String,
       ownerId: row['owner_id'] as String,
-      occurredAt: DateTime.parse(row['occurred_at'] as String),
+      occurredAt: DateTime.parse(row['occurred_at'] as String).toLocal(),
       actionType: row['action_type'] as String,
       details: Value(row['details'] as String?),
-      updatedAt: DateTime.parse(row['updated_at'] as String),
+      updatedAt: DateTime.parse(row['updated_at'] as String).toLocal(),
     );
   }
 
@@ -531,8 +592,8 @@ class SyncEngine {
         'phone_number': n.phoneNumber,
         'status': n.status,
         'message': n.message,
-        'created_at': n.createdAt.toIso8601String(),
-        'updated_at': n.updatedAt.toIso8601String(),
+        'created_at': n.createdAt.toUtc().toIso8601String(),
+        'updated_at': n.updatedAt.toUtc().toIso8601String(),
       };
 
   NumberUpdateLogTableCompanion _numberUpdateLogFromRow(Map<String, dynamic> row) {
@@ -542,8 +603,49 @@ class SyncEngine {
       phoneNumber: row['phone_number'] as String,
       status: row['status'] as String,
       message: row['message'] as String,
-      createdAt: DateTime.parse(row['created_at'] as String),
-      updatedAt: DateTime.parse(row['updated_at'] as String),
+      createdAt: DateTime.parse(row['created_at'] as String).toLocal(),
+      updatedAt: DateTime.parse(row['updated_at'] as String).toLocal(),
+    );
+  }
+
+  // ── number update provider cache ────────────────────────────────────
+
+  Future<void> pushPendingNumberUpdateProviderCache(String ownerId) async {
+    final pending = await (_db.select(_db.numberUpdateProviderCacheTable)
+          ..where((t) => t.ownerId.equals(ownerId) & t.synced.equals(false)))
+        .get();
+    if (pending.isEmpty) return;
+
+    await _client.from('number_update_provider_cache').upsert(pending.map(_numberUpdateProviderCacheToRow).toList());
+
+    for (final row in pending) {
+      await (_db.update(_db.numberUpdateProviderCacheTable)
+            ..where((t) => t.ownerId.equals(row.ownerId) & t.phoneNumber.equals(row.phoneNumber)))
+          .write(const NumberUpdateProviderCacheTableCompanion(synced: Value(true)));
+    }
+  }
+
+  Future<void> pullNumberUpdateProviderCache(String ownerId) async {
+    final rows = await _client.from('number_update_provider_cache').select().eq('owner_id', ownerId);
+    if (rows.isEmpty) return;
+    await _db.batch((batch) {
+      batch.insertAllOnConflictUpdate(_db.numberUpdateProviderCacheTable, rows.map(_numberUpdateProviderCacheFromRow).toList());
+    });
+  }
+
+  Map<String, dynamic> _numberUpdateProviderCacheToRow(NumberUpdateProviderCacheTableData n) => {
+        'owner_id': n.ownerId,
+        'phone_number': n.phoneNumber,
+        'provider': n.provider,
+        'updated_at': n.updatedAt.toUtc().toIso8601String(),
+      };
+
+  NumberUpdateProviderCacheTableCompanion _numberUpdateProviderCacheFromRow(Map<String, dynamic> row) {
+    return NumberUpdateProviderCacheTableCompanion.insert(
+      ownerId: row['owner_id'] as String,
+      phoneNumber: row['phone_number'] as String,
+      provider: row['provider'] as String,
+      updatedAt: DateTime.parse(row['updated_at'] as String).toLocal(),
     );
   }
 
@@ -558,8 +660,8 @@ class SyncEngine {
       numberUpdateUrl: Value(row['number_update_url'] as String?),
       numberUpdateProvider: Value(row['number_update_provider'] as String?),
       status: Value(row['status'] as String? ?? 'active'),
-      createdAt: DateTime.parse(row['created_at'] as String),
-      updatedAt: DateTime.parse(row['updated_at'] as String),
+      createdAt: DateTime.parse(row['created_at'] as String).toLocal(),
+      updatedAt: DateTime.parse(row['updated_at'] as String).toLocal(),
     );
   }
 
@@ -568,11 +670,12 @@ class SyncEngine {
       id: row['id'] as String,
       companyCatalogId: row['company_catalog_id'] as String,
       name: row['name'] as String,
+      simType: Value(row['sim_type'] as String?),
       wholesaleCost: Value((row['wholesale_cost'] as num).toDouble()),
       suggestedRetailPrice: Value((row['suggested_retail_price'] as num).toDouble()),
       status: Value(row['status'] as String? ?? 'active'),
-      createdAt: DateTime.parse(row['created_at'] as String),
-      updatedAt: DateTime.parse(row['updated_at'] as String),
+      createdAt: DateTime.parse(row['created_at'] as String).toLocal(),
+      updatedAt: DateTime.parse(row['updated_at'] as String).toLocal(),
     );
   }
 }

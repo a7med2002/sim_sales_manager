@@ -38,7 +38,18 @@ class SyncStatusIndicator extends StatelessWidget {
           return Tooltip(
             message: tooltipKey.tr(),
             child: GestureDetector(
-              onTap: () => context.read<SyncBloc>().add(const SyncRequested()),
+              onTap: () {
+                // Never show the raw captured exception (`state.errorMessage`
+                // is `e.toString()` from `SyncBloc`, e.g. a low-level socket
+                // exception) — just a translated, generic notice that a
+                // retry is happening.
+                if (state.status == SyncStatus.error) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('sync.status.retrying'.tr()), duration: const Duration(seconds: 3)),
+                  );
+                }
+                context.read<SyncBloc>().add(const SyncRequested());
+              },
               behavior: HitTestBehavior.opaque,
               child: Padding(
                 padding: const EdgeInsets.all(4),

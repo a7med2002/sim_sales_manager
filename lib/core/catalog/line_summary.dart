@@ -41,6 +41,18 @@ class LineSummary extends Equatable {
   final String id;
   final String customerName;
   final String customerContact;
+
+  /// True when the customer this line belongs to is soft-deleted (or no
+  /// longer exists at all) — set by `CustomersCubit.allLines`. Numbers/
+  /// Profits/Reports keep showing these lines (a completed sale's
+  /// history/profit doesn't stop being real just because the customer
+  /// record was later deleted), but any "still owed"/"to collect" total
+  /// built from [amountRemaining] should exclude them — that debt is no
+  /// longer tracked/collectible through the app once its customer is
+  /// gone, and leaving it in would show a seller a mystery balance with
+  /// no customer left to explain or act on it.
+  final bool customerDeleted;
+
   final String simNumber;
 
   /// Real FK into the seller's own `companies` — see `Line`'s doc
@@ -51,6 +63,7 @@ class LineSummary extends Equatable {
   final String companyName;
   final String companyInitials;
   final String packageName;
+  final String? packageSimType;
   final DateTime purchaseDate;
   final DateTime expiryDate;
   final double wholesaleCost;
@@ -66,10 +79,12 @@ class LineSummary extends Equatable {
     required this.companyName,
     required this.companyInitials,
     required this.packageName,
+    this.packageSimType,
     required this.purchaseDate,
     required this.expiryDate,
     this.customerName = '',
     this.customerContact = '',
+    this.customerDeleted = false,
     this.wholesaleCost = 0,
     this.retailPrice = 0,
     this.amountPaid = 0,
@@ -90,11 +105,13 @@ class LineSummary extends Equatable {
         id,
         customerName,
         customerContact,
+        customerDeleted,
         simNumber,
         companyId,
         companyName,
         companyInitials,
         packageName,
+        packageSimType,
         purchaseDate,
         expiryDate,
         wholesaleCost,

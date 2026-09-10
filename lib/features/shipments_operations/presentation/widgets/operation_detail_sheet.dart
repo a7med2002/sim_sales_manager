@@ -8,6 +8,7 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
+import '../../../../core/utils/package_display.dart';
 import '../../../../core/widgets/status_badge.dart';
 
 /// Read-only operation detail sheet — tapping a row in the Operations
@@ -63,7 +64,7 @@ class _OperationDetailContent extends StatelessWidget {
                 _row(context, 'shipmentsOperations.operationDetail.customer'.tr(), line.customerName),
                 _row(context, 'shipmentsOperations.operationDetail.contact'.tr(), line.customerContact),
                 _row(context, 'shipmentsOperations.operationDetail.company'.tr(), line.companyName),
-                _row(context, 'shipmentsOperations.operationDetail.package'.tr(), line.packageName),
+                _row(context, 'shipmentsOperations.operationDetail.package'.tr(), packageDisplayLabel(line.packageName, line.packageSimType)),
                 _row(context, 'shipmentsOperations.operationDetail.purchaseDate'.tr(), formatDate(line.purchaseDate)),
                 _row(context, 'shipmentsOperations.operationDetail.expiryDate'.tr(), formatDate(line.expiryDate)),
                 _row(context, 'shipmentsOperations.operationDetail.wholesaleCost'.tr(), formatCurrency(line.wholesaleCost)),

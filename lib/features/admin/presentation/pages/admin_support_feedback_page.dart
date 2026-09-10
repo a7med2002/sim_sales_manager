@@ -61,7 +61,7 @@ class _AdminSupportFeedbackView extends StatelessWidget {
                   if (state.errorMessage != null)
                     Padding(
                       padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                      child: Text(state.errorMessage!, style: AppTextStyles.body(colors.danger)),
+                      child: Text(state.errorMessage!.tr(), style: AppTextStyles.body(colors.danger)),
                     ),
                   if (state.isLoading && state.requests.isEmpty)
                     const Padding(padding: EdgeInsets.symmetric(vertical: AppSpacing.xl), child: Center(child: CircularProgressIndicator()))

@@ -7,18 +7,20 @@ enum CatalogStatus { active, archived }
 class CatalogPackageAdmin extends Equatable {
   final String id;
   final String name;
+  final String? simType;
   final double wholesaleCost;
   final double suggestedRetailPrice;
 
   const CatalogPackageAdmin({
     required this.id,
     required this.name,
+    this.simType,
     required this.wholesaleCost,
     required this.suggestedRetailPrice,
   });
 
   @override
-  List<Object?> get props => [id, name, wholesaleCost, suggestedRetailPrice];
+  List<Object?> get props => [id, name, simType, wholesaleCost, suggestedRetailPrice];
 }
 
 /// A company template in the shared, admin-managed `company_catalog` —
@@ -31,6 +33,7 @@ class CatalogCompanyAdmin extends Equatable {
   final String notes;
   final String numberUpdateUrl;
   final NumberUpdateProviderKey? numberUpdateProvider;
+  final String? logoUrl;
   final CatalogStatus status;
   final List<CatalogPackageAdmin> packages;
 
@@ -40,10 +43,11 @@ class CatalogCompanyAdmin extends Equatable {
     this.notes = '',
     this.numberUpdateUrl = '',
     this.numberUpdateProvider,
+    this.logoUrl,
     this.status = CatalogStatus.active,
     this.packages = const [],
   });
 
   @override
-  List<Object?> get props => [id, name, notes, numberUpdateUrl, numberUpdateProvider, status, packages];
+  List<Object?> get props => [id, name, notes, numberUpdateUrl, numberUpdateProvider, logoUrl, status, packages];
 }
