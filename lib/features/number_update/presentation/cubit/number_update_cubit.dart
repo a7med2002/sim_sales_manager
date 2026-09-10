@@ -18,13 +18,18 @@ import '../../domain/entities/number_update_entry.dart';
 import 'number_update_state.dart';
 
 /// Number Update: tries a typed number against every supplier this app
-/// knows how to talk to automatically — SmileSim first (covers the
-/// largest share of numbers in practice), Liyan, QuickLine, Areen, Aloha
-/// (plain HTTP, `data/number_update_providers.dart`), then Sky as a last
-/// resort. SmileSim and Sky both need a real browser for reCAPTCHA, so
-/// they're the two that open a visible WebView (`runSmileSimFlow`/
-/// `runSkyFlow`, both backed by the shared `FormWebViewUpdater`). The
-/// number does **not** need to be registered to any customer Line first:
+/// knows how to talk to automatically — Aloha, Liyan, QuickLine, Areen
+/// first (plain HTTP, `data/number_update_providers.dart`, silent and
+/// near-instant), **then** SmileSim and Sky last, in that order.
+/// SmileSim/Sky both need a real browser for reCAPTCHA, so they're the
+/// two that open a visible WebView (`runSmileSimFlow`/`runSkyFlow`, both
+/// backed by the shared `FormWebViewUpdater`) — deliberately tried last
+/// rather than first: SmileSim's own number-update page matches against
+/// a broad/generic link that ends up accepting most numbers regardless
+/// of their real supplier, so trying it first meant almost every update
+/// opened a WebView even when a plain HTTP provider further down the
+/// list would have matched silently. The number does **not** need to be
+/// registered to any customer Line first:
 /// whichever supplier responds with a real match wins, in whatever order
 /// they're tried. A successful match is remembered locally
 /// (`NumberUpdateProviderCacheTable`) so the next update for that same
@@ -38,17 +43,20 @@ class NumberUpdateCubit extends Cubit<NumberUpdateState> {
   final SyncEngine? _syncEngine;
 
   /// The fixed trial order when nothing is cached yet for a number —
-  /// SmileSim first since it covers the largest share of numbers in
-  /// practice (most likely to match first, so most updates finish after
-  /// just one call instead of several); Sky last since, of the two
-  /// WebView-based suppliers, it's the narrower/slower one to fall back
-  /// on. The rest are quick, silent HTTP calls in between.
+  /// every plain-HTTP provider first (quick, silent, no UI), since
+  /// they're each a narrow/specific match (fail fast and cleanly when a
+  /// number isn't theirs); the two WebView-based providers
+  /// (SmileSim/Sky) last, SmileSim before Sky since it covers the larger
+  /// share of what's left by the time the search gets there. See this
+  /// class's doc comment for why WebView providers moved to the back —
+  /// a visible browser popping up should be the exception (a number none
+  /// of the quiet providers recognized), not the common case.
   static const _defaultTryOrder = [
-    NumberUpdateProviderKey.smilesim,
     NumberUpdateProviderKey.aloha,
     NumberUpdateProviderKey.liyan,
     NumberUpdateProviderKey.quickline,
     NumberUpdateProviderKey.areen,
+    NumberUpdateProviderKey.smilesim,
     NumberUpdateProviderKey.sky,
   ];
 

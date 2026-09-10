@@ -5322,3 +5322,20 @@ exercise this opt-in, which defaults to off). Not yet tested on-device
 end-to-end (needs the new Supabase migration run first, then a real
 company with the toggle on, a small positive balance, and a sale that
 exceeds it).
+
+## Changed: Number Update trial order — WebView providers moved to last
+
+Per explicit feedback after real-world testing: SmileSim's generic
+number-update link (tried first per an earlier session's decision) turns
+out to match broadly and accept most numbers regardless of their real
+supplier — so trying it first meant almost every update opened a visible
+WebView, even for numbers a plain/silent HTTP provider further down the
+list would have matched instantly. Reordered `NumberUpdateCubit._defaultTryOrder`
+so every plain-HTTP provider (Aloha, Liyan, QuickLine, Areen) is tried
+first, and the two WebView-based providers (SmileSim, then Sky) only as
+a last resort. A number's own cached provider (from a previous
+successful match) still always tries first regardless of this order —
+unchanged, separate concern.
+
+**Verified**: `flutter analyze` — no issues. `flutter test` — 16/16
+passing.
