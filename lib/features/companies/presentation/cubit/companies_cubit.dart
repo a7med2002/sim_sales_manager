@@ -13,6 +13,7 @@ import '../../../../core/catalog/company_summary.dart';
 import '../../../../core/config/env.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/di/service_locator.dart';
+import '../../../../core/notifications/notifications_cubit.dart';
 import '../../../../core/number_update/number_update_provider.dart';
 import '../../../../core/sync/connectivity_service.dart';
 import '../../../../core/sync/sync_engine.dart';
@@ -196,6 +197,15 @@ class CompaniesCubit extends Cubit<CompaniesState> implements CompanyCatalog {
     }).toList();
 
     emit(state.copyWith(companies: companies));
+
+    final notifications = getIt<NotificationsCubit>();
+    for (final company in companies.where((c) => c.status == CompanyStatus.active)) {
+      unawaited(notifications.raiseOrClearLowBalanceAlert(
+        companyId: company.id,
+        companyName: company.name,
+        availableToSell: company.availableToSell,
+      ));
+    }
   }
 
   /// Options offered in "Import Ready-Made": the shared catalog in real

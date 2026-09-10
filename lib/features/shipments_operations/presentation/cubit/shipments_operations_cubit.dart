@@ -14,6 +14,7 @@ import '../../../../core/config/env.dart';
 import '../../../../core/constants/period_filter.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/di/service_locator.dart';
+import '../../../../core/notifications/notifications_cubit.dart';
 import '../../../../core/sync/sync_engine.dart';
 import '../../../../core/utils/uuid.dart';
 import '../../domain/entities/shipment.dart';
@@ -158,6 +159,13 @@ class ShipmentsOperationsCubit extends Cubit<ShipmentsOperationsState> {
     ));
 
     if (_isReal) unawaited(_persistNewShipment(shipment));
+    if (shipment.amountRemaining > 0) {
+      unawaited(getIt<NotificationsCubit>().notifyCompanyOwed(
+        companyId: companyId,
+        companyName: companyName,
+        amountOwed: shipment.amountRemaining,
+      ));
+    }
     final typeLabel = type == ShipmentType.creditLimit ? 'credit limit' : 'prepaid';
     getIt<ActivityLogger>().log(
       ActivityActionType.create,

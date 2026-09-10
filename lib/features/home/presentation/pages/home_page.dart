@@ -17,6 +17,7 @@ import '../../../../core/widgets/app_top_bar.dart';
 import '../../../../core/widgets/balance_progress_card.dart';
 import '../../../../core/widgets/bottom_nav_bar.dart';
 import '../../../../core/widgets/empty_state.dart';
+import '../../../../core/widgets/notification_bell_button.dart';
 import '../../../../core/widgets/period_filter_row.dart';
 import '../../../../core/widgets/stat_card.dart';
 import '../../domain/entities/company_balance.dart';
@@ -84,6 +85,7 @@ class _HomeViewState extends State<_HomeView> {
                   showBrandMark: true,
                   isDarkMode: Theme.of(context).brightness == Brightness.dark,
                   onThemeToggle: () => context.read<ThemeCubit>().toggle(),
+                  actions: const [NotificationBellButton()],
                 ),
                 const SizedBox(height: AppSpacing.md),
                 PeriodFilterRow(

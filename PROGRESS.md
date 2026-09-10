@@ -5339,3 +5339,214 @@ unchanged, separate concern.
 
 **Verified**: `flutter analyze` — no issues. `flutter test` — 16/16
 passing.
+
+## Arabic text audit: colloquial (Palestinian dialect) -> Modern Standard Arabic
+
+Per explicit request — reviewed `assets/translations/ar.json` end to end
+for dialectal wording and rewrote every instance found to formal
+Arabic (فصحى), keeping every key/placeholder untouched (`{amount}`,
+`{name}`, etc. all preserved exactly). Found and fixed:
+
+- `sync.status.offline`: "رح تتزامن لما يرجع النت" -> "ستتم مزامنة
+  التغييرات عند عودة الاتصال بالإنترنت"
+- `login.usernameHelper`: "يلي أعطاك إياه الأدمن" -> "الذي زوّدك به
+  المسؤول"
+- `forgotPassword.emailHelper`: "رح نرسل ... لهذا البريد" -> "سيتم
+  إرسال ... إلى هذا البريد"
+- `admin.hub.supportFeedbackDescription`: "شوف طلبات البائعين ورد
+  عليهم" -> "اطّلع على طلبات البائعين وأجب عنها"
+- `admin.supportFeedback.emptyDescription`: "يلي بيرسلها البائعون رح
+  تظهر هون" -> "ستظهر هنا الطلبات التي يرسلها البائعون"
+- `companies.detail.emptyLinesDescription`: "رح تظهر هون" -> "ستظهر
+  هنا ..."
+- `companies.form.allowNegativeBalanceExplanation` (the one the user
+  flagged directly): full rewrite from dialect ("معك"/"بعت"/"رح
+  تنسمح"/"بس هاد بيصير مرة وحدة بس"/"هاي الشركة"/"إلا بعد ما") to MSA.
+- `companies.import.emptyCatalogDescription`: "من الأدمن ... قبل ما
+  تقدر تختار وحدة هون" -> "من المسؤول ... قبل أن تتمكن من اختيار واحدة
+  هنا"
+- `customers.lineForm.noCompaniesDescription`: "قبل ما تقدر تضيف خط"
+  -> "قبل أن تتمكن من إضافة خط"
+- `supportFeedback.subtitle`: "عندك فكرة؟ يسعدنا سماعها" -> "لديك
+  فكرة؟ يسعدنا الاستماع إليها"
+- `numberUpdate.webviewDialog.subtitle`: "ممكن ياخذ لعدة دقائق. لا
+  تقفل هالنافذة" -> "قد تستغرق العملية عدة دقائق. يرجى عدم إغلاق هذه
+  النافذة"
+
+Every other string in the file was already formal or a neutral
+technical term (checked with a targeted grep for dialect markers —
+يلي/رح/هون/شو/ليش/هيك/معك/قبل ما/شوف/هاد/هاي/بيصير/الأدمن/كمان/etc. —
+the only remaining matches were false positives inside unrelated words
+like "سيليكوم"/"طالما"/"اشرح"). `en.json` untouched (out of scope — the
+request was specifically about the Arabic dialect).
+
+**Verified**: JSON re-validated as well-formed. `flutter analyze` — no
+issues.
+
+## Added: Notifications system (line expiry, customer debt, company balance)
+
+Full local-notification feature, planned with the user first (via
+AskUserQuestion) before implementing. Delivers even while the app isn't
+running, via Android's `AlarmManager` — not just something computed
+while the app is open.
+
+**New packages** (confirmed with the user first): `flutter_local_notifications`,
+`timezone`. **Native additions**: `RECEIVE_BOOT_COMPLETED` permission +
+the plugin's own `ActionBroadcastReceiver`/`ScheduledNotificationReceiver`/
+`ScheduledNotificationBootReceiver` (`AndroidManifest.xml`) so still-pending
+alarms survive a device reboot; `isCoreLibraryDesugaringEnabled` +
+`desugar_jdk_libs` (`android/app/build.gradle.kts`) for the plugin's
+`java.time` usage on older API levels. `POST_NOTIFICATIONS`/`VIBRATE`
+come from the plugin's own manifest automatically.
+
+**Data model** (`core/notifications/`, `notifications_table.dart` —
+schema v10 -> v11): one local-only table (deliberately **not** synced to
+Supabase — a scheduled OS alarm only exists on the device that scheduled
+it, so syncing the row to another device would be misleading) doubling
+as both the in-app inbox and the source of truth for what's currently
+armed at the OS level.
+
+**`NotificationsCubit`** (`core/notifications/notifications_cubit.dart`)
+owns everything end to end — every feature that needs to raise/clear a
+reminder calls its public methods (same `getIt<...>()` direct-call
+pattern as `ActivityLogger`, not constructor-injected) rather than
+touching the OS scheduler directly:
+
+- **Line expiry** (`scheduleLineReminders`/`cancelLineReminders`) — 3
+  days before `expiryDate` **and** again on the day itself, both fixed
+  (not user-configurable, per explicit choice), both at 9am local time.
+  Wired into `CustomersCubit.addLine`/`.updateLine`/`.addSaleLine`
+  (schedule) and `.deleteLine`/`.permanentlyDeleteCustomer` (cancel).
+- **Customer debt reminder** (`scheduleDebtReminder`) — a new "remind me
+  in ▾" row on Customer Detail (`_DebtReminderRow`, 1-30 day dropdown),
+  shown only when the customer owes something. Auto-cancelled
+  (`cancelDebtRemindersIfSettled`, wired into `CustomersCubit.addPayment`)
+  the moment their total owed reaches zero, per explicit choice.
+- **Company low/negative balance** (`raiseOrClearLowBalanceAlert`) —
+  fires once when `availableToSell` hits zero or below (wired into
+  `CompaniesCubit._loadFromDrift`, active companies only), clears itself
+  the instant the balance recovers above zero so the next dip alerts
+  fresh — a persisted anti-spam guard (skipped while an alert for that
+  company is already unresolved), not a one-shot fire-and-forget.
+- **Company owed** (`notifyCompanyOwed`) — fires once whenever a
+  shipment is recorded with an unpaid remainder (wired into
+  `ShipmentsOperationsCubit.addShipment`). Scoped deliberately narrower
+  than the symmetric customer-debt reminder: there's no "mark this
+  shipment paid later" flow in the app to hook an auto-cancel to (unlike
+  a Line's `addPayment`), so this is a one-shot alert per shipment, not
+  a persistent tracked/cancellable state.
+
+**Inbox page** (`features/notifications/`, `NotificationsPage`) — every
+row, past and future, newest first; tap marks read and (for the
+customer/company-scoped types only — line reminders have no customer id
+to jump to) navigates to the relevant list page. A bell icon + unread
+badge (`NotificationBellButton`, self-contained like
+`SyncStatusIndicator`) sits in Home's top bar.
+
+**Reliability notes** (told to the user directly, not glossed over):
+inexact scheduling was chosen deliberately (`AndroidScheduleMode.inexactAllowWhileIdle`)
+to avoid needing Android 12+'s special "exact alarm" permission — fine
+for day-granularity reminders. Every still-future notification is also
+re-armed with the OS on every app cold start
+(`NotificationsCubit._rearmAllPending`), on top of the boot receiver —
+belt and suspenders, since neither alone is bulletproof (a reboot with
+the app never reopened before the fire time is the one real gap, and
+some OEMs' aggressive battery managers can still kill scheduled alarms
+regardless of what this app does).
+
+**Verified**: `flutter analyze` — no issues. `flutter test` — 16/16
+passing. A release build succeeded with all the new native manifest/
+Gradle changes in place. Not yet tested end-to-end on a real device
+(scheduling, permission prompt, reboot survival, and actual delivery
+timing all need a real device to confirm).
+
+## Changed: notifications now sync to Supabase too
+
+User pushed back on the earlier "local-only, not synced" decision with
+a valid point: since it's purely local, clearing the app's storage (or
+reinstalling) would silently lose every still-future scheduled
+reminder — worse than not having a backup at all for a feature whose
+whole point is "don't let me forget this."
+
+**Fix**: `notifications` now syncs like every other tenant table —
+`supabase/migrations/0015_notifications.sql` (owner-only RLS, same
+shape as the local table), `SyncEngine.pushPendingNotifications`/
+`pullNotifications` (same push/pull/tombstone pattern as companies/
+customers/lines — a cancelled reminder tombstones+pushes its delete via
+`recordAndPushDelete` so a pull can't resurrect it), wired into
+`syncAll`. `NotificationsCubit._init` now pushes+pulls before re-arming
+OS alarms, so a fresh install/cleared-storage device recovers every
+still-future reminder from Supabase on the next sign-in and re-arms it
+locally. Fixed a real bug caught while doing this: newly-inserted
+notification rows were never actually marked `synced = false`, so
+before this change they would never have been pushed at all even if
+`syncAll` had tried.
+
+`os_notification_id` (the int flutter_local_notifications schedules by)
+is a pure hash of the row's own uuid, not random — so it comes back
+identical after a restore and re-scheduling by it is safe.
+
+**Verified**: `flutter analyze` — no issues. `flutter test` — 16/16
+passing. **Needs the new Supabase migration run** (`0015_notifications.sql`)
+before this works end-to-end.
+
+## Changed: retail price moved from Package to sale-time only
+
+Per explicit request: a package no longer has its own retail/sale
+price — a seller may want to charge different customers differently for
+the same package, so that price is now always entered fresh at the
+moment a line is actually sold, not pre-set when the package itself is
+added to a company.
+
+**Removed**: the "Retail sale price" field from Add/Edit Company's
+package rows (`company_form_sheet.dart` — `_PackageRow`/
+`_PackageRowFields`, wholesale cost field kept, now full-width on its
+own).
+
+**No data or schema touched, deliberately** (per explicit request not to
+affect existing data): `CompanyPackage.retailPrice` and its underlying
+Drift/Supabase columns (`packages`/`package_catalog`) are untouched —
+any package saved before this change keeps whatever retail price it
+already had sitting there unused; every package saved from now on just
+gets `0`. Nothing reads this field anymore.
+
+**Sale-time behavior**: both places a line gets created — New Sale
+(`NewSaleCubit.selectPackage`) and Customer Detail's "+ Add Line"
+(`_LineFormSheetState._selectPackage`) — used to pre-fill the retail
+price field from the selected package's stored `retailPrice`; both now
+leave it empty/zero instead, so the seller always types it in for that
+specific sale. The field itself was already freely editable either way
+(this only changes what it starts at) — a `Line`'s own `retailPrice`
+(the actual sold price, per sale) is completely unaffected and unrelated
+to this change.
+
+**Scope note**: this only touches a seller's own companies/packages —
+the admin's shared company **catalog** (`suggestedRetailPrice`, used as
+a starting point when a seller imports a ready-made company) was left
+alone, since the request was specifically about "إضافة باقة" on a
+seller's own company, not the catalog template.
+
+**Verified**: `flutter analyze` — no issues. `flutter test` — 16/16
+passing (fixed `new_sale_cubit_test.dart`'s two tests that previously
+relied on the now-removed auto-fill behavior, by having them set the
+retail price explicitly like a real sale would).
+
+## Extended: same retail-price removal applied to the admin catalog
+
+Per follow-up request — the admin's shared company catalog (used by
+"Import Ready-Made") gets the identical treatment: admin now only enters
+wholesale cost per catalog package, never a suggested retail price. A
+seller stays completely free to set their own retail price per sale
+regardless of where the company came from (typed from scratch, or
+imported from the catalog).
+
+**Changed**: `catalog_company_form_sheet.dart` — same shape as the
+seller-facing form's earlier change: removed the "Retail price" field
+from `_PackageRow`/its UI, `suggestedRetailPrice` now always saved as
+`0`. `CatalogPackageAdmin.suggestedRetailPrice` doc comment updated to
+match `CompanyPackage.retailPrice`'s. Same "don't touch existing data"
+guarantee — the column stays, old catalog packages keep whatever value
+they already had, nothing reads it anymore.
+
+**Verified**: `flutter analyze` — no issues. `flutter test` — 16/16
+passing.

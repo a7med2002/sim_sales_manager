@@ -10,6 +10,7 @@ import 'tables/companies_table.dart';
 import 'tables/customers_table.dart';
 import 'tables/lines_table.dart';
 import 'tables/number_update_log_table.dart';
+import 'tables/notifications_table.dart';
 import 'tables/number_update_provider_cache_table.dart';
 import 'tables/operations_table.dart';
 import 'tables/packages_table.dart';
@@ -41,6 +42,7 @@ part 'app_database.g.dart';
     NumberUpdateLogTable,
     NumberUpdateProviderCacheTable,
     PendingDeletesTable,
+    NotificationsTable,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -68,7 +70,7 @@ class AppDatabase extends _$AppDatabase {
   // there (including anything still only-local and unsynced) — this is
   // additive only, nothing here can lose data.
   @override
-  int get schemaVersion => 10;
+  int get schemaVersion => 11;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -134,6 +136,12 @@ class AppDatabase extends _$AppDatabase {
             // allowNegativeBalance — the "allow negative balance"
             // per-company opt-in.
             await m.addColumn(companiesTable, companiesTable.allowNegativeBalance);
+          }
+          if (from < 11) {
+            // See notifications_table.dart's doc comment — the
+            // notifications feature's local-only inbox + scheduling
+            // source of truth.
+            await m.createTable(notificationsTable);
           }
         },
       );

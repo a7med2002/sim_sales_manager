@@ -9,6 +9,13 @@ class CatalogPackageAdmin extends Equatable {
   final String name;
   final String? simType;
   final double wholesaleCost;
+
+  /// No longer settable from the catalog form — an imported company's
+  /// packages don't carry a retail price either; a seller sets their
+  /// own per sale. See `CompanyPackage.retailPrice`'s doc comment. Kept
+  /// only so a catalog package saved before this change keeps whatever
+  /// value it already had; always `0` for anything saved from now on,
+  /// and nothing reads it anymore.
   final double suggestedRetailPrice;
 
   const CatalogPackageAdmin({

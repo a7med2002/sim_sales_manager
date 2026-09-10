@@ -151,7 +151,10 @@ class _LineFormSheetState extends State<LineFormSheet> {
       if (matches.isEmpty) return;
       final package = matches.first;
       _wholesaleController.text = _formatNum(package.wholesaleCost);
-      _retailController.text = _formatNum(package.retailPrice);
+      // Deliberately not pre-filled from the package — a package no
+      // longer carries its own retail price (see CompanyPackage's doc
+      // comment), so the seller always types it fresh per sale.
+      _retailController.clear();
     });
   }
 

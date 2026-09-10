@@ -49,14 +49,12 @@ class _PackageRow {
   final TextEditingController nameController;
   final TextEditingController simTypeController;
   final TextEditingController costController;
-  final TextEditingController priceController;
 
-  _PackageRow({String? id, String name = '', String simType = '', String cost = '', String price = ''})
+  _PackageRow({String? id, String name = '', String simType = '', String cost = ''})
       : id = id ?? UniqueKey().toString(),
         nameController = TextEditingController(text: name),
         simTypeController = TextEditingController(text: simType),
-        costController = TextEditingController(text: cost),
-        priceController = TextEditingController(text: price);
+        costController = TextEditingController(text: cost);
 }
 
 class _CatalogCompanyFormSheetState extends State<CatalogCompanyFormSheet> {
@@ -87,7 +85,6 @@ class _CatalogCompanyFormSheetState extends State<CatalogCompanyFormSheet> {
                   name: p.name,
                   simType: p.simType ?? '',
                   cost: _fmt(p.wholesaleCost),
-                  price: _fmt(p.suggestedRetailPrice),
                 ))
             .toList() ??
         [];
@@ -106,7 +103,6 @@ class _CatalogCompanyFormSheetState extends State<CatalogCompanyFormSheet> {
       row.nameController.dispose();
       row.simTypeController.dispose();
       row.costController.dispose();
-      row.priceController.dispose();
     }
     super.dispose();
   }
@@ -142,7 +138,10 @@ class _CatalogCompanyFormSheetState extends State<CatalogCompanyFormSheet> {
               name: row.nameController.text.trim(),
               simType: row.simTypeController.text.trim(),
               wholesaleCost: double.tryParse(row.costController.text.trim()) ?? 0,
-              suggestedRetailPrice: double.tryParse(row.priceController.text.trim()) ?? 0,
+              // The seller is free to set their own retail price per
+              // sale — see CompanyPackage's doc comment. The catalog
+              // (and imported companies' packages) no longer carry one.
+              suggestedRetailPrice: 0,
             ))
         .toList();
 
@@ -353,26 +352,11 @@ class _PackageRowFields extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.xs),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: row.costController,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  style: AppTextStyles.body(colors.textPrimary),
-                  decoration: decoration.copyWith(hintText: 'admin.catalogForm.wholesaleCostPlaceholder'.tr()),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.xs),
-              Expanded(
-                child: TextField(
-                  controller: row.priceController,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  style: AppTextStyles.body(colors.textPrimary),
-                  decoration: decoration.copyWith(hintText: 'admin.catalogForm.retailPricePlaceholder'.tr()),
-                ),
-              ),
-            ],
+          TextField(
+            controller: row.costController,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            style: AppTextStyles.body(colors.textPrimary),
+            decoration: decoration.copyWith(hintText: 'admin.catalogForm.wholesaleCostPlaceholder'.tr()),
           ),
         ],
       ),

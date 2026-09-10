@@ -18,6 +18,7 @@ class RouteNames {
   static const String reports = '/reports';
   static const String shipmentsOperations = '/shipments-operations';
   static const String numberUpdate = '/number-update';
+  static const String notifications = '/notifications';
   static const String adminHub = '/admin';
   static const String adminCompanyCatalog = '/admin/company-catalog';
   static const String adminUsers = '/admin/users';

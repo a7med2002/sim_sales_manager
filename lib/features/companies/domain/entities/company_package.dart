@@ -13,6 +13,15 @@ class CompanyPackage extends Equatable {
   final String name;
   final String? simType;
   final double wholesaleCost;
+
+  /// No longer settable from the Add/Edit Company package form — a
+  /// seller may charge different customers a different price for the
+  /// same package, so retail price is now entered fresh every time a
+  /// line is actually sold (New Sale / "+ Add Line") rather than stored
+  /// here. Always `0` for any package saved from now on; the field
+  /// itself (and its underlying `packages`/`package_catalog` column)
+  /// stays only so packages saved before this change keep whatever
+  /// value they already had, undisturbed — nothing reads it anymore.
   final double retailPrice;
 
   const CompanyPackage({

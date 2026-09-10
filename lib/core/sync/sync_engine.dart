@@ -59,6 +59,8 @@ class SyncEngine {
     await pullActivityLog(ownerId);
     await pullSupportRequests(ownerId);
     await pullNumberUpdateLog(ownerId);
+    await pushPendingNotifications(ownerId);
+    await pullNotifications(ownerId);
   }
 
   /// Tombstones a permanent local delete of [id] from [entityTable] and
@@ -645,6 +647,67 @@ class SyncEngine {
       ownerId: row['owner_id'] as String,
       phoneNumber: row['phone_number'] as String,
       provider: row['provider'] as String,
+      updatedAt: DateTime.parse(row['updated_at'] as String).toLocal(),
+    );
+  }
+
+  // ── notifications ────────────────────────────────────────────────────
+  // Backs up the local notifications inbox/schedule so a still-future
+  // reminder survives clearing the app's local storage — see
+  // supabase/migrations/0015_notifications.sql. Same push/pull/tombstone
+  // shape as companies/customers/lines; deletes (a cancelled reminder —
+  // debt settled, balance recovered, line removed) go through
+  // `recordAndPushDelete`/`pushPendingDeletes` like those tables too.
+
+  Future<void> pushPendingNotifications(String ownerId) async {
+    final pending = await (_db.select(_db.notificationsTable)
+          ..where((t) => t.ownerId.equals(ownerId) & t.synced.equals(false)))
+        .get();
+    if (pending.isEmpty) return;
+
+    await _client.from('notifications').upsert(pending.map(_notificationToRow).toList());
+
+    for (final row in pending) {
+      await (_db.update(_db.notificationsTable)..where((t) => t.id.equals(row.id)))
+          .write(const NotificationsTableCompanion(synced: Value(true)));
+    }
+  }
+
+  Future<void> pullNotifications(String ownerId) async {
+    final rows = await _client.from('notifications').select().eq('owner_id', ownerId);
+    if (rows.isEmpty) return;
+    final tombstoned = await _tombstonedIds(ownerId, 'notifications');
+    final fresh = tombstoned.isEmpty ? rows : rows.where((r) => !tombstoned.contains(r['id'])).toList();
+    if (fresh.isEmpty) return;
+    await _db.batch((batch) {
+      batch.insertAllOnConflictUpdate(_db.notificationsTable, fresh.map(_notificationFromRow).toList());
+    });
+  }
+
+  Map<String, dynamic> _notificationToRow(NotificationsTableData n) => {
+        'id': n.id,
+        'owner_id': n.ownerId,
+        'os_notification_id': n.osNotificationId,
+        'type': n.type,
+        'title': n.title,
+        'body': n.body,
+        'related_entity_id': n.relatedEntityId,
+        'fire_at': n.fireAt.toUtc().toIso8601String(),
+        'read': n.read,
+        'updated_at': n.updatedAt.toUtc().toIso8601String(),
+      };
+
+  NotificationsTableCompanion _notificationFromRow(Map<String, dynamic> row) {
+    return NotificationsTableCompanion.insert(
+      id: row['id'] as String,
+      ownerId: row['owner_id'] as String,
+      osNotificationId: (row['os_notification_id'] as num).toInt(),
+      type: row['type'] as String,
+      title: row['title'] as String,
+      body: row['body'] as String,
+      relatedEntityId: Value(row['related_entity_id'] as String?),
+      fireAt: DateTime.parse(row['fire_at'] as String).toLocal(),
+      read: Value(row['read'] as bool? ?? false),
       updatedAt: DateTime.parse(row['updated_at'] as String).toLocal(),
     );
   }

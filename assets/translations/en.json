@@ -8,6 +8,36 @@
       "retrying": "Retrying sync…"
     }
   },
+  "notifications": {
+    "title": "Notifications",
+    "emptyTitle": "No notifications yet",
+    "emptyDescription": "Line-expiry, customer debt, and company balance reminders will show up here.",
+    "pendingLabel": "Scheduled for {date}",
+    "lineExpiringSoon": {
+      "title": "Line expiring soon",
+      "body": "SIM {sim} expires in 3 days. Customer: {customer}."
+    },
+    "lineExpired": {
+      "title": "Line expired",
+      "body": "SIM {sim} expires today. Customer: {customer}."
+    },
+    "customerDebtReminder": {
+      "title": "Customer debt reminder",
+      "body": "{customer} owes ₪{amount}.",
+      "buttonLabel": "Remind me in",
+      "daysUnit": "days",
+      "setButton": "Schedule reminder",
+      "sent": "Reminder scheduled."
+    },
+    "companyLowBalance": {
+      "title": "Low company balance",
+      "body": "{company}'s available balance is now ₪{amount}."
+    },
+    "companyOwedAlert": {
+      "title": "Amount owed to supplier",
+      "body": "A shipment from {company} was recorded with an unpaid remainder of ₪{amount}."
+    }
+  },
   "update": {
     "title": "A new update is available",
     "mandatoryTitle": "Update required",

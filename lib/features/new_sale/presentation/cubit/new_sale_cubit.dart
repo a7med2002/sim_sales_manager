@@ -57,7 +57,10 @@ class NewSaleCubit extends Cubit<NewSaleState> {
     emit(state.copyWith(
       selectedPackageId: packageId,
       wholesaleCost: package.wholesaleCost,
-      retailPrice: package.retailPrice,
+      // Deliberately not pre-filled from the package — a package no
+      // longer carries its own retail price (see CompanyPackage's doc
+      // comment), so the seller always types it fresh per sale.
+      retailPrice: 0,
     ));
   }
 

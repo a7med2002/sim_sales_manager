@@ -129,12 +129,16 @@ void main() {
     cubit.goNext();
     expect(cubit.state.step, NewSaleStep.packageAndPrice);
 
-    // Step 2: package & price — selecting the package auto-fills cost/price.
+    // Step 2: package & price — selecting the package auto-fills wholesale
+    // cost only; retail price is no longer stored on the package (a
+    // seller may charge different customers differently for the same
+    // package), so it's typed fresh every sale.
     expect(cubit.state.canGoNextFromPackageStep, isFalse);
     cubit.selectCompany('company-1');
     cubit.selectPackage('pkg-1');
     expect(cubit.state.wholesaleCost, 30);
-    expect(cubit.state.retailPrice, 45);
+    expect(cubit.state.retailPrice, 0);
+    cubit.retailPriceChanged(45);
     expect(cubit.state.profit, 15);
     cubit.simNumberChanged('0500000111');
     expect(cubit.state.canGoNextFromPackageStep, isTrue);
@@ -186,6 +190,7 @@ void main() {
 
     cubit.selectCompany('company-1');
     cubit.selectPackage('pkg-1');
+    cubit.retailPriceChanged(45);
     cubit.simNumberChanged('0500000222');
     cubit.goNext();
 

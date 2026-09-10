@@ -55,14 +55,12 @@ class _PackageRow {
   final TextEditingController nameController;
   final TextEditingController simTypeController;
   final TextEditingController costController;
-  final TextEditingController priceController;
 
-  _PackageRow({String? id, String name = '', String simType = '', String cost = '', String price = ''})
+  _PackageRow({String? id, String name = '', String simType = '', String cost = ''})
       : id = id ?? UniqueKey().toString(),
         nameController = TextEditingController(text: name),
         simTypeController = TextEditingController(text: simType),
-        costController = TextEditingController(text: cost),
-        priceController = TextEditingController(text: price);
+        costController = TextEditingController(text: cost);
 }
 
 class _CompanyFormSheetState extends State<CompanyFormSheet> {
@@ -100,7 +98,6 @@ class _CompanyFormSheetState extends State<CompanyFormSheet> {
                   name: p.name,
                   simType: p.simType ?? '',
                   cost: p.wholesaleCost == p.wholesaleCost.roundToDouble() ? p.wholesaleCost.toStringAsFixed(0) : p.wholesaleCost.toString(),
-                  price: p.retailPrice == p.retailPrice.roundToDouble() ? p.retailPrice.toStringAsFixed(0) : p.retailPrice.toString(),
                 ))
             .toList() ??
         [];
@@ -115,7 +112,6 @@ class _CompanyFormSheetState extends State<CompanyFormSheet> {
       row.nameController.dispose();
       row.simTypeController.dispose();
       row.costController.dispose();
-      row.priceController.dispose();
     }
     super.dispose();
   }
@@ -156,7 +152,12 @@ class _CompanyFormSheetState extends State<CompanyFormSheet> {
               name: row.nameController.text.trim(),
               simType: row.simTypeController.text.trim(),
               wholesaleCost: double.tryParse(row.costController.text.trim()) ?? 0,
-              retailPrice: double.tryParse(row.priceController.text.trim()) ?? 0,
+              // Retail price is no longer set at the package/company
+              // level — a seller may want to charge different customers
+              // differently for the same package, so it's entered fresh
+              // every time a line is actually sold (New Sale / "+ Add
+              // Line") instead. See CompanyPackage's doc comment.
+              retailPrice: 0,
             ))
         .toList();
 
@@ -435,26 +436,11 @@ class _PackageRowFields extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.xs),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: row.costController,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  style: AppTextStyles.body(colors.textPrimary),
-                  decoration: decoration.copyWith(hintText: 'companies.form.wholesaleCostPlaceholder'.tr()),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.xs),
-              Expanded(
-                child: TextField(
-                  controller: row.priceController,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  style: AppTextStyles.body(colors.textPrimary),
-                  decoration: decoration.copyWith(hintText: 'companies.form.retailPricePlaceholder'.tr()),
-                ),
-              ),
-            ],
+          TextField(
+            controller: row.costController,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            style: AppTextStyles.body(colors.textPrimary),
+            decoration: decoration.copyWith(hintText: 'companies.form.wholesaleCostPlaceholder'.tr()),
           ),
         ],
       ),

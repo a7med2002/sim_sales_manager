@@ -4,6 +4,20 @@
          Supabase Storage and hands it to open_filex, which opens
          Android's own package-install screen for it. -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
+    <!-- Notifications (core/notifications/) — line-expiry/debt/balance
+         reminders scheduled via flutter_local_notifications, delivered
+         through Android's AlarmManager even while the app isn't
+         running. POST_NOTIFICATIONS/VIBRATE are merged in automatically
+         by the plugin's own manifest; RECEIVE_BOOT_COMPLETED plus the
+         plugin's own receivers below let it re-arm any still-pending
+         alarms after a device reboot (Android clears AlarmManager
+         alarms on reboot otherwise) — on top of this app's own
+         reschedule-from-Drift pass on every cold start
+         (NotificationsCubit._syncThenLoad), which is still the primary
+         mechanism since a reboot's receiver alone can't recover an
+         alarm for something created/changed after the last time the
+         plugin's native side saved it. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <!-- Support & Feedback: attach a photo (image_picker) and record a
          short voice note (record). -->
     <uses-permission android:name="android.permission.CAMERA"/>
@@ -51,6 +65,16 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ActionBroadcastReceiver" />
+        <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
+        <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON"/>
+            </intent-filter>
+        </receiver>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

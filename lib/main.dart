@@ -29,6 +29,7 @@ import 'features/home/presentation/pages/home_page.dart';
 import 'features/more/presentation/pages/more_page.dart';
 import 'features/new_sale/presentation/pages/new_sale_sheet.dart';
 import 'features/number_update/presentation/pages/number_update_page.dart';
+import 'features/notifications/presentation/pages/notifications_page.dart';
 import 'features/numbers/presentation/pages/numbers_page.dart';
 import 'features/auth/presentation/pages/reset_password_page.dart';
 import 'features/profits/presentation/pages/profits_page.dart';
@@ -100,7 +101,9 @@ void main() async {
 
 Future<String?> _readCachedRole(AppDatabase db, String ownerId) async {
   try {
-    final row = await (db.select(db.settingsTable)..where((t) => t.ownerId.equals(ownerId))).getSingleOrNull();
+    final row = await (db.select(
+      db.settingsTable,
+    )..where((t) => t.ownerId.equals(ownerId))).getSingleOrNull();
     return row?.cachedRole;
   } catch (_) {
     return null;
@@ -109,8 +112,14 @@ Future<String?> _readCachedRole(AppDatabase db, String ownerId) async {
 
 Future<void> _cacheRole(AppDatabase db, String ownerId, String role) async {
   try {
-    await db.into(db.settingsTable).insertOnConflictUpdate(
-          SettingsTableCompanion.insert(ownerId: ownerId, updatedAt: DateTime.now(), cachedRole: Value(role)),
+    await db
+        .into(db.settingsTable)
+        .insertOnConflictUpdate(
+          SettingsTableCompanion.insert(
+            ownerId: ownerId,
+            updatedAt: DateTime.now(),
+            cachedRole: Value(role),
+          ),
         );
   } catch (_) {
     // Best-effort cache write — a miss here just means the next offline
@@ -195,6 +204,7 @@ class _SimSalesManagerAppState extends State<SimSalesManagerApp> {
                 RouteNames.shipmentsOperations: (_) =>
                     const ShipmentsOperationsPage(),
                 RouteNames.numberUpdate: (_) => const NumberUpdatePage(),
+                RouteNames.notifications: (_) => const NotificationsPage(),
                 RouteNames.adminHub: (_) => const AdminHubPage(),
                 RouteNames.adminCompanyCatalog: (_) =>
                     const AdminCompanyCatalogPage(),

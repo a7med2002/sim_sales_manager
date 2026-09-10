@@ -14,6 +14,7 @@ import '../../../../core/catalog/line_summary.dart';
 import '../../../../core/config/env.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/di/service_locator.dart';
+import '../../../../core/notifications/notifications_cubit.dart';
 import '../../../../core/sync/connectivity_service.dart';
 import '../../../../core/sync/sync_engine.dart';
 import '../../../../core/utils/uuid.dart';
@@ -282,10 +283,16 @@ class CustomersCubit extends Cubit<CustomersState> implements CustomerCatalog {
       (db.delete(db.customersTable)..where((t) => t.ownerId.equals(ownerId) & t.id.equals(id))).go();
       unawaited(_syncEngine?.recordAndPushDelete(entityTable: 'customers', id: id, ownerId: ownerId) ?? Future.value());
     }
+    final removedLineIds = state.lines.where((l) => l.customerId == id).map((l) => l.id).toList();
     emit(state.copyWith(
       customers: state.customers.where((c) => c.id != id).toList(),
       lines: state.lines.where((l) => l.customerId != id).toList(),
     ));
+    final notifications = getIt<NotificationsCubit>();
+    unawaited(notifications.cancelDebtRemindersIfSettled(customerId: id, totalOwed: 0));
+    for (final lineId in removedLineIds) {
+      unawaited(notifications.cancelLineReminders(lineId));
+    }
   }
 
   void _replaceCustomer(String id, Customer Function(Customer) update) {
@@ -430,9 +437,19 @@ class CustomersCubit extends Cubit<CustomersState> implements CustomerCatalog {
     // itself, or a line added here would never move the company's
     // balance at all.
     getIt<CompanyCatalog>().recordSale(companyId: companyId, wholesaleCost: line.wholesaleCost, profit: line.profit);
-    final matchingCustomer = state.customers.where((c) => c.id == customerId);
-    final customerName = matchingCustomer.isEmpty ? '' : matchingCustomer.first.name;
+    final customerName = _customerNameFor(customerId);
+    unawaited(getIt<NotificationsCubit>().scheduleLineReminders(
+      lineId: line.id,
+      simNumber: line.simNumber,
+      customerName: customerName,
+      expiryDate: line.expiryDate,
+    ));
     getIt<ActivityLogger>().log(ActivityActionType.create, 'Sold a new line to $customerName ($packageName, $companyName).');
+  }
+
+  String _customerNameFor(String customerId) {
+    final matches = state.customers.where((c) => c.id == customerId);
+    return matches.isEmpty ? '' : matches.first.name;
   }
 
   void updateLine(
@@ -490,6 +507,12 @@ class CustomersCubit extends Cubit<CustomersState> implements CustomerCatalog {
       companyCatalog.reverseSale(companyId: oldCompanyId, wholesaleCost: oldLine.wholesaleCost, profit: oldLine.profit);
     }
     companyCatalog.recordSale(companyId: companyId, wholesaleCost: wholesaleCost, profit: retailPrice - wholesaleCost);
+    unawaited(getIt<NotificationsCubit>().scheduleLineReminders(
+      lineId: id,
+      simNumber: simNumber,
+      customerName: _customerNameFor(oldLine.customerId),
+      expiryDate: expiryDate,
+    ));
     getIt<ActivityLogger>().log(ActivityActionType.edit, 'Updated line ${oldLine.simNumber}.');
   }
 
@@ -512,6 +535,7 @@ class CustomersCubit extends Cubit<CustomersState> implements CustomerCatalog {
     if (lineCompanyId != null) {
       getIt<CompanyCatalog>().reverseSale(companyId: lineCompanyId, wholesaleCost: line.wholesaleCost, profit: line.profit);
     }
+    unawaited(getIt<NotificationsCubit>().cancelLineReminders(id));
     getIt<ActivityLogger>().log(ActivityActionType.delete, 'Deleted line ${line.simNumber}.');
   }
 
@@ -526,6 +550,10 @@ class CustomersCubit extends Cubit<CustomersState> implements CustomerCatalog {
       lines: state.lines.map((l) => l.id == lineId ? l.applyPayment(amount) : l).toList(),
     ));
     if (_isReal) unawaited(_persistLineUpdate(lineId));
+    unawaited(getIt<NotificationsCubit>().cancelDebtRemindersIfSettled(
+      customerId: line.customerId,
+      totalOwed: state.totalOwedFor(line.customerId),
+    ));
     getIt<ActivityLogger>().log(
       isFullCollection ? ActivityActionType.fullCollection : ActivityActionType.edit,
       'Collected ${amount.toStringAsFixed(2)} on ${line.simNumber} (${line.companyName}).',
@@ -689,8 +717,13 @@ class CustomersCubit extends Cubit<CustomersState> implements CustomerCatalog {
     );
     emit(state.copyWith(lines: [...state.lines, line]));
     if (_isReal) unawaited(_persistNewLine(line));
-    final matchingCustomer = state.customers.where((c) => c.id == customerId);
-    final customerName = matchingCustomer.isEmpty ? '' : matchingCustomer.first.name;
+    final customerName = _customerNameFor(customerId);
+    unawaited(getIt<NotificationsCubit>().scheduleLineReminders(
+      lineId: line.id,
+      simNumber: line.simNumber,
+      customerName: customerName,
+      expiryDate: line.expiryDate,
+    ));
     getIt<ActivityLogger>().log(ActivityActionType.create, 'Sold a new line to $customerName ($packageName, $companyName).');
   }
 

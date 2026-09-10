@@ -11,6 +11,7 @@ import '../catalog/company_catalog.dart';
 import '../catalog/customer_catalog.dart';
 import '../config/env.dart';
 import '../database/app_database.dart';
+import '../notifications/notifications_cubit.dart';
 import '../settings/settings_cubit.dart';
 import '../sync/bloc/sync_bloc.dart';
 import '../sync/connectivity_service.dart';
@@ -46,6 +47,7 @@ void setupServiceLocator() {
 
   getIt.registerLazySingleton<ActivityLogger>(() => ActivityLogger());
   getIt.registerLazySingleton<UpdateCubit>(() => UpdateCubit());
+  getIt.registerLazySingleton<NotificationsCubit>(() => NotificationsCubit());
 
   getIt.registerLazySingleton<CompaniesCubit>(() => CompaniesCubit());
   getIt.registerLazySingleton<CustomersCubit>(() => CustomersCubit());
