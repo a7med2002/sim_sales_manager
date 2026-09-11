@@ -31,7 +31,7 @@ class CustomerStep extends StatelessWidget {
           style: AppTextStyles.cardTitle(colors.textPrimary),
           decoration: InputDecoration(
             hintText: 'newSale.customerStep.searchHint'.tr(),
-            hintStyle: AppTextStyles.cardTitle(colors.textSecondary),
+            hintStyle: AppTextStyles.hint(colors.textSecondary),
             prefixIcon: Icon(Icons.search_rounded, color: colors.textSecondary, size: 20),
             filled: true,
             fillColor: colors.surface,
@@ -108,7 +108,7 @@ class CustomerStep extends StatelessWidget {
   InputDecoration _decoration(AppColors colors, {String? hint}) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: AppTextStyles.cardTitle(colors.textSecondary),
+      hintStyle: AppTextStyles.hint(colors.textSecondary),
       filled: true,
       fillColor: colors.surface,
       contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 12),

@@ -5659,3 +5659,24 @@ awkwardly.
 
 **Verified**: `flutter analyze` — no issues. `flutter test` — 16/16
 passing.
+
+## Fixed: text field hints were the same size as (or bigger than) their labels
+
+Per request — every text field's placeholder/hint across the app was
+using `AppTextStyles.cardTitle` (15px) or `.body` (13px), the same size
+every field's *label* above it already uses (`.body`, 13px) — so a hint
+never read as visually secondary to its label, sometimes even looking
+larger.
+
+**Fix**: added `AppTextStyles.hint(Color color)` — 12px (smaller than
+every label's 13px) with a baked-in 0.65 alpha fade on whatever color is
+passed in, so callers still just pass `colors.textSecondary` like any
+other secondary text instead of remembering to fade it themselves.
+Swapped every `hintStyle:` across the app (14 direct call sites across
+13 files, plus 2 shared `InputDecoration` helper functions in
+`company_form_sheet.dart`/`catalog_company_form_sheet.dart` that were
+missing a `hintStyle` entirely, inheriting Flutter's default full-size
+styling) to use it.
+
+**Verified**: `flutter analyze` — no issues. `flutter test` — 16/16
+passing.

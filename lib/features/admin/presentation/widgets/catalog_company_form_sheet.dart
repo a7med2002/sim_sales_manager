@@ -290,7 +290,7 @@ class _CatalogCompanyFormSheetState extends State<CatalogCompanyFormSheet> {
   InputDecoration _decoration(AppColors colors, {String? hint}) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: AppTextStyles.cardTitle(colors.textSecondary),
+      hintStyle: AppTextStyles.hint(colors.textSecondary),
       filled: true,
       fillColor: colors.surface,
       contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 12),
@@ -317,6 +317,7 @@ class _PackageRowFields extends StatelessWidget {
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadii.button), borderSide: BorderSide(color: colors.border)),
       enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadii.button), borderSide: BorderSide(color: colors.border)),
       focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadii.button), borderSide: BorderSide(color: colors.primaryAction, width: 1.5)),
+      hintStyle: AppTextStyles.hint(colors.textSecondary),
     );
 
     return Container(

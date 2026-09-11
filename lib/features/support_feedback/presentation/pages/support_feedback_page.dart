@@ -178,7 +178,7 @@ class _SupportFeedbackViewState extends State<_SupportFeedbackView> {
                   buildCounter: (context, {required currentLength, required isFocused, maxLength}) => null,
                   decoration: InputDecoration(
                     hintText: _placeholderFor(state.selectedType),
-                    hintStyle: AppTextStyles.body(colors.textSecondary),
+                    hintStyle: AppTextStyles.hint(colors.textSecondary),
                     filled: true,
                     fillColor: colors.surface,
                     contentPadding: const EdgeInsets.all(AppSpacing.md),

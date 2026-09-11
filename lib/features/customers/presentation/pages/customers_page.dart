@@ -67,7 +67,7 @@ class _CustomersView extends StatelessWidget {
                   style: AppTextStyles.cardTitle(colors.textPrimary),
                   decoration: InputDecoration(
                     hintText: 'customers.searchHint'.tr(),
-                    hintStyle: AppTextStyles.cardTitle(colors.textSecondary),
+                    hintStyle: AppTextStyles.hint(colors.textSecondary),
                     prefixIcon: Icon(Icons.search_rounded, color: colors.textSecondary, size: 20),
                     filled: true,
                     fillColor: colors.surface,

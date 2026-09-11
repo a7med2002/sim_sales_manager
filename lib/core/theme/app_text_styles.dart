@@ -45,6 +45,20 @@ class AppTextStyles {
         color: color,
       );
 
+  /// A text field's placeholder — deliberately smaller than [body] (13px,
+  /// the size every field's label above it already uses) and lighter
+  /// than whatever color is passed in, so a hint never competes visually
+  /// with its own label or the value the user actually types. Callers
+  /// still pass `colors.textSecondary` like any other secondary text —
+  /// the extra fade is baked in here, not something each call site needs
+  /// to remember.
+  static TextStyle hint(Color color) => TextStyle(
+        fontFamily: fontFamily,
+        fontSize: 12,
+        fontWeight: FontWeight.w400,
+        color: color.withValues(alpha: 0.65),
+      );
+
   static TextStyle statNumber(Color color) => TextStyle(
         fontFamily: fontFamily,
         fontSize: 24,

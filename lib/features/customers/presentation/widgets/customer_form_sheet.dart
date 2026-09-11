@@ -202,7 +202,7 @@ class _CustomerFormSheetState extends State<CustomerFormSheet> {
   InputDecoration _decoration(AppColors colors, {String? hint}) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: AppTextStyles.cardTitle(colors.textSecondary),
+      hintStyle: AppTextStyles.hint(colors.textSecondary),
       filled: true,
       fillColor: colors.surface,
       contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 12),

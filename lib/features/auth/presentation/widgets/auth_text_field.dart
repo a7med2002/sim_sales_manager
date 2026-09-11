@@ -70,7 +70,7 @@ class _AuthTextFieldState extends State<AuthTextField> {
           style: AppTextStyles.cardTitle(colors.textPrimary),
           decoration: InputDecoration(
             hintText: widget.placeholder,
-            hintStyle: AppTextStyles.cardTitle(colors.textSecondary),
+            hintStyle: AppTextStyles.hint(colors.textSecondary),
             filled: true,
             fillColor: colors.surface,
             contentPadding: EdgeInsets.symmetric(horizontal: widget.icon == null ? AppSpacing.md : 0, vertical: 14),

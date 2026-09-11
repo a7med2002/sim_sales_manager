@@ -94,7 +94,7 @@ class _NumberUpdateViewState extends State<_NumberUpdateView> {
                         onChanged: cubit.phoneNumberChanged,
                         decoration: InputDecoration(
                           hintText: 'numberUpdate.numberHint'.tr(),
-                          hintStyle: AppTextStyles.cardTitle(colors.textSecondary),
+                          hintStyle: AppTextStyles.hint(colors.textSecondary),
                           filled: true,
                           fillColor: colors.background,
                           contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 12),

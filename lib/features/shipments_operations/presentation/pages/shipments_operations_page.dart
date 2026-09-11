@@ -472,7 +472,7 @@ class _OperationsTabState extends State<_OperationsTab> {
           style: AppTextStyles.body(colors.textPrimary),
           decoration: InputDecoration(
             hintText: 'shipmentsOperations.operationsTab.searchHint'.tr(),
-            hintStyle: AppTextStyles.body(colors.textSecondary),
+            hintStyle: AppTextStyles.hint(colors.textSecondary),
             prefixIcon: Icon(Icons.search_rounded, color: colors.textSecondary, size: 20),
             filled: true,
             fillColor: colors.surface,

@@ -58,7 +58,7 @@ class _ActivityLogView extends StatelessWidget {
                   style: AppTextStyles.body(colors.textPrimary),
                   decoration: InputDecoration(
                     hintText: 'activityLog.searchHint'.tr(),
-                    hintStyle: AppTextStyles.body(colors.textSecondary),
+                    hintStyle: AppTextStyles.hint(colors.textSecondary),
                     prefixIcon: Icon(Icons.search_rounded, color: colors.textSecondary, size: 20),
                     filled: true,
                     fillColor: colors.surface,

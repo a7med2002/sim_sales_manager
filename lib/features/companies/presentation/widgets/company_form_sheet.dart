@@ -375,6 +375,7 @@ class _CompanyFormSheetState extends State<CompanyFormSheet> {
         borderRadius: BorderRadius.circular(AppRadii.button),
         borderSide: BorderSide(color: colors.primaryAction, width: 1.5),
       ),
+      hintStyle: AppTextStyles.hint(colors.textSecondary),
     );
   }
 }
@@ -398,6 +399,7 @@ class _PackageRowFields extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadii.button),
         borderSide: BorderSide(color: colors.primaryAction, width: 1.5),
       ),
+      hintStyle: AppTextStyles.hint(colors.textSecondary),
     );
 
     return Container(
