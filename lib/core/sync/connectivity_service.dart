@@ -11,15 +11,19 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 /// internet uplink still reports "connected" there, which used to make
 /// every real/mock cubit's connectivity pre-check pass, then hang on the
 /// platform's much longer default socket-connect timeout once it tried
-/// an actual Supabase call. A quick DNS lookup with a hard 1-second
-/// timeout confirms real reachability without risking that long stall —
-/// if there's genuinely no internet, this reports offline within ~1s.
+/// an actual Supabase call. A quick DNS lookup confirms real reachability
+/// without risking that long stall. The timeout is 3s, not 1s — mobile
+/// data (weak signal especially) routinely takes longer than 1s to
+/// resolve a DNS query even when it's genuinely online, and a 1s cap was
+/// misreporting those as offline, silently skipping real sync
+/// opportunities (see PROGRESS.md's "mobile data sync" entry). 3s is
+/// still fast enough to never read as a stall to the user.
 class ConnectivityService {
   final Connectivity _connectivity;
 
   ConnectivityService({Connectivity? connectivity}) : _connectivity = connectivity ?? Connectivity();
 
-  static const _probeTimeout = Duration(seconds: 1);
+  static const _probeTimeout = Duration(seconds: 3);
 
   Stream<bool> get onConnectivityChanged => _connectivity.onConnectivityChanged.asyncMap(_hasRealInternet);
 

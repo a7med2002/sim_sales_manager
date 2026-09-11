@@ -5567,3 +5567,49 @@ so this was just wiring it through the two display surfaces:
 
 **Verified**: `flutter analyze` — no issues. `flutter test` — 16/16
 passing.
+
+## Fixed: mobile-data sync reliability + visible "not backed up yet" indicator
+
+Root-caused a real incident: a seller worked on mobile data, updated the
+app, then cleared the app's local storage — losing everything they'd
+just done, because it had never actually reached Supabase. Diagnosed
+three compounding gaps (see the conversation's summary) and fixed all of
+them:
+
+1. **Connectivity probe timeout raised 1s -> 3s** (`connectivity_service.dart`)
+   — mobile data (weak signal especially) routinely takes longer than 1s
+   to resolve a DNS query even when genuinely online; the old 1s cap was
+   misreporting those moments as offline and skipping real sync
+   opportunities (the app-open catch-up sync in particular). Per explicit
+   instruction, capped at 3s — no higher, so this still never reads as a
+   stall to the user.
+2. **A periodic background sync safety net** — `SyncBloc` now also fires
+   a silent sync attempt every 3 minutes while the app is open
+   (`PeriodicSyncTick`, a plain `Timer.periodic`, no `syncing` UI state
+   so it never flickers anything), independent of write-time pushes,
+   connectivity-change events, and app-open syncs. If every one of those
+   discrete trigger points happened to land during a bad-signal moment
+   (exactly what seems to have happened here), this is what eventually
+   catches up instead of local changes sitting unsynced for an entire
+   session.
+3. **A real "not backed up yet" count, visible in two places** —
+   `SyncEngine.countPendingChanges(ownerId)` sums every `synced = false`
+   row across every synced table plus any pending-delete tombstone.
+   `SyncState` now carries `pendingCount`, recomputed after every sync
+   attempt (success, failure, offline, or a periodic tick).
+   - `SyncStatusIndicator` (top bar): small numbered badge on the cloud
+     icon when `pendingCount > 0` — still subtle per CLAUDE.md, but no
+     longer silent about there being something outstanding.
+   - **New**: a "Data & Sync" section in Settings — plain count ("3
+     تغيير لم يُحفظ على السيرفر بعد" / synced confirmation), last-synced
+     timestamp, a "Sync now" button, and an explicit warning: *"don't
+     clear the app's data or uninstall before confirming everything is
+     backed up."* This is the deliberately hard-to-miss surface — a
+     seller about to do something drastic can check here first instead
+     of having to notice and interpret a small top-bar icon.
+
+**Verified**: `flutter analyze` — no issues. `flutter test` — 16/16
+passing. Not yet tested end-to-end on a real device under actual flaky
+mobile-data conditions (the original failure mode) — the fixes address
+the diagnosed root causes but real-world cellular flakiness is hard to
+reproduce in this environment.

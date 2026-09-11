@@ -29,6 +29,32 @@ class SyncEngine {
 
   SyncEngine(this._client, this._db);
 
+  /// How many local rows for [ownerId] still haven't reached Supabase —
+  /// every `synced = false` row across every synced table, plus any
+  /// permanent-delete tombstone still waiting to confirm remotely (see
+  /// `pending_deletes_table.dart`). Drives the prominent "not backed up
+  /// yet" indicator (`SyncBloc`/`SyncStatusIndicator`) — the whole point
+  /// is a seller can tell, at a glance, whether it's safe to do
+  /// something drastic (clear app storage, uninstall, switch devices)
+  /// without silently losing work that never made it to the server.
+  Future<int> countPendingChanges(String ownerId) async {
+    var count = 0;
+    count += (await (_db.select(_db.companiesTable)..where((t) => t.ownerId.equals(ownerId) & t.synced.equals(false))).get()).length;
+    count += (await (_db.select(_db.packagesTable)..where((t) => t.ownerId.equals(ownerId) & t.synced.equals(false))).get()).length;
+    count += (await (_db.select(_db.customersTable)..where((t) => t.ownerId.equals(ownerId) & t.synced.equals(false))).get()).length;
+    count += (await (_db.select(_db.linesTable)..where((t) => t.ownerId.equals(ownerId) & t.synced.equals(false))).get()).length;
+    count += (await (_db.select(_db.shipmentsTable)..where((t) => t.ownerId.equals(ownerId) & t.synced.equals(false))).get()).length;
+    count += (await (_db.select(_db.settingsTable)..where((t) => t.ownerId.equals(ownerId) & t.synced.equals(false))).get()).length;
+    count += (await (_db.select(_db.activityLogTable)..where((t) => t.ownerId.equals(ownerId) & t.synced.equals(false))).get()).length;
+    count += (await (_db.select(_db.supportRequestsTable)..where((t) => t.ownerId.equals(ownerId) & t.synced.equals(false))).get()).length;
+    count += (await (_db.select(_db.numberUpdateLogTable)..where((t) => t.ownerId.equals(ownerId) & t.synced.equals(false))).get()).length;
+    count +=
+        (await (_db.select(_db.numberUpdateProviderCacheTable)..where((t) => t.ownerId.equals(ownerId) & t.synced.equals(false))).get()).length;
+    count += (await (_db.select(_db.notificationsTable)..where((t) => t.ownerId.equals(ownerId) & t.synced.equals(false))).get()).length;
+    count += (await (_db.select(_db.pendingDeletesTable)..where((t) => t.ownerId.equals(ownerId))).get()).length;
+    return count;
+  }
+
   /// Runs a full sync for [ownerId]: catalog pull, then push/pull for
   /// every tenant table currently migrated. Companies before packages
   /// (packages reference companies by id); customers before lines (lines

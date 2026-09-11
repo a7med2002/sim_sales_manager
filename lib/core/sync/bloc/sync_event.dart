@@ -26,3 +26,13 @@ class ConnectivityChanged extends SyncEvent {
 class SyncRequested extends SyncEvent {
   const SyncRequested();
 }
+
+/// Fired by `SyncBloc`'s own internal timer every few minutes while the
+/// app is open — a safety net independent of write-time pushes,
+/// connectivity-change events, and app-open syncs: if every one of
+/// those happened to land during a bad-signal moment (mobile data is
+/// more prone to this than WiFi), this is what eventually catches up
+/// instead of local changes sitting unsynced for an entire session.
+class PeriodicSyncTick extends SyncEvent {
+  const PeriodicSyncTick();
+}

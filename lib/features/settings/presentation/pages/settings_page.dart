@@ -6,11 +6,15 @@ import '../../../../core/constants/app_constants.dart';
 import '../../../../core/di/service_locator.dart';
 import '../../../../core/navigation/logout.dart';
 import '../../../../core/settings/settings_cubit.dart';
+import '../../../../core/sync/bloc/sync_bloc.dart';
+import '../../../../core/sync/bloc/sync_event.dart';
+import '../../../../core/sync/bloc/sync_state.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/cubit/theme_cubit.dart';
+import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/widgets/app_top_bar.dart';
 import '../../../../core/widgets/language_switch.dart';
 import '../../../../core/widgets/list_row.dart';
@@ -278,6 +282,13 @@ class _SettingsViewState extends State<_SettingsView> {
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
+            Text(
+              'settings.dataSyncSectionTitle'.tr(),
+              style: AppTextStyles.overline(colors.textSecondary),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            const _DataSyncSection(),
+            const SizedBox(height: AppSpacing.lg),
             Center(
               child: Text(
                 '${AppConstants.appName} ${AppConstants.appVersion}',
@@ -366,6 +377,92 @@ class _SectionCard extends StatelessWidget {
         border: Border.all(color: colors.border),
       ),
       child: child,
+    );
+  }
+}
+
+/// "Not backed up yet" surface for Settings — the deliberately-visible
+/// counterpart to `SyncStatusIndicator`'s small top-bar badge: a seller
+/// about to do something drastic (clear app storage, switch phones,
+/// uninstall) should be able to come here, see a plain count and a
+/// clear warning, and hit "sync now" before doing it — not have to
+/// notice and interpret a tiny cloud icon. Self-contained
+/// (`BlocProvider`/`BlocBuilder`), same pattern as `SyncStatusIndicator`.
+class _DataSyncSection extends StatelessWidget {
+  const _DataSyncSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider.value(
+      value: getIt<SyncBloc>(),
+      child: BlocBuilder<SyncBloc, SyncState>(
+        builder: (context, state) {
+          final colors = context.colors;
+          final pending = state.pendingCount;
+          final allSynced = pending == 0 && state.status != SyncStatus.offline;
+
+          return _SectionCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      allSynced ? Icons.cloud_done_outlined : Icons.cloud_off_outlined,
+                      color: allSynced ? colors.success : colors.warning,
+                      size: 20,
+                    ),
+                    const SizedBox(width: AppSpacing.xs),
+                    Expanded(
+                      child: Text(
+                        allSynced ? 'settings.dataSync.allSynced'.tr() : 'settings.dataSync.pendingCount'.tr(namedArgs: {'count': '$pending'}),
+                        style: AppTextStyles.cardTitle(colors.textPrimary),
+                      ),
+                    ),
+                  ],
+                ),
+                if (state.lastSyncedAt != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    'settings.dataSync.lastSynced'.tr(namedArgs: {'date': formatDateTime(state.lastSyncedAt!)}),
+                    style: AppTextStyles.body(colors.textSecondary),
+                  ),
+                ],
+                const SizedBox(height: AppSpacing.sm),
+                SizedBox(
+                  width: double.infinity,
+                  height: 44,
+                  child: OutlinedButton.icon(
+                    onPressed: state.status == SyncStatus.syncing ? null : () => context.read<SyncBloc>().add(const SyncRequested()),
+                    icon: state.status == SyncStatus.syncing
+                        ? SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: colors.textPrimary))
+                        : Icon(Icons.sync_rounded, size: 18, color: colors.textPrimary),
+                    label: Text('settings.dataSync.syncNow'.tr(), style: AppTextStyles.body(colors.textPrimary)),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: colors.textPrimary,
+                      side: BorderSide(color: colors.border),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.button)),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Container(height: 1, color: colors.border),
+                const SizedBox(height: AppSpacing.sm),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.warning_amber_rounded, size: 16, color: colors.danger),
+                    const SizedBox(width: AppSpacing.xs),
+                    Expanded(
+                      child: Text('settings.dataSync.clearDataWarning'.tr(), style: AppTextStyles.body(colors.textSecondary)),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 }

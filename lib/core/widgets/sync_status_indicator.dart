@@ -35,8 +35,9 @@ class SyncStatusIndicator extends StatelessWidget {
             SyncStatus.error => (Icons.cloud_off_outlined, colors.danger, 'sync.status.error'),
           };
 
+          final pending = state.pendingCount;
           return Tooltip(
-            message: tooltipKey.tr(),
+            message: pending > 0 ? 'sync.status.pendingTooltip'.tr(namedArgs: {'count': '$pending'}) : tooltipKey.tr(),
             child: GestureDetector(
               onTap: () {
                 // Never show the raw captured exception (`state.errorMessage`
@@ -53,7 +54,27 @@ class SyncStatusIndicator extends StatelessWidget {
               behavior: HitTestBehavior.opaque,
               child: Padding(
                 padding: const EdgeInsets.all(4),
-                child: Icon(icon, size: 18, color: color),
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Icon(icon, size: 18, color: color),
+                    if (pending > 0)
+                      Positioned(
+                        top: -3,
+                        right: -3,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                          constraints: const BoxConstraints(minWidth: 15),
+                          decoration: BoxDecoration(color: colors.warning, borderRadius: BorderRadius.circular(8)),
+                          alignment: Alignment.center,
+                          child: Text(
+                            pending > 9 ? '9+' : '$pending',
+                            style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
           );

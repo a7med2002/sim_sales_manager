@@ -5,7 +5,8 @@
       "syncing": "Syncing…",
       "idle": "Synced",
       "error": "Sync error — tap to retry",
-      "retrying": "Retrying sync…"
+      "retrying": "Retrying sync…",
+      "pendingTooltip": "{count} change(s) not backed up yet — tap to sync now"
     }
   },
   "notifications": {
@@ -300,7 +301,15 @@
     "changePassword": "Change Password",
     "logout": "Logout",
     "profileUpdated": "Profile updated.",
-    "currencyUpdated": "Currency symbol updated."
+    "currencyUpdated": "Currency symbol updated.",
+    "dataSyncSectionTitle": "DATA & SYNC",
+    "dataSync": {
+      "allSynced": "All your data is backed up",
+      "pendingCount": "{count} change(s) not backed up yet",
+      "lastSynced": "Last synced: {date}",
+      "syncNow": "Sync now",
+      "clearDataWarning": "Don't clear the app's data or uninstall it before confirming everything is backed up — clearing data permanently deletes anything not uploaded yet, with no way to recover it."
+    }
   },
   "changePassword": {
     "title": "Change Password",
