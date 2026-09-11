@@ -5627,3 +5627,19 @@ both.
 
 **Verified**: `flutter analyze` — no issues. `flutter test` — 16/16
 passing.
+
+## Changed: Shipments & Operations "add" buttons are now a floating action button
+
+Same treatment as Customers' "New Customer" — replaced both inline
+full-width/inline `ElevatedButton`s ("New Shipment" on the Shipments
+tab, "Add Operation" on the Operations tab) with a single
+`FloatingActionButton.extended` on the page's Scaffold, whose action and
+label switch with the active tab (`state.tabIndex`) rather than having
+two separate FABs. Required moving the `Scaffold`/`floatingActionButton`
+inside the `BlocBuilder` (it needs `state`/`cubit` to know which tab is
+active and wire the right action) — the page's actual layout/content is
+otherwise unchanged. Export buttons on the Operations tab keep their
+existing spot next to where "Add Operation" used to be.
+
+**Verified**: `flutter analyze` — no issues. `flutter test` — 16/16
+passing.

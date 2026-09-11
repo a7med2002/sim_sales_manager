@@ -83,14 +83,14 @@ class _ShipmentsOperationsViewState extends State<_ShipmentsOperationsView> {
   Widget build(BuildContext context) {
     final colors = context.colors;
 
-    return Scaffold(
-      backgroundColor: colors.background,
-      body: SafeArea(
-        child: BlocBuilder<ShipmentsOperationsCubit, ShipmentsOperationsState>(
-          builder: (context, state) {
-            final cubit = context.read<ShipmentsOperationsCubit>();
+    return BlocBuilder<ShipmentsOperationsCubit, ShipmentsOperationsState>(
+      builder: (context, state) {
+        final cubit = context.read<ShipmentsOperationsCubit>();
 
-            return ListView(
+        return Scaffold(
+          backgroundColor: colors.background,
+          body: SafeArea(
+            child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.pageHorizontal).copyWith(
                 top: AppSpacing.md,
                 bottom: AppSpacing.xl,
@@ -120,10 +120,40 @@ class _ShipmentsOperationsViewState extends State<_ShipmentsOperationsView> {
                     onExport: (format) => _exportOperations(state, format),
                   ),
               ],
-            );
-          },
-        ),
-      ),
+            ),
+          ),
+          floatingActionButton: state.tabIndex == 0
+              ? FloatingActionButton.extended(
+                  onPressed: () => ShipmentFormSheet.show(
+                    context,
+                    companies: state.companies,
+                    onSave: (company, type, total, paid, method, date, ref, notes) => cubit.addShipment(
+                      companyId: company.id,
+                      companyName: company.name,
+                      companyInitials: company.initials,
+                      type: type,
+                      totalAmount: total,
+                      amountPaid: paid,
+                      paymentMethod: method,
+                      date: date,
+                      referenceNumber: ref,
+                      notes: notes,
+                    ),
+                  ),
+                  backgroundColor: colors.primaryAction,
+                  foregroundColor: colors.onPrimaryAction,
+                  icon: const Icon(Icons.add_rounded),
+                  label: Text('shipmentsOperations.shipmentsTab.newShipment'.tr(), style: AppTextStyles.cardTitle(colors.onPrimaryAction)),
+                )
+              : FloatingActionButton.extended(
+                  onPressed: () => NewSaleLauncher.open(context),
+                  backgroundColor: colors.primaryAction,
+                  foregroundColor: colors.onPrimaryAction,
+                  icon: const Icon(Icons.add_rounded),
+                  label: Text('shipmentsOperations.operationsTab.addOperation'.tr(), style: AppTextStyles.cardTitle(colors.onPrimaryAction)),
+                ),
+        );
+      },
     );
   }
 }
@@ -156,36 +186,6 @@ class _ShipmentsTab extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppSpacing.md),
-        SizedBox(
-          width: double.infinity,
-          height: 48,
-          child: ElevatedButton.icon(
-            onPressed: () => ShipmentFormSheet.show(
-              context,
-              companies: state.companies,
-              onSave: (company, type, total, paid, method, date, ref, notes) => cubit.addShipment(
-                companyId: company.id,
-                companyName: company.name,
-                companyInitials: company.initials,
-                type: type,
-                totalAmount: total,
-                amountPaid: paid,
-                paymentMethod: method,
-                date: date,
-                referenceNumber: ref,
-                notes: notes,
-              ),
-            ),
-            icon: Icon(Icons.add_rounded, color: colors.onPrimaryAction, size: 18),
-            label: Text('shipmentsOperations.shipmentsTab.newShipment'.tr(), style: AppTextStyles.cardTitle(colors.onPrimaryAction)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: colors.primaryAction,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.button)),
-              elevation: 0,
-            ),
-          ),
-        ),
-        const SizedBox(height: AppSpacing.lg),
         Text('shipmentsOperations.shipmentsTab.balanceSectionTitle'.tr(), style: AppTextStyles.overline(colors.textSecondary)),
         const SizedBox(height: AppSpacing.sm),
         if (state.companies.isEmpty)
@@ -490,16 +490,6 @@ class _OperationsTabState extends State<_OperationsTab> {
           spacing: AppSpacing.sm,
           runSpacing: AppSpacing.sm,
           children: [
-            ElevatedButton.icon(
-              onPressed: () => NewSaleLauncher.open(context),
-              icon: Icon(Icons.add_rounded, color: colors.onPrimaryAction, size: 16),
-              label: Text('shipmentsOperations.operationsTab.addOperation'.tr(), style: AppTextStyles.body(colors.onPrimaryAction)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: colors.primaryAction,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.button)),
-                elevation: 0,
-              ),
-            ),
             OutlinedButton.icon(
               onPressed: widget.exportingFormat != null ? null : () => widget.onExport(TableExportFormat.excel),
               icon: widget.exportingFormat == TableExportFormat.excel
