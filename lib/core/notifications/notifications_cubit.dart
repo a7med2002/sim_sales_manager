@@ -325,6 +325,26 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     );
   }
 
+  // ── Admin: new support request (live, not scheduled) ────────────────
+
+  /// Called by `SupportRequestRealtimeGate` the instant a seller submits
+  /// a new Support & Feedback request, while an admin's app is open.
+  /// Unlike every other notification here, nothing schedules this ahead
+  /// of time — it's a plain immediate insert (`fireAt: DateTime.now()`),
+  /// same underlying path (`_insertAndSchedule` already shows instantly
+  /// via `NotificationScheduler.showNow` when `fireAt` isn't in the
+  /// future) that a same-instant company-balance alert already uses.
+  Future<void> notifyNewSupportRequest({required String requestTypeLabel}) async {
+    if (!_isReal) return;
+    await _insertAndSchedule(
+      type: NotificationType.newSupportRequest,
+      title: 'notifications.newSupportRequest.title'.tr(),
+      body: 'notifications.newSupportRequest.body'.tr(namedArgs: {'type': requestTypeLabel}),
+      relatedEntityId: null,
+      fireAt: DateTime.now(),
+    );
+  }
+
   /// Call whenever a company stops being active (archived, soft-deleted,
   /// or permanently deleted) — `raiseOrClearLowBalanceAlert` only ever
   /// runs over the *active* company list, so without this a low-balance

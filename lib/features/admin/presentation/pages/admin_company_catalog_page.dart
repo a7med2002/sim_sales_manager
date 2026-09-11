@@ -36,14 +36,31 @@ class _AdminCompanyCatalogView extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
 
-    return Scaffold(
-      backgroundColor: colors.background,
-      body: SafeArea(
-        child: BlocBuilder<AdminCompanyCatalogCubit, AdminCompanyCatalogState>(
-          builder: (context, state) {
-            final cubit = context.read<AdminCompanyCatalogCubit>();
+    return BlocBuilder<AdminCompanyCatalogCubit, AdminCompanyCatalogState>(
+      builder: (context, state) {
+        final cubit = context.read<AdminCompanyCatalogCubit>();
 
-            return RefreshIndicator(
+        return Scaffold(
+          backgroundColor: colors.background,
+          floatingActionButton: FloatingActionButton.extended(
+            onPressed: () => CatalogCompanyFormSheet.show(
+              context,
+              onSave: (name, notes, url, provider, logoLocalPath, removeLogo, packages) => cubit.addCompany(
+                name: name,
+                notes: notes,
+                numberUpdateUrl: url,
+                numberUpdateProvider: provider,
+                logoLocalPath: logoLocalPath,
+                packages: packages,
+              ),
+            ),
+            backgroundColor: colors.primaryAction,
+            foregroundColor: colors.onPrimaryAction,
+            icon: const Icon(Icons.add_rounded),
+            label: Text('admin.catalog.addCompany'.tr(), style: AppTextStyles.cardTitle(colors.onPrimaryAction)),
+          ),
+          body: SafeArea(
+            child: RefreshIndicator(
               onRefresh: cubit.load,
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.pageHorizontal).copyWith(
@@ -52,31 +69,6 @@ class _AdminCompanyCatalogView extends StatelessWidget {
                 ),
                 children: [
                   AppTopBar(title: 'admin.catalog.title'.tr(), subtitle: 'admin.catalog.subtitle'.tr(), showBack: true),
-                  const SizedBox(height: AppSpacing.md),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 48,
-                    child: ElevatedButton.icon(
-                      onPressed: () => CatalogCompanyFormSheet.show(
-                        context,
-                        onSave: (name, notes, url, provider, logoLocalPath, removeLogo, packages) => cubit.addCompany(
-                          name: name,
-                          notes: notes,
-                          numberUpdateUrl: url,
-                          numberUpdateProvider: provider,
-                          logoLocalPath: logoLocalPath,
-                          packages: packages,
-                        ),
-                      ),
-                      icon: Icon(Icons.add_rounded, color: colors.onPrimaryAction, size: 18),
-                      label: Text('admin.catalog.addCompany'.tr(), style: AppTextStyles.cardTitle(colors.onPrimaryAction)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: colors.primaryAction,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.button)),
-                        elevation: 0,
-                      ),
-                    ),
-                  ),
                   const SizedBox(height: AppSpacing.md),
                   if (state.errorMessage != null)
                     Padding(
@@ -100,10 +92,10 @@ class _AdminCompanyCatalogView extends StatelessWidget {
                     ),
                 ],
               ),
-            );
-          },
-        ),
-      ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

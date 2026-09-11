@@ -21,6 +21,14 @@ enum NotificationType {
   /// A shipment was recorded with an unpaid remainder — what's owed to
   /// that supplier. [relatedEntityId] is the Company's id.
   companyOwedAlert,
+
+  /// Admin-only: a seller submitted a new Support & Feedback request.
+  /// Raised live via `SupportRequestRealtimeGate`'s Supabase Realtime
+  /// subscription, not scheduled ahead of time like every other type
+  /// here — see its doc comment for why this only works while the admin
+  /// app is open. [relatedEntityId] is unused (there's no per-request
+  /// detail route to jump to yet, just the Support & Feedback list).
+  newSupportRequest,
 }
 
 String notificationTypeToRow(NotificationType type) => type.name;

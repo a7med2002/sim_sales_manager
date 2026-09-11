@@ -37,6 +37,10 @@
     "companyOwedAlert": {
       "title": "مبلغ مستحق لشركة موردة",
       "body": "تم تسجيل شحنة من شركة {company} بمبلغ متبقٍ غير مدفوع قدره {amount} ₪."
+    },
+    "newSupportRequest": {
+      "title": "طلب دعم جديد",
+      "body": "وصل طلب {type} جديد من أحد البائعين."
     }
   },
   "update": {

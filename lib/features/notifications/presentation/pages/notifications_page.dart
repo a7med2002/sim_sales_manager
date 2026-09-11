@@ -94,6 +94,8 @@ class _NotificationsView extends StatelessWidget {
       case NotificationType.companyLowBalance:
       case NotificationType.companyOwedAlert:
         Navigator.of(context).pushNamed(RouteNames.companies);
+      case NotificationType.newSupportRequest:
+        Navigator.of(context).pushNamed(RouteNames.adminSupportFeedback);
       case NotificationType.lineExpiringSoon:
       case NotificationType.lineExpired:
         break;
@@ -117,6 +119,8 @@ class _NotificationTile extends StatelessWidget {
       case NotificationType.companyLowBalance:
       case NotificationType.companyOwedAlert:
         return Icons.apartment_rounded;
+      case NotificationType.newSupportRequest:
+        return Icons.support_agent_rounded;
     }
   }
 

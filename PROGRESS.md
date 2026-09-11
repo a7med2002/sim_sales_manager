@@ -5758,3 +5758,56 @@ passing. A release build is running to confirm the scheduler change
 compiles natively; not yet verified on a real device that reminders now
 actually fire at the correct local hour (needs a real device + waiting
 out an actual reminder to fully confirm).
+
+## Changed: admin "add" buttons are now FABs too
+
+Same treatment as the seller-facing pages — "Add Company"
+(`admin_company_catalog_page.dart`) and "Add User"
+(`admin_users_page.dart`) are now `FloatingActionButton.extended`
+instead of full-width inline buttons, same restructure pattern (Scaffold
+moved inside the page's `BlocBuilder` so the FAB's action can reach
+`cubit`). Surveyed the rest of the admin section
+(`admin_support_feedback_page.dart`, `admin_hub_page.dart`) — both are
+read-only list/menu pages with no "add" action, nothing to convert
+there.
+
+**Verified**: `flutter analyze` — no issues. `flutter test` — 16/16
+passing. The background release build from the notifications-fix pass
+also finished successfully in the meantime (exit code 0).
+
+## Added: live in-app notification for admin on new support requests
+
+Per request, agreed with the user via AskUserQuestion: a **live,
+in-app-only** notification (not a real push) the instant a seller
+submits a new Support & Feedback request — only while an admin's app is
+actually open, explicitly chosen over standing up real push
+infrastructure (Firebase Cloud Messaging + a Supabase Edge Function),
+which would need a new Firebase project and packages for a lot more
+reliability than this use case needs right now.
+
+**Mechanism**: Supabase Realtime, not the local-alarm scheduling every
+other notification type uses — `supabase/migrations/0016_support_requests_realtime.sql`
+adds `support_requests` to the `supabase_realtime` publication (RLS
+still applies: an admin's subscription only ever receives rows their
+existing "admin reads all" SELECT policy already allows). New widget
+`SupportRequestRealtimeGate` (`features/admin/presentation/widgets/`)
+wraps `AdminHubPage`, subscribes on mount, unsubscribes on dispose —
+stays alive for the whole admin session since `AdminHubPage` remains
+mounted underneath whatever sub-page gets pushed on top of it.
+
+**Reused the existing notification system** rather than building a
+parallel one: new `NotificationType.newSupportRequest` +
+`NotificationsCubit.notifyNewSupportRequest` (same immediate-insert path
+`_insertAndSchedule` already had for same-instant alerts like company
+low-balance — `fireAt: DateTime.now()` shows it right away via
+`NotificationScheduler.showNow`), so it shows up in the same bell icon +
+inbox page as everything else. Added the bell to `AdminHubPage`'s top
+bar (only Home had it before). Tapping this notification in the inbox
+jumps to Support & Feedback.
+
+**Verified**: `flutter analyze` — no issues. `flutter test` — 16/16
+passing. **Needs the new migration run on Supabase**
+(`0016_support_requests_realtime.sql`) before this works — not yet
+tested end-to-end (needs two real accounts: a seller submitting a
+request while signed in as admin on another device/session to confirm
+delivery).

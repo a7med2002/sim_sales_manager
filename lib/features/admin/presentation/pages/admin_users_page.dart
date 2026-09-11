@@ -37,15 +37,25 @@ class _AdminUsersView extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
 
-    return Scaffold(
-      backgroundColor: colors.background,
-      body: SafeArea(
-        child: BlocBuilder<AdminUsersCubit, AdminUsersState>(
-          builder: (context, state) {
-            final cubit = context.read<AdminUsersCubit>();
-            final currentUserId = Env.isConfigured ? getIt<AuthService>().currentOwnerId : null;
+    return BlocBuilder<AdminUsersCubit, AdminUsersState>(
+      builder: (context, state) {
+        final cubit = context.read<AdminUsersCubit>();
+        final currentUserId = Env.isConfigured ? getIt<AuthService>().currentOwnerId : null;
 
-            return RefreshIndicator(
+        return Scaffold(
+          backgroundColor: colors.background,
+          floatingActionButton: FloatingActionButton.extended(
+            onPressed: () => AddUserSheet.show(
+              context,
+              onSave: (email, password, name) => cubit.createUser(email: email, password: password, displayName: name),
+            ),
+            backgroundColor: colors.primaryAction,
+            foregroundColor: colors.onPrimaryAction,
+            icon: const Icon(Icons.person_add_alt_1_rounded),
+            label: Text('admin.users.addUser'.tr(), style: AppTextStyles.cardTitle(colors.onPrimaryAction)),
+          ),
+          body: SafeArea(
+            child: RefreshIndicator(
               onRefresh: cubit.load,
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.pageHorizontal).copyWith(
@@ -54,24 +64,6 @@ class _AdminUsersView extends StatelessWidget {
                 ),
                 children: [
                   AppTopBar(title: 'admin.users.title'.tr(), subtitle: 'admin.users.subtitle'.tr(), showBack: true),
-                  const SizedBox(height: AppSpacing.md),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 48,
-                    child: ElevatedButton.icon(
-                      onPressed: () => AddUserSheet.show(
-                        context,
-                        onSave: (email, password, name) => cubit.createUser(email: email, password: password, displayName: name),
-                      ),
-                      icon: Icon(Icons.person_add_alt_1_rounded, color: colors.onPrimaryAction, size: 18),
-                      label: Text('admin.users.addUser'.tr(), style: AppTextStyles.cardTitle(colors.onPrimaryAction)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: colors.primaryAction,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.button)),
-                        elevation: 0,
-                      ),
-                    ),
-                  ),
                   const SizedBox(height: AppSpacing.md),
                   if (state.errorMessage != null)
                     Padding(
@@ -91,10 +83,10 @@ class _AdminUsersView extends StatelessWidget {
                     ),
                 ],
               ),
-            );
-          },
-        ),
-      ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

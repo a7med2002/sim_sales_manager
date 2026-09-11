@@ -37,6 +37,10 @@
     "companyOwedAlert": {
       "title": "Amount owed to supplier",
       "body": "A shipment from {company} was recorded with an unpaid remainder of ₪{amount}."
+    },
+    "newSupportRequest": {
+      "title": "New support request",
+      "body": "A new {type} request came in from a seller."
     }
   },
   "update": {

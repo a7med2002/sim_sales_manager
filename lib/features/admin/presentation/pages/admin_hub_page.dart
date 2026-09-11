@@ -11,9 +11,11 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/cubit/theme_cubit.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/widgets/app_top_bar.dart';
+import '../../../../core/widgets/notification_bell_button.dart';
 import '../../../../core/widgets/stat_card.dart';
 import '../../domain/entities/admin_user.dart';
 import '../cubit/admin_dashboard_cubit.dart';
+import '../widgets/support_request_realtime_gate.dart';
 
 /// Admin's own home — an admin account never sees the seller shell
 /// (Home/Companies/Customers/New Sale/More) at all: `main.dart`'s
@@ -34,7 +36,7 @@ class AdminHubPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => AdminDashboardCubit(),
-      child: const _AdminHubView(),
+      child: const SupportRequestRealtimeGate(child: _AdminHubView()),
     );
   }
 }
@@ -67,7 +69,8 @@ class _AdminHubView extends StatelessWidget {
                     isDarkMode: Theme.of(context).brightness == Brightness.dark,
                     onThemeToggle: () => context.read<ThemeCubit>().toggle(),
                     actions: [
-                      const SizedBox(width: 4),
+                      const NotificationBellButton(),
+                      const SizedBox(width: 6),
                       _LogoutButton(onTap: () => confirmLogout(context)),
                     ],
                   ),
