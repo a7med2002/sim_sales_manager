@@ -5643,3 +5643,19 @@ existing spot next to where "Add Operation" used to be.
 
 **Verified**: `flutter analyze` — no issues. `flutter test` — 16/16
 passing.
+
+## Fixed: Home's "Welcome back" greeting wrapping to two lines
+
+Per request — the greeting ("Welcome back, {name}") is a full sentence,
+not a short page label like every other page's title, so at the shared
+`AppTopBar` default (24px `pageTitle`) a real name routinely wrapped to
+two lines and looked off. `AppTopBar` gained an optional `titleStyle`
+override (falls back to the same default everywhere else — every other
+page keeps its 24px title untouched); Home now passes
+`AppTextStyles.sectionHeader` (18px) for its greeting specifically. Also
+added `maxLines: 1` + ellipsis to `AppTopBar`'s title generally, as a
+backstop against any future long title (page or greeting) wrapping
+awkwardly.
+
+**Verified**: `flutter analyze` — no issues. `flutter test` — 16/16
+passing.

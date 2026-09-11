@@ -81,6 +81,7 @@ class _HomeViewState extends State<_HomeView> {
               children: [
                 AppTopBar(
                   title: 'home.welcomeBack'.tr(namedArgs: {'name': state.userName}),
+                  titleStyle: AppTextStyles.sectionHeader(colors.textPrimary),
                   subtitle: 'home.tagline'.tr(),
                   showBrandMark: true,
                   isDarkMode: Theme.of(context).brightness == Brightness.dark,

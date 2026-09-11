@@ -26,6 +26,13 @@ class AppTopBar extends StatelessWidget {
   final VoidCallback? onThemeToggle;
   final List<Widget>? actions;
 
+  /// Overrides the default `AppTextStyles.pageTitle` size — Home's own
+  /// "Welcome back, {name}" greeting is a full sentence rather than a
+  /// short page label, so it wrapped to two lines and looked off at the
+  /// default 24px; passing `AppTextStyles.sectionHeader` there keeps
+  /// every other page's title untouched.
+  final TextStyle? titleStyle;
+
   const AppTopBar({
     super.key,
     required this.title,
@@ -37,6 +44,7 @@ class AppTopBar extends StatelessWidget {
     this.isDarkMode = false,
     this.onThemeToggle,
     this.actions,
+    this.titleStyle,
   });
 
   @override
@@ -66,7 +74,12 @@ class AppTopBar extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(title, style: AppTextStyles.pageTitle(colors.textPrimary)),
+              Text(
+                title,
+                style: titleStyle ?? AppTextStyles.pageTitle(colors.textPrimary),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
               if (subtitle != null) ...[
                 const SizedBox(height: 4),
                 Text(subtitle!, style: AppTextStyles.body(colors.textSecondary)),
