@@ -15,6 +15,7 @@ import '../../../../core/widgets/confirm_dialog.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/status_badge.dart';
 import '../../domain/entities/customer.dart';
+import '../../domain/entities/line.dart';
 import '../cubit/customers_cubit.dart';
 import '../cubit/customers_state.dart';
 import '../widgets/add_payment_sheet.dart';
@@ -34,19 +35,60 @@ class CustomerDetailPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
 
-    return Scaffold(
-      backgroundColor: colors.background,
-      body: SafeArea(
-        child: BlocBuilder<CustomersCubit, CustomersState>(
-          builder: (context, state) {
-            final cubit = context.read<CustomersCubit>();
-            final customer = state.customers.firstWhere((c) => c.id == customerId);
-            final lines = state.linesFor(customerId);
-            final companies = getIt<CompanyCatalog>().activeCompanies;
-            final totalSpent = state.totalSpentFor(customerId);
-            final totalOwed = state.totalOwedFor(customerId);
+    return BlocBuilder<CustomersCubit, CustomersState>(
+      builder: (context, state) {
+        final cubit = context.read<CustomersCubit>();
+        final customer = state.customers.firstWhere((c) => c.id == customerId);
+        final lines = state.linesFor(customerId);
+        final companies = getIt<CompanyCatalog>().activeCompanies;
+        final totalSpent = state.totalSpentFor(customerId);
+        final totalOwed = state.totalOwedFor(customerId);
 
-            return ListView(
+        void addLine(
+          String sim,
+          String companyId,
+          String company,
+          String initials,
+          String? packageId,
+          String package,
+          String? packageSimType,
+          DateTime purchase,
+          DateTime expiry,
+          double wholesale,
+          double retail,
+          PaymentStatus status,
+          double paid,
+          double remaining,
+        ) =>
+            cubit.addLine(
+              customerId,
+              simNumber: sim,
+              companyId: companyId,
+              companyName: company,
+              companyInitials: initials,
+              packageId: packageId,
+              packageName: package,
+              packageSimType: packageSimType,
+              purchaseDate: purchase,
+              expiryDate: expiry,
+              wholesaleCost: wholesale,
+              retailPrice: retail,
+              paymentStatus: status,
+              amountPaid: paid,
+              amountRemaining: remaining,
+            );
+
+        return Scaffold(
+          backgroundColor: colors.background,
+          floatingActionButton: FloatingActionButton.extended(
+            onPressed: () => LineFormSheet.show(context, companies: companies, onSave: addLine),
+            backgroundColor: colors.primaryAction,
+            foregroundColor: colors.onPrimaryAction,
+            icon: const Icon(Icons.add_rounded),
+            label: Text('customers.detail.addLine'.tr(), style: AppTextStyles.cardTitle(colors.onPrimaryAction)),
+          ),
+          body: SafeArea(
+            child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.pageHorizontal).copyWith(
                 top: AppSpacing.md,
                 bottom: AppSpacing.xl,
@@ -75,42 +117,6 @@ class CustomerDetailPage extends StatelessWidget {
                   const SizedBox(height: AppSpacing.md),
                   _DebtReminderRow(customerId: customerId, customerName: customer.name, amountOwed: totalOwed),
                 ],
-                const SizedBox(height: AppSpacing.md),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton.icon(
-                    onPressed: () => LineFormSheet.show(
-                      context,
-                      companies: companies,
-                      onSave: (sim, companyId, company, initials, packageId, package, packageSimType, purchase, expiry, wholesale, retail, status, paid, remaining) =>
-                          cubit.addLine(
-                        customerId,
-                        simNumber: sim,
-                        companyId: companyId,
-                        companyName: company,
-                        companyInitials: initials,
-                        packageId: packageId,
-                        packageName: package,
-                        packageSimType: packageSimType,
-                        purchaseDate: purchase,
-                        expiryDate: expiry,
-                        wholesaleCost: wholesale,
-                        retailPrice: retail,
-                        paymentStatus: status,
-                        amountPaid: paid,
-                        amountRemaining: remaining,
-                      ),
-                    ),
-                    icon: Icon(Icons.add_rounded, color: colors.onPrimaryAction, size: 18),
-                    label: Text('customers.detail.addLine'.tr(), style: AppTextStyles.cardTitle(colors.onPrimaryAction)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: colors.primaryAction,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.button)),
-                      elevation: 0,
-                    ),
-                  ),
-                ),
                 const SizedBox(height: AppSpacing.lg),
                 Text('customers.detail.linesSection'.tr(), style: AppTextStyles.overline(colors.textSecondary)),
                 const SizedBox(height: AppSpacing.sm),
@@ -165,13 +171,12 @@ class CustomerDetailPage extends StatelessWidget {
                     ),
                   ),
               ],
-            );
-          },
-        ),
-      ),
+            ),
+          ),
+        );
+      },
     );
   }
-
 }
 
 class _DetailHeader extends StatelessWidget {
@@ -447,8 +452,28 @@ class _DebtReminderRow extends StatefulWidget {
 }
 
 class _DebtReminderRowState extends State<_DebtReminderRow> {
+  static const _minDays = 1;
+  static const _maxDays = 30;
+
   int _days = 3;
   bool _sent = false;
+
+  void _changeDays(int delta) {
+    setState(() => _days = (_days + delta).clamp(_minDays, _maxDays));
+  }
+
+  void _schedule() {
+    getIt<NotificationsCubit>().scheduleDebtReminder(
+      customerId: widget.customerId,
+      customerName: widget.customerName,
+      amountOwed: widget.amountOwed,
+      days: _days,
+    );
+    setState(() => _sent = true);
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text('notifications.customerDebtReminder.sent'.tr())));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -459,47 +484,92 @@ class _DebtReminderRowState extends State<_DebtReminderRow> {
       decoration: BoxDecoration(
         color: colors.surface,
         borderRadius: BorderRadius.circular(AppRadii.card),
-        border: Border.all(color: colors.border),
+        border: Border.all(color: colors.warning.withValues(alpha: 0.4)),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('notifications.customerDebtReminder.buttonLabel'.tr(), style: AppTextStyles.body(colors.textPrimary)),
-          const SizedBox(width: AppSpacing.sm),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-            decoration: BoxDecoration(borderRadius: BorderRadius.circular(AppRadii.button), border: Border.all(color: colors.border)),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<int>(
-                value: _days,
-                items: List.generate(
-                  30,
-                  (i) => DropdownMenuItem(value: i + 1, child: Text('${i + 1} ${'notifications.customerDebtReminder.daysUnit'.tr()}')),
-                ),
-                onChanged: (value) {
-                  if (value != null) setState(() => _days = value);
-                },
+          Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(color: colors.warning.withValues(alpha: 0.12), shape: BoxShape.circle),
+                alignment: Alignment.center,
+                child: Icon(Icons.notifications_active_outlined, size: 16, color: colors.warning),
               ),
-            ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text('notifications.customerDebtReminder.buttonLabel'.tr(), style: AppTextStyles.cardTitle(colors.textPrimary)),
+              ),
+            ],
           ),
-          const Spacer(),
-          TextButton(
-            onPressed: _sent
-                ? null
-                : () {
-                    getIt<NotificationsCubit>().scheduleDebtReminder(
-                      customerId: widget.customerId,
-                      customerName: widget.customerName,
-                      amountOwed: widget.amountOwed,
-                      days: _days,
-                    );
-                    setState(() => _sent = true);
-                    ScaffoldMessenger.of(context)
-                      ..hideCurrentSnackBar()
-                      ..showSnackBar(SnackBar(content: Text('notifications.customerDebtReminder.sent'.tr())));
-                  },
-            child: Text(_sent ? 'notifications.customerDebtReminder.sent'.tr() : 'notifications.customerDebtReminder.setButton'.tr()),
+          const SizedBox(height: AppSpacing.sm),
+          Row(
+            children: [
+              // A compact +/- stepper instead of a 30-item dropdown menu
+              // (which used to pop open tall enough to cover most of the
+              // screen) — same 1-30 range, far less visual weight.
+              Container(
+                decoration: BoxDecoration(borderRadius: BorderRadius.circular(AppRadii.button), border: Border.all(color: colors.border)),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _StepperButton(icon: Icons.remove_rounded, onTap: _days > _minDays ? () => _changeDays(-1) : null),
+                    SizedBox(
+                      width: 64,
+                      child: Text(
+                        '$_days ${'notifications.customerDebtReminder.daysUnit'.tr()}',
+                        textAlign: TextAlign.center,
+                        style: AppTextStyles.cardTitle(colors.textPrimary),
+                      ),
+                    ),
+                    _StepperButton(icon: Icons.add_rounded, onTap: _days < _maxDays ? () => _changeDays(1) : null),
+                  ],
+                ),
+              ),
+              const Spacer(),
+              SizedBox(
+                height: 40,
+                child: ElevatedButton(
+                  onPressed: _sent ? null : _schedule,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colors.primaryAction,
+                    disabledBackgroundColor: colors.border,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.button)),
+                    elevation: 0,
+                  ),
+                  child: Text(
+                    _sent ? 'notifications.customerDebtReminder.sent'.tr() : 'notifications.customerDebtReminder.setButton'.tr(),
+                    style: AppTextStyles.body(_sent ? colors.textSecondary : colors.onPrimaryAction),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _StepperButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback? onTap;
+
+  const _StepperButton({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final enabled = onTap != null;
+
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.sm),
+        child: Icon(icon, size: 16, color: enabled ? colors.textPrimary : colors.border),
       ),
     );
   }

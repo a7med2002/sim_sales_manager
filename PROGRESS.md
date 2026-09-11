@@ -5703,3 +5703,58 @@ toggle, none at all before `actions`).
 
 **Verified**: `flutter analyze` — no issues. `flutter test` — 16/16
 passing.
+
+## Notifications: correctness review + fixed a real timezone bug
+
+Per explicit request — reviewed the whole notifications system for
+correctness before trusting it, rather than assuming it was already
+right. Found and fixed one real bug plus one real edge-case gap:
+
+**Timezone bug (the important one)**: `NotificationScheduler.init()`
+called `tz.setLocalLocation(tz.local)` — `tz.local` defaults to (and, since
+nothing had ever set it otherwise, stays) UTC, so this line was a no-op
+disguised as a fix: it never actually pointed the `timezone` package at
+the device's real timezone. Every scheduled reminder's wall-clock time
+(e.g. "9am") was being interpreted as 9am **UTC**, not 9am local —
+meaning every line-expiry reminder would have fired at the wrong local
+hour (off by the device's UTC offset, e.g. 2-3 hours early/late in this
+app's expected timezone). Fixed without adding a new package: instead of
+tagging the target time with a resolved named zone,
+`NotificationScheduler.scheduleAt` now converts the target `DateTime` to
+UTC first (`at.toUtc()`, which Dart's own `DateTime` already computes
+correctly from the OS's real offset) and schedules that exact instant
+against `tz.UTC` — the absolute moment is what actually matters to
+`zonedSchedule`, not which `Location` label it's tagged with, so this
+sidesteps needing to resolve the device's real IANA timezone name at
+all.
+
+**Stale-alert gap**: `raiseOrClearLowBalanceAlert` only runs over a
+company's *active* list (`CompaniesCubit._loadFromDrift`) — so a
+low-balance alert already showing when a company got archived,
+soft-deleted, or permanently deleted would never get cleared, sitting in
+the inbox forever pointing at a company no longer active. Added
+`NotificationsCubit.cancelCompanyAlerts(companyId)` (clears both
+`companyLowBalance` and `companyOwedAlert` for that company) and wired
+it into `CompaniesCubit.archive`/`.softDelete`/`.permanentlyDelete`.
+
+## Redesigned: debt reminder section + "Add Line" is now a FAB
+
+Per request — the debt-reminder control on Customer Detail used a plain
+`DropdownButton` for the 1-30 day picker, which popped its menu open
+tall enough to dominate the screen (30 items, no height cap) — replaced
+with a compact +/- stepper (a bordered pill: minus button, "N days"
+text, plus button, clamped 1-30) next to a proper "Schedule" button, both
+inside a nicer card (small bell icon in a tinted circle + label on its
+own row, controls below) instead of the previous single cramped `Row`.
+
+"+ Add Line" is now a `FloatingActionButton.extended` (same pattern as
+Customers'/Shipments & Operations' "add" buttons), replacing the old
+full-width inline button — required moving `Scaffold`/
+`floatingActionButton` inside the page's `BlocBuilder` (same restructure
+as Shipments & Operations, since the FAB's action needs `state`/`cubit`).
+
+**Verified**: `flutter analyze` — no issues. `flutter test` — 16/16
+passing. A release build is running to confirm the scheduler change
+compiles natively; not yet verified on a real device that reminders now
+actually fire at the correct local hour (needs a real device + waiting
+out an actual reminder to fully confirm).

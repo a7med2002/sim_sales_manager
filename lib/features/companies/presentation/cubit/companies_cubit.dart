@@ -292,6 +292,11 @@ class CompaniesCubit extends Cubit<CompaniesState> implements CompanyCatalog {
     final name = state.companies.firstWhere((c) => c.id == id).name;
     getIt<ActivityLogger>().log(ActivityActionType.edit, 'Archived company $name.');
     _updateCompanyRow(id, (c) => c.copyWith(status: const Value('archived')));
+    // Only raised over the *active* company list (see
+    // NotificationsCubit.raiseOrClearLowBalanceAlert) — without this an
+    // alert already showing for this company would sit in the inbox
+    // forever pointing at a company that's no longer active.
+    unawaited(getIt<NotificationsCubit>().cancelCompanyAlerts(id));
   }
 
   void restoreToActive(String id) {
@@ -304,6 +309,7 @@ class CompaniesCubit extends Cubit<CompaniesState> implements CompanyCatalog {
     final name = state.companies.firstWhere((c) => c.id == id).name;
     getIt<ActivityLogger>().log(ActivityActionType.delete, 'Deleted company $name.');
     _updateCompanyRow(id, (c) => c.copyWith(status: const Value('deleted')));
+    unawaited(getIt<NotificationsCubit>().cancelCompanyAlerts(id));
   }
 
   void permanentlyDelete(String id) {
@@ -339,6 +345,7 @@ class CompaniesCubit extends Cubit<CompaniesState> implements CompanyCatalog {
       unawaited(_syncEngine?.recordAndPushDelete(entityTable: 'companies', id: id, ownerId: ownerId) ?? Future.value());
     }
     emit(state.copyWith(companies: state.companies.where((c) => c.id != id).toList()));
+    unawaited(getIt<NotificationsCubit>().cancelCompanyAlerts(id));
   }
 
   void importPreset(PresetCompany preset) {

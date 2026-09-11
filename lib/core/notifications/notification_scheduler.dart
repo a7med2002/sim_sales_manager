@@ -17,13 +17,17 @@ class NotificationScheduler {
 
   Future<void> init() async {
     if (_initialized) return;
+    // Only used so `zonedSchedule` below has a loaded timezone database to
+    // work with at all — this app deliberately never resolves the
+    // device's actual named zone (`tz.local` defaults to, and stays,
+    // UTC with nothing more done here; there's no bundled/platform-
+    // channel way to ask for the real one without a new package). Every
+    // `DateTime` this app schedules against is converted straight to a
+    // UTC instant before it ever reaches `TZDateTime` (see [scheduleAt])
+    // — Dart's own `DateTime.toUtc()` already correctly accounts for the
+    // device's real offset, so the absolute moment scheduled is correct
+    // regardless of what "local" means to the `timezone` package itself.
     tz_data.initializeTimeZones();
-    try {
-      tz.setLocalLocation(tz.local);
-    } catch (_) {
-      // Falls back to UTC if the platform's local timezone can't be
-      // resolved — reminders still fire, just against UTC clock time.
-    }
 
     const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings();
@@ -56,7 +60,11 @@ class NotificationScheduler {
         iOS: DarwinNotificationDetails(),
       );
 
-  /// Schedules [title]/[body] to appear at [at]. A past [at] fires
+  /// Schedules [title]/[body] to appear at [at] (interpreted as whatever
+  /// timezone [at] itself carries — local wall-clock time for every
+  /// caller in this app; converted to UTC below before being wrapped in
+  /// a `TZDateTime`, which is what actually determines the real fire
+  /// instant, not the `Location` tag it carries). A past [at] fires
   /// almost immediately instead (Android/iOS both handle this
   /// gracefully) — callers that need "never schedule for the past"
   /// filter before calling this, not here.
@@ -65,7 +73,7 @@ class NotificationScheduler {
       id,
       title,
       body,
-      tz.TZDateTime.from(at, tz.local),
+      tz.TZDateTime.from(at.toUtc(), tz.UTC),
       _details,
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,

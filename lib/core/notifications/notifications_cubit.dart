@@ -324,4 +324,17 @@ class NotificationsCubit extends Cubit<NotificationsState> {
       fireAt: DateTime.now(),
     );
   }
+
+  /// Call whenever a company stops being active (archived, soft-deleted,
+  /// or permanently deleted) — `raiseOrClearLowBalanceAlert` only ever
+  /// runs over the *active* company list, so without this a low-balance
+  /// alert already raised before the company left that list would sit
+  /// in the inbox forever pointing at a company that's gone.
+  Future<void> cancelCompanyAlerts(String companyId) async {
+    if (!_isReal) return;
+    await _cancelWhere((row) =>
+        row.relatedEntityId == companyId &&
+        (row.type == notificationTypeToRow(NotificationType.companyLowBalance) ||
+            row.type == notificationTypeToRow(NotificationType.companyOwedAlert)));
+  }
 }
