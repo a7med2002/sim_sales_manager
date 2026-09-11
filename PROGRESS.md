@@ -5550,3 +5550,20 @@ they already had, nothing reads it anymore.
 
 **Verified**: `flutter analyze` — no issues. `flutter test` — 16/16
 passing.
+
+## Added: customer name column on Numbers (table + all export formats)
+
+Per request — the Numbers page table and every export format both
+needed a "who owns this number" column, not just the company/package.
+`LineSummary` already carries `customerName` (used elsewhere already),
+so this was just wiring it through the two display surfaces:
+
+- `numbers_page.dart`'s `DataTable` — new "صاحب الرقم" / "Customer"
+  column, placed right after the number itself (before company),
+  matching the order requested.
+- `numbers_export.dart` — same column added to the PDF/CSV/Excel export
+  (`exportNumbers`, shared `core/utils/table_export.dart` builder), same
+  position, so every exported file carries it too.
+
+**Verified**: `flutter analyze` — no issues. `flutter test` — 16/16
+passing.

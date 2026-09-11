@@ -599,6 +599,7 @@
     },
     "table": {
       "number": "الرقم",
+      "customer": "صاحب الرقم",
       "company": "الشركة",
       "package": "الباقة",
       "status": "الحالة",

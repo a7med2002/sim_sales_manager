@@ -307,6 +307,7 @@ class _NumbersTable extends StatelessWidget {
             dividerThickness: 1,
             columns: [
               DataColumn(label: Text('numbers.table.number'.tr())),
+              DataColumn(label: Text('numbers.table.customer'.tr())),
               DataColumn(label: Text('numbers.table.company'.tr())),
               DataColumn(label: Text('numbers.table.package'.tr())),
               DataColumn(label: Text('numbers.table.status'.tr())),
@@ -328,6 +329,7 @@ class _NumbersTable extends StatelessWidget {
 
               return DataRow(cells: [
                 DataCell(Text(line.simNumber)),
+                DataCell(Text(line.customerName)),
                 DataCell(Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [

@@ -599,6 +599,7 @@
     },
     "table": {
       "number": "Number",
+      "customer": "Customer",
       "company": "Company",
       "package": "Package",
       "status": "Status",

@@ -18,6 +18,7 @@ Future<void> exportNumbers({
 }) {
   final headers = [
     'numbers.table.number'.tr(),
+    'numbers.table.customer'.tr(),
     'numbers.table.company'.tr(),
     'numbers.table.package'.tr(),
     'numbers.table.status'.tr(),
@@ -28,6 +29,7 @@ Future<void> exportNumbers({
   final rows = lines
       .map((l) => [
             l.simNumber,
+            l.customerName,
             l.companyName,
             packageDisplayLabel(l.packageName, l.packageSimType),
             l.statusAt(now).label,
