@@ -5613,3 +5613,17 @@ passing. Not yet tested end-to-end on a real device under actual flaky
 mobile-data conditions (the original failure mode) — the fixes address
 the diagnosed root causes but real-world cellular flakiness is hard to
 reproduce in this environment.
+
+## Changed: "New Customer" is now a floating action button
+
+Per request — the full-width `ElevatedButton` at the top of Customers
+(above the search field) felt off; replaced with a proper
+`FloatingActionButton.extended` (icon + label, same brand colors),
+docked in the Scaffold's own `floatingActionButton` slot — standard
+Material placement, floats above `BottomNavBar` without overlapping the
+"New Sale" circular button in its center. Removed the old inline
+button + its spacer from the page content entirely, rather than keeping
+both.
+
+**Verified**: `flutter analyze` — no issues. `flutter test` — 16/16
+passing.

@@ -62,25 +62,6 @@ class _CustomersView extends StatelessWidget {
                   onThemeToggle: () => context.read<ThemeCubit>().toggle(),
                 ),
                 const SizedBox(height: AppSpacing.md),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton.icon(
-                    onPressed: () => CustomerFormSheet.show(
-                      context,
-                      onSave: (name, contact, tags, status, pinned, notes) =>
-                          cubit.addCustomer(name: name, contactNumber: contact, tags: tags, status: status, pinned: pinned, notes: notes),
-                    ),
-                    icon: Icon(Icons.add_rounded, color: colors.onPrimaryAction, size: 18),
-                    label: Text('customers.newCustomer'.tr(), style: AppTextStyles.cardTitle(colors.onPrimaryAction)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: colors.primaryAction,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.button)),
-                      elevation: 0,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.md),
                 TextField(
                   onChanged: cubit.searchChanged,
                   style: AppTextStyles.cardTitle(colors.textPrimary),
@@ -173,6 +154,18 @@ class _CustomersView extends StatelessWidget {
             );
           },
         ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => CustomerFormSheet.show(
+          context,
+          onSave: (name, contact, tags, status, pinned, notes) => context
+              .read<CustomersCubit>()
+              .addCustomer(name: name, contactNumber: contact, tags: tags, status: status, pinned: pinned, notes: notes),
+        ),
+        backgroundColor: colors.primaryAction,
+        foregroundColor: colors.onPrimaryAction,
+        icon: const Icon(Icons.add_rounded),
+        label: Text('customers.newCustomer'.tr(), style: AppTextStyles.cardTitle(colors.onPrimaryAction)),
       ),
       bottomNavigationBar: BottomNavBar(
         current: AppNavTab.customers,
