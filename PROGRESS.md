@@ -5680,3 +5680,26 @@ styling) to use it.
 
 **Verified**: `flutter analyze` — no issues. `flutter test` — 16/16
 passing.
+
+## Unified: top-bar icons (sync, notifications, dark/light toggle) now share one look
+
+Per request — sync status and the notification bell didn't match the
+dark/light mode toggle's styling (a 40x40 bordered circle around an 18px
+icon); the bell in particular was a plain 22px icon with no circle at
+all, sitting at a visibly different weight/level.
+
+**New shared widget**: `core/widgets/circular_icon_button.dart`
+(`CircularIconButton`) — the dark/light toggle's exact look, centralized:
+40x40 bordered circle, 18px icon, optional small badge pinned to the
+top-end corner (for unread/pending counts), optional tooltip.
+`_ThemeToggleButton`, `SyncStatusIndicator`, and `NotificationBellButton`
+all rebuilt on top of it — same size, same border, same icon scale,
+same badge position math, one definition instead of three near-copies.
+
+Also gave `AppTopBar` a uniform 6px gap between whichever trailing icons
+are actually present (sync/theme-toggle/actions), instead of the
+previous inconsistent spacing (a 4px gap only between sync and the
+toggle, none at all before `actions`).
+
+**Verified**: `flutter analyze` — no issues. `flutter test` — 16/16
+passing.

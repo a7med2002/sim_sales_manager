@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
+import 'circular_icon_button.dart';
 import 'sync_status_indicator.dart';
 
 /// Page header: title (+ optional subtitle) on the leading side, an optional
@@ -87,15 +88,26 @@ class AppTopBar extends StatelessWidget {
             ],
           ),
         ),
-        if (showSyncStatus) const SyncStatusIndicator(),
-        if (onThemeToggle != null) ...[
-          const SizedBox(width: 4),
-          _ThemeToggleButton(isDark: isDarkMode, onTap: onThemeToggle!),
+        // Every trailing icon (sync, theme toggle, notifications, ...)
+        // shares `CircularIconButton`'s look — same 40x40 bordered circle,
+        // same 18px icon size, same level — so none of them can drift out
+        // of visual sync with each other again. `_trailingGap` between
+        // each one that's actually present, none before the first.
+        for (final (index, widget) in _trailingIcons.indexed) ...[
+          if (index > 0) const SizedBox(width: _trailingGap),
+          widget,
         ],
-        if (actions != null) ...actions!,
       ],
     );
   }
+
+  static const _trailingGap = 6.0;
+
+  List<Widget> get _trailingIcons => [
+        if (showSyncStatus) const SyncStatusIndicator(),
+        if (onThemeToggle != null) _ThemeToggleButton(isDark: isDarkMode, onTap: onThemeToggle!),
+        ...?actions,
+      ];
 }
 
 class _ThemeToggleButton extends StatelessWidget {
@@ -108,21 +120,10 @@ class _ThemeToggleButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
 
-    return GestureDetector(
+    return CircularIconButton(
+      icon: isDark ? Icons.dark_mode_rounded : Icons.wb_sunny_outlined,
+      iconColor: colors.textPrimary,
       onTap: onTap,
-      child: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(color: colors.border),
-        ),
-        child: Icon(
-          isDark ? Icons.dark_mode_rounded : Icons.wb_sunny_outlined,
-          color: colors.textPrimary,
-          size: 18,
-        ),
-      ),
     );
   }
 }

@@ -8,6 +8,7 @@ import '../sync/bloc/sync_bloc.dart';
 import '../sync/bloc/sync_event.dart';
 import '../sync/bloc/sync_state.dart';
 import '../theme/app_colors.dart';
+import 'circular_icon_button.dart';
 
 /// The "subtle sync-status indicator" CLAUDE.md's offline-first section
 /// calls for — a small icon, never a blocking spinner. Self-contained
@@ -36,47 +37,34 @@ class SyncStatusIndicator extends StatelessWidget {
           };
 
           final pending = state.pendingCount;
-          return Tooltip(
-            message: pending > 0 ? 'sync.status.pendingTooltip'.tr(namedArgs: {'count': '$pending'}) : tooltipKey.tr(),
-            child: GestureDetector(
-              onTap: () {
-                // Never show the raw captured exception (`state.errorMessage`
-                // is `e.toString()` from `SyncBloc`, e.g. a low-level socket
-                // exception) — just a translated, generic notice that a
-                // retry is happening.
-                if (state.status == SyncStatus.error) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('sync.status.retrying'.tr()), duration: const Duration(seconds: 3)),
-                  );
-                }
-                context.read<SyncBloc>().add(const SyncRequested());
-              },
-              behavior: HitTestBehavior.opaque,
-              child: Padding(
-                padding: const EdgeInsets.all(4),
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Icon(icon, size: 18, color: color),
-                    if (pending > 0)
-                      Positioned(
-                        top: -3,
-                        right: -3,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                          constraints: const BoxConstraints(minWidth: 15),
-                          decoration: BoxDecoration(color: colors.warning, borderRadius: BorderRadius.circular(8)),
-                          alignment: Alignment.center,
-                          child: Text(
-                            pending > 9 ? '9+' : '$pending',
-                            style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w700),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ),
+          return CircularIconButton(
+            icon: icon,
+            iconColor: color,
+            tooltip: pending > 0 ? 'sync.status.pendingTooltip'.tr(namedArgs: {'count': '$pending'}) : tooltipKey.tr(),
+            onTap: () {
+              // Never show the raw captured exception (`state.errorMessage`
+              // is `e.toString()` from `SyncBloc`, e.g. a low-level socket
+              // exception) — just a translated, generic notice that a
+              // retry is happening.
+              if (state.status == SyncStatus.error) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('sync.status.retrying'.tr()), duration: const Duration(seconds: 3)),
+                );
+              }
+              context.read<SyncBloc>().add(const SyncRequested());
+            },
+            badge: pending > 0
+                ? Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                    constraints: const BoxConstraints(minWidth: 15),
+                    decoration: BoxDecoration(color: colors.warning, borderRadius: BorderRadius.circular(8)),
+                    alignment: Alignment.center,
+                    child: Text(
+                      pending > 9 ? '9+' : '$pending',
+                      style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w700),
+                    ),
+                  )
+                : null,
           );
         },
       ),
