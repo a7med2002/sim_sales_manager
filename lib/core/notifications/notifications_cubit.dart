@@ -272,6 +272,25 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     await _cancelWhere((row) => row.relatedEntityId == customerId && row.type == notificationTypeToRow(NotificationType.customerDebtReminder));
   }
 
+  /// Manual cancel from the customer detail page's reminder row — unlike
+  /// [cancelDebtRemindersIfSettled] this isn't gated on the debt actually
+  /// being paid off, since the seller may just want to call off a
+  /// reminder they scheduled by mistake or too far out.
+  Future<void> cancelDebtReminder(String customerId) async {
+    if (!_isReal) return;
+    await _cancelWhere((row) => row.relatedEntityId == customerId && row.type == notificationTypeToRow(NotificationType.customerDebtReminder));
+  }
+
+  /// The still-pending (future `fireAt`) debt reminder for [customerId],
+  /// if any — lets the customer detail page show real persisted state
+  /// instead of ephemeral widget state that resets on navigation.
+  AppNotification? pendingDebtReminder(String customerId) {
+    for (final n in state.notifications) {
+      if (n.relatedEntityId == customerId && n.type == NotificationType.customerDebtReminder && n.isPending) return n;
+    }
+    return null;
+  }
+
   // ── Company balance ─────────────────────────────────────────────────
 
   /// Call after every balance recompute (`CompaniesCubit._loadFromDrift`)

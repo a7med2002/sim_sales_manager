@@ -49,7 +49,6 @@ class _SettingsView extends StatefulWidget {
 
 class _SettingsViewState extends State<_SettingsView> {
   late final TextEditingController _nameController;
-  late final TextEditingController _emailController;
   late final TextEditingController _currencyController;
 
   @override
@@ -57,7 +56,6 @@ class _SettingsViewState extends State<_SettingsView> {
     super.initState();
     final profile = context.read<ProfileCubit>().state;
     _nameController = TextEditingController(text: profile.name);
-    _emailController = TextEditingController(text: profile.email);
     _currencyController = TextEditingController(
       text: context.read<SettingsCubit>().state.currencySymbol,
     );
@@ -66,7 +64,6 @@ class _SettingsViewState extends State<_SettingsView> {
   @override
   void dispose() {
     _nameController.dispose();
-    _emailController.dispose();
     _currencyController.dispose();
     super.dispose();
   }
@@ -79,9 +76,8 @@ class _SettingsViewState extends State<_SettingsView> {
 
   void _saveProfile() {
     final name = _nameController.text.trim();
-    final email = _emailController.text.trim();
-    if (name.isEmpty || email.isEmpty) return;
-    context.read<ProfileCubit>().update(name: name, email: email);
+    if (name.isEmpty) return;
+    context.read<ProfileCubit>().update(name: name);
     _showSavedSnackBar('settings.profileUpdated'.tr());
   }
 
@@ -146,18 +142,6 @@ class _SettingsViewState extends State<_SettingsView> {
                   const SizedBox(height: AppSpacing.xs),
                   TextField(
                     controller: _nameController,
-                    style: AppTextStyles.cardTitle(colors.textPrimary),
-                    decoration: _fieldDecoration(colors),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  Text(
-                    'settings.email'.tr(),
-                    style: AppTextStyles.body(colors.textSecondary),
-                  ),
-                  const SizedBox(height: AppSpacing.xs),
-                  TextField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
                     style: AppTextStyles.cardTitle(colors.textPrimary),
                     decoration: _fieldDecoration(colors),
                   ),

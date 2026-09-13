@@ -28,7 +28,10 @@
       "buttonLabel": "Remind me in",
       "daysUnit": "days",
       "setButton": "Schedule reminder",
-      "sent": "Reminder scheduled."
+      "sent": "Reminder scheduled.",
+      "scheduledFor": "Scheduled — will fire on {date}",
+      "cancelButton": "Cancel reminder",
+      "cancelled": "Reminder cancelled."
     },
     "companyLowBalance": {
       "title": "Low company balance",

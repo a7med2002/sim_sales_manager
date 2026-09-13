@@ -28,7 +28,10 @@
       "buttonLabel": "تذكير بعد",
       "daysUnit": "يوم",
       "setButton": "جدولة التذكير",
-      "sent": "تم جدولة التذكير."
+      "sent": "تم جدولة التذكير.",
+      "scheduledFor": "مُجدوَل — سيصلك بتاريخ {date}",
+      "cancelButton": "إلغاء التذكير",
+      "cancelled": "تم إلغاء التذكير."
     },
     "companyLowBalance": {
       "title": "رصيد شركة منخفض",

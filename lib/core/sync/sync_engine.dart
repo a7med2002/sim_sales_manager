@@ -59,34 +59,56 @@ class SyncEngine {
   /// every tenant table currently migrated. Companies before packages
   /// (packages reference companies by id); customers before lines (lines
   /// reference both a customer and a company).
+  ///
+  /// Each step is isolated (`_step`, below) — before this, a single
+  /// table throwing (a transient error, or a genuinely bad row) aborted
+  /// the *entire* remaining chain, since nothing here had its own
+  /// try/catch: an early failure silently skipped every step after it,
+  /// including whichever tables' pending rows might otherwise have
+  /// synced cleanly. That's exactly the shape of bug that could leave
+  /// the "not backed up yet" count stuck long after the actual problem
+  /// (if any) was long gone — a real "sync now" press should never come
+  /// back having accomplished nothing just because one unrelated table
+  /// had a bad moment.
   Future<void> syncAll(String ownerId) async {
-    await pullCatalog();
-    await pushPendingCompanies(ownerId);
-    await pushPendingPackages(ownerId);
-    await pushPendingCustomers(ownerId);
-    await pushPendingLines(ownerId);
-    await pushPendingShipments(ownerId);
-    await pushPendingSettings(ownerId);
+    await _step(pullCatalog);
+    await _step(() => pushPendingCompanies(ownerId));
+    await _step(() => pushPendingPackages(ownerId));
+    await _step(() => pushPendingCustomers(ownerId));
+    await _step(() => pushPendingLines(ownerId));
+    await _step(() => pushPendingShipments(ownerId));
+    await _step(() => pushPendingSettings(ownerId));
     // Flush any permanent deletes still waiting on their remote
     // counterpart *before* pulling — otherwise a delete that hadn't
     // reached the server yet gets resurrected by the pull below re-
     // fetching a row that (from this device's perspective) is already
     // gone. See pending_deletes_table.dart.
-    await pushPendingDeletes(ownerId);
-    await pullCompanies(ownerId);
-    await pullPackages(ownerId);
-    await pullCustomers(ownerId);
-    await pullLines(ownerId);
-    await pushPendingActivityLog(ownerId);
-    await pushPendingSupportRequests(ownerId);
-    await pushPendingNumberUpdateLog(ownerId);
-    await pullShipments(ownerId);
-    await pullSettings(ownerId);
-    await pullActivityLog(ownerId);
-    await pullSupportRequests(ownerId);
-    await pullNumberUpdateLog(ownerId);
-    await pushPendingNotifications(ownerId);
-    await pullNotifications(ownerId);
+    await _step(() => pushPendingDeletes(ownerId));
+    await _step(() => pullCompanies(ownerId));
+    await _step(() => pullPackages(ownerId));
+    await _step(() => pullCustomers(ownerId));
+    await _step(() => pullLines(ownerId));
+    await _step(() => pushPendingActivityLog(ownerId));
+    await _step(() => pushPendingSupportRequests(ownerId));
+    await _step(() => pushPendingNumberUpdateLog(ownerId));
+    await _step(() => pullShipments(ownerId));
+    await _step(() => pullSettings(ownerId));
+    await _step(() => pullActivityLog(ownerId));
+    await _step(() => pullSupportRequests(ownerId));
+    await _step(() => pullNumberUpdateLog(ownerId));
+    await _step(() => pushPendingNotifications(ownerId));
+    await _step(() => pullNotifications(ownerId));
+  }
+
+  Future<void> _step(Future<void> Function() step) async {
+    try {
+      await step();
+    } catch (_) {
+      // Offline or a transient/one-off failure on this specific table —
+      // every other, independent step still gets its own chance to run.
+      // Whatever failed here just stays `synced = false` for the next
+      // sync attempt to pick up, same as always.
+    }
   }
 
   /// Tombstones a permanent local delete of [id] from [entityTable] and

@@ -98,13 +98,17 @@ class ProfileCubit extends Cubit<Profile> {
     }
   }
 
-  void update({required String name, required String email}) {
-    emit(state.copyWith(name: name, email: email));
+  /// Email is deliberately not editable here at all (see class doc
+  /// comment on `_loadReal`'s email source — Supabase Auth's own real
+  /// email, not something this app's simple profile form can silently
+  /// change): only ever the display name. The Settings form used to
+  /// also show an editable email field that looked like it worked but
+  /// never actually did anything — this replaced that with the fix
+  /// itself, not just this Cubit no longer accepting one.
+  void update({required String name}) {
+    emit(state.copyWith(name: name));
     final auth = _auth;
     if (auth?.currentOwnerId == null) return;
-    // Only the display name is persisted here — changing the account's
-    // actual email requires Supabase Auth's own email-change flow
-    // (re-verification), out of scope for this simple profile form.
     Supabase.instance.client.from('profiles').update({'display_name': name}).eq('id', auth!.currentOwnerId!).then(
           (_) {},
           onError: (_) {},

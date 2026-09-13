@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/catalog/company_catalog.dart';
 import '../../../../core/di/service_locator.dart';
 import '../../../../core/notifications/notifications_cubit.dart';
+import '../../../../core/notifications/notifications_state.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -456,7 +457,6 @@ class _DebtReminderRowState extends State<_DebtReminderRow> {
   static const _maxDays = 30;
 
   int _days = 3;
-  bool _sent = false;
 
   void _changeDays(int delta) {
     setState(() => _days = (_days + delta).clamp(_minDays, _maxDays));
@@ -469,87 +469,132 @@ class _DebtReminderRowState extends State<_DebtReminderRow> {
       amountOwed: widget.amountOwed,
       days: _days,
     );
-    setState(() => _sent = true);
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text('notifications.customerDebtReminder.sent'.tr())));
+  }
+
+  void _cancel() {
+    getIt<NotificationsCubit>().cancelDebtReminder(widget.customerId);
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text('notifications.customerDebtReminder.cancelled'.tr())));
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
 
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.cardPadding),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(AppRadii.card),
-        border: Border.all(color: colors.warning.withValues(alpha: 0.4)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(color: colors.warning.withValues(alpha: 0.12), shape: BoxShape.circle),
-                alignment: Alignment.center,
-                child: Icon(Icons.notifications_active_outlined, size: 16, color: colors.warning),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: Text('notifications.customerDebtReminder.buttonLabel'.tr(), style: AppTextStyles.cardTitle(colors.textPrimary)),
-              ),
-            ],
+    // Reads the real persisted reminder (if any) straight from
+    // NotificationsCubit instead of tracking a local "did I just tap
+    // schedule" flag — a plain widget-state flag resets to false the
+    // instant this page is rebuilt (e.g. navigating away and back),
+    // which used to make an actually-still-scheduled reminder look
+    // unscheduled again with no way to tell the two apart.
+    return BlocBuilder<NotificationsCubit, NotificationsState>(
+      bloc: getIt<NotificationsCubit>(),
+      builder: (context, _) {
+        final pending = getIt<NotificationsCubit>().pendingDebtReminder(widget.customerId);
+
+        return Container(
+          padding: const EdgeInsets.all(AppSpacing.cardPadding),
+          decoration: BoxDecoration(
+            color: colors.surface,
+            borderRadius: BorderRadius.circular(AppRadii.card),
+            border: Border.all(color: colors.warning.withValues(alpha: 0.4)),
           ),
-          const SizedBox(height: AppSpacing.sm),
-          Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // A compact +/- stepper instead of a 30-item dropdown menu
-              // (which used to pop open tall enough to cover most of the
-              // screen) — same 1-30 range, far less visual weight.
-              Container(
-                decoration: BoxDecoration(borderRadius: BorderRadius.circular(AppRadii.button), border: Border.all(color: colors.border)),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+              Row(
+                children: [
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(color: colors.warning.withValues(alpha: 0.12), shape: BoxShape.circle),
+                    alignment: Alignment.center,
+                    child: Icon(Icons.notifications_active_outlined, size: 16, color: colors.warning),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Text('notifications.customerDebtReminder.buttonLabel'.tr(), style: AppTextStyles.cardTitle(colors.textPrimary)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              if (pending != null) ...[
+                Text(
+                  'notifications.customerDebtReminder.scheduledFor'.tr(namedArgs: {'date': _formatDate(pending.fireAt)}),
+                  style: AppTextStyles.body(colors.textSecondary),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                SizedBox(
+                  height: 40,
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: _cancel,
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: colors.danger),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.button)),
+                    ),
+                    child: Text('notifications.customerDebtReminder.cancelButton'.tr(), style: AppTextStyles.body(colors.danger)),
+                  ),
+                ),
+              ] else
+                Row(
                   children: [
-                    _StepperButton(icon: Icons.remove_rounded, onTap: _days > _minDays ? () => _changeDays(-1) : null),
-                    SizedBox(
-                      width: 64,
-                      child: Text(
-                        '$_days ${'notifications.customerDebtReminder.daysUnit'.tr()}',
-                        textAlign: TextAlign.center,
-                        style: AppTextStyles.cardTitle(colors.textPrimary),
+                    // A compact +/- stepper instead of a 30-item dropdown
+                    // menu (which used to pop open tall enough to cover
+                    // most of the screen) — same 1-30 range, far less
+                    // visual weight.
+                    Container(
+                      decoration:
+                          BoxDecoration(borderRadius: BorderRadius.circular(AppRadii.button), border: Border.all(color: colors.border)),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _StepperButton(icon: Icons.remove_rounded, onTap: _days > _minDays ? () => _changeDays(-1) : null),
+                          SizedBox(
+                            width: 64,
+                            child: Text(
+                              '$_days ${'notifications.customerDebtReminder.daysUnit'.tr()}',
+                              textAlign: TextAlign.center,
+                              style: AppTextStyles.cardTitle(colors.textPrimary),
+                            ),
+                          ),
+                          _StepperButton(icon: Icons.add_rounded, onTap: _days < _maxDays ? () => _changeDays(1) : null),
+                        ],
                       ),
                     ),
-                    _StepperButton(icon: Icons.add_rounded, onTap: _days < _maxDays ? () => _changeDays(1) : null),
+                    const Spacer(),
+                    SizedBox(
+                      height: 40,
+                      child: ElevatedButton(
+                        onPressed: _schedule,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: colors.primaryAction,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.button)),
+                          elevation: 0,
+                        ),
+                        child: Text(
+                          'notifications.customerDebtReminder.setButton'.tr(),
+                          style: AppTextStyles.body(colors.onPrimaryAction),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
-              ),
-              const Spacer(),
-              SizedBox(
-                height: 40,
-                child: ElevatedButton(
-                  onPressed: _sent ? null : _schedule,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colors.primaryAction,
-                    disabledBackgroundColor: colors.border,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.button)),
-                    elevation: 0,
-                  ),
-                  child: Text(
-                    _sent ? 'notifications.customerDebtReminder.sent'.tr() : 'notifications.customerDebtReminder.setButton'.tr(),
-                    style: AppTextStyles.body(_sent ? colors.textSecondary : colors.onPrimaryAction),
-                  ),
-                ),
-              ),
             ],
           ),
-        ],
-      ),
+        );
+      },
     );
+  }
+
+  String _formatDate(DateTime dt) {
+    final local = dt.toLocal();
+    String two(int n) => n.toString().padLeft(2, '0');
+    return '${two(local.day)}/${two(local.month)}/${local.year} ${two(local.hour)}:${two(local.minute)}';
   }
 }
 

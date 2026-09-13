@@ -5811,3 +5811,95 @@ passing. **Needs the new migration run on Supabase**
 tested end-to-end (needs two real accounts: a seller submitting a
 request while signed in as admin on another device/session to confirm
 delivery).
+
+## Fixed: Settings' email field looked editable but silently did nothing
+
+Per report — Settings > Profile had an editable email `TextField`
+alongside the name one. `ProfileCubit.update` accepted the typed value
+but its own doc comment already said the quiet part: "only the display
+name is persisted... changing the account's actual email requires
+Supabase Auth's own email-change flow (re-verification), out of scope."
+So typing a new email and hitting save looked like it worked (no error,
+a "saved" snackbar) but the real Supabase Auth email never changed —
+exactly the "بزبطش" the user ran into.
+
+**Fix**: removed the email field/controller entirely from Settings — only
+the name is editable now, matching what actually persists.
+`ProfileCubit.update` no longer takes an `email` param at all (was
+`update({name, email})`, now `update({name})`) — the previous parameter
+existed only to feed that same non-functional field, so this isn't a
+narrower fix bolted on top of the bug, it removes the bug's only
+purpose for existing. Changing an account's real email would need
+Supabase Auth's own re-verification flow — out of scope unless
+explicitly requested.
+
+## Fixed: "Data & Sync" pending count could get stuck even after a manual sync
+
+Root cause: `SyncEngine.syncAll` ran every table's push/pull as one
+unbroken `await` chain with no per-step error isolation — if *any* one
+step threw (a transient network hiccup, or a genuinely bad row), every
+step sequenced after it silently never ran at all, including
+`pushPendingNotifications`/`pushPendingDeletes` (both near the very end
+of the chain). A "Sync now" press retries the whole chain from the top,
+but if the *same* earlier step keeps failing, the same later steps keep
+getting starved every time — from the outside this reads as "I synced
+and it's still stuck," even though most of the app's data might
+genuinely be up to date.
+
+**Fix**: wrapped each of `syncAll`'s ~20 steps in its own isolated
+try/catch (`SyncEngine._step`) — one table's failure no longer blocks
+any other, independent table's push/pull from still getting its own
+chance to run and actually clear its own pending rows. `SyncBloc`'s own
+top-level try/catch around `syncAll` is now effectively only reachable
+for truly total failures (e.g. no connectivity to attempt anything at
+all); the accurate, per-row-based pending count in Settings/the top-bar
+badge stays the real source of truth for "is anything still
+unsynced," which this fix makes trustworthy again after a real sync
+attempt.
+
+**Verified**: `flutter analyze` — no issues. `flutter test` — 16/16
+passing. Not independently reproduced on-device (no access to the
+user's live Supabase/local state to confirm which specific step was
+silently blocking the rest) — this fixes a real structural gap found by
+code review that fully explains the reported symptom.
+
+## Fixed: customer debt-reminder button reset to "unscheduled" on navigation + added a real automated test suite for notifications
+
+Root cause: `_DebtReminderRowState` (in `customer_detail_page.dart`)
+tracked "did I just schedule this?" as a plain `bool _sent` field on
+`StatefulWidget` state — ephemeral, in-memory only. Navigating away
+from Customer Detail and back rebuilds the widget from scratch, so
+`_sent` always came back `false` regardless of whether the underlying
+reminder was still genuinely scheduled — the user had no way to tell
+"nothing was ever scheduled" apart from "it's scheduled, the UI's just
+lying."
+
+**Fix**: the row now wraps itself in a
+`BlocBuilder<NotificationsCubit, NotificationsState>` and reads the
+real persisted state via a new `NotificationsCubit.pendingDebtReminder
+(customerId)` (returns the still-future `AppNotification` for that
+customer, or `null`). When one exists, the row shows "Scheduled — will
+fire on {date}" plus a real Cancel button (backed by a new
+`NotificationsCubit.cancelDebtReminder(customerId)`, an unconditional
+version of the existing settle-triggered
+`cancelDebtRemindersIfSettled`); otherwise it shows the original
+day-stepper + Schedule button. State now always reflects the actual
+Drift row, survives navigating away and back, and gives the user a way
+to both verify and undo a reminder.
+
+Also added `test/notifications_cubit_test.dart` — a real, re-runnable
+automated suite (14 tests) covering `NotificationsCubit` end to end
+against an in-memory Drift DB (`AppDatabase.forTesting`), a fake
+`AuthService` (real `SupabaseClient` instance, only `currentOwnerId`
+overridden — never touches the network), and a fake
+`NotificationScheduler` that records calls instead of touching
+`flutter_local_notifications`: debt reminders (schedule/cancel/
+settle-triggered-cancel/re-schedule), line-expiry reminders (both
+alarms armed, stale alarms cancelled on re-schedule, near-expiry lines
+correctly skip the already-past 3-day-before alarm), low-balance alerts
+(dedup on repeated dips, clears on recovery, a fresh dip re-raises),
+company-owed alerts, and `markRead`.
+
+**Verified**: `flutter analyze` — no issues on the whole project.
+`flutter test` — 30/30 passing (1 pre-existing unrelated skip in
+`widget_test.dart`), including all 14 new notification tests.
