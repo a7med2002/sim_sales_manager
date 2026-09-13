@@ -5903,3 +5903,43 @@ company-owed alerts, and `markRead`.
 **Verified**: `flutter analyze` — no issues on the whole project.
 `flutter test` — 30/30 passing (1 pre-existing unrelated skip in
 `widget_test.dart`), including all 14 new notification tests.
+
+## Fixed: debt-reminder button still didn't update on the real device after the fix above
+
+The widget-level fix above was correct but incomplete — on-device
+testing showed the button didn't change even *immediately* after
+tapping "Schedule reminder" (not just after navigating away and back),
+which meant the underlying cubit state was never actually updating,
+not just a stale-widget problem.
+
+Root cause: `NotificationsCubit._insertAndSchedule` wrote the row to
+Drift, then called the *real* OS-level scheduler
+(`_scheduler.scheduleAt`/`showNow`, backed by
+`flutter_local_notifications`) **before** reloading state from the
+database — and that call wasn't wrapped in a try/catch. On a real
+device this can throw for reasons the in-memory test double never
+reproduces (notification permission not granted, OEM alarm
+restrictions, etc.). Since nothing awaits `scheduleDebtReminder`'s
+Future from the button's `onPressed`, that exception was silently
+swallowed — the row really was saved to the database, but
+`_loadFromDrift()` (the line that would've refreshed `state` and
+triggered the `BlocBuilder`) never ran because it came *after* the
+throwing call. Same bug existed symmetrically in `_cancelWhere` (OS
+`cancel()` before the DB delete).
+
+**Fix**: reordered both methods so the Drift write always happens and
+`_loadFromDrift()` always runs first — the local database stays the
+single source of truth per this app's offline-first rule — then the
+native OS scheduling/cancelling call runs wrapped in its own
+try/catch, best-effort. A native failure now only means the heads-up
+OS alarm didn't arm (still retried on every cold start via
+`_rearmAllPending`); it can never again silently prevent the in-app
+inbox/button state from reflecting what's actually saved.
+
+Added two regression tests to `test/notifications_cubit_test.dart`
+using a fake scheduler that can simulate a native throw on command,
+proving `pendingDebtReminder`/the row survive a scheduling failure and
+a cancel failure alike.
+
+**Verified**: `flutter analyze` — no issues. `flutter test` — 32/32
+passing (1 pre-existing unrelated skip), 16 notification tests total.

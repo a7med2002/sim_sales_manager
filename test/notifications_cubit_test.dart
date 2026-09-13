@@ -29,6 +29,19 @@ class _FakeScheduler extends NotificationScheduler {
   final List<({int id, String title, String body})> shownNow = [];
   final List<int> cancelled = [];
 
+  /// Simulates a real-device native-plugin failure (missing notification
+  /// permission, OEM alarm restrictions, etc.) that the in-memory test
+  /// double otherwise never reproduces — used to prove the cubit's state
+  /// still reflects the database even when this throws.
+  bool failNextCall = false;
+
+  void _maybeFail() {
+    if (failNextCall) {
+      failNextCall = false;
+      throw Exception('simulated native plugin failure');
+    }
+  }
+
   @override
   Future<void> init() async {}
 
@@ -37,16 +50,19 @@ class _FakeScheduler extends NotificationScheduler {
 
   @override
   Future<void> scheduleAt({required int id, required String title, required String body, required DateTime at}) async {
+    _maybeFail();
     scheduled.add((id: id, title: title, body: body, at: at));
   }
 
   @override
   Future<void> showNow({required int id, required String title, required String body}) async {
+    _maybeFail();
     shownNow.add((id: id, title: title, body: body));
   }
 
   @override
   Future<void> cancel(int id) async {
+    _maybeFail();
     cancelled.add(id);
   }
 }
@@ -112,6 +128,31 @@ void main() {
 
       await cubit.cancelDebtRemindersIfSettled(customerId: 'cust-1', totalOwed: 0);
       expect(cubit.pendingDebtReminder('cust-1'), isNull);
+    });
+
+    test('a native-plugin failure while arming the OS alarm never blocks the row from showing as pending', () async {
+      // Reproduces the real-device bug report: the DB write must land
+      // and the in-app state must reflect it even when
+      // flutter_local_notifications itself throws (permission denied,
+      // OEM restrictions, etc.) — otherwise the button looks stuck
+      // forever even though a row genuinely exists.
+      scheduler.failNextCall = true;
+      await cubit.scheduleDebtReminder(customerId: 'cust-1', customerName: 'Mahmoud', amountOwed: 120, days: 2);
+
+      final pending = cubit.pendingDebtReminder('cust-1');
+      expect(pending, isNotNull, reason: 'the local row + state must update regardless of the native scheduler throwing');
+      expect(scheduler.scheduled, isEmpty, reason: 'the simulated failure means the OS alarm itself never actually got armed');
+    });
+
+    test('a native-plugin failure while cancelling still deletes the row and clears pending state', () async {
+      await cubit.scheduleDebtReminder(customerId: 'cust-1', customerName: 'Mahmoud', amountOwed: 120, days: 2);
+
+      scheduler.failNextCall = true;
+      await cubit.cancelDebtReminder('cust-1');
+
+      expect(cubit.pendingDebtReminder('cust-1'), isNull);
+      final rows = await (db.select(db.notificationsTable)..where((t) => t.relatedEntityId.equals('cust-1'))).get();
+      expect(rows, isEmpty);
     });
 
     test('scheduling again for the same customer stacks another pending reminder rather than silently no-oping', () async {

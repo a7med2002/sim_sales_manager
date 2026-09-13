@@ -173,12 +173,28 @@ class NotificationsCubit extends Cubit<NotificationsState> {
           synced: const Value(false),
           updatedAt: DateTime.now(),
         ));
-    if (fireAt.isAfter(DateTime.now())) {
-      await _scheduler.scheduleAt(id: osId, title: title, body: body, at: fireAt);
-    } else {
-      await _scheduler.showNow(id: osId, title: title, body: body);
-    }
+    // The Drift row is the source of truth (per this app's offline-first
+    // rule) — refresh state from it right away, before touching the OS
+    // alarm below. `flutter_local_notifications`'s real plugin can throw
+    // on a real device in ways the tests' fake scheduler never does
+    // (missing notification permission, exact-alarm restrictions, OEM
+    // quirks) — if that call threw *before* this reload ran, the row
+    // would already be saved but the UI would never find out, since
+    // nothing here awaits/catches this method's Future. Best-effort and
+    // isolated so a native scheduling failure can never again block the
+    // in-app state from reflecting what's actually in the database.
     await _loadFromDrift();
+    try {
+      if (fireAt.isAfter(DateTime.now())) {
+        await _scheduler.scheduleAt(id: osId, title: title, body: body, at: fireAt);
+      } else {
+        await _scheduler.showNow(id: osId, title: title, body: body);
+      }
+    } catch (_) {
+      // The reminder still exists and shows in the inbox; only the OS-level
+      // alarm/heads-up failed to arm. _rearmAllPending retries this on
+      // every cold start.
+    }
     unawaited(_pushBestEffort());
   }
 
@@ -192,7 +208,15 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     final ownerId = _auth!.currentOwnerId!;
     final rows = await (db.select(db.notificationsTable)..where((t) => t.ownerId.equals(ownerId))).get();
     for (final row in rows.where(match)) {
-      await _scheduler.cancel(row.osNotificationId);
+      // Same ordering fix as _insertAndSchedule: cancel the OS alarm
+      // best-effort first, but never let a native-plugin failure there
+      // stop the row from actually being deleted and reflected below.
+      try {
+        await _scheduler.cancel(row.osNotificationId);
+      } catch (_) {
+        // Worst case a stale alarm fires once more later; the row (the
+        // source of truth) is still removed right after this.
+      }
       await (db.delete(db.notificationsTable)..where((t) => t.id.equals(row.id))).go();
       unawaited(_syncEngine?.recordAndPushDelete(entityTable: 'notifications', id: row.id, ownerId: ownerId) ?? Future.value());
     }
