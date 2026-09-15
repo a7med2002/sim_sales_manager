@@ -13,7 +13,6 @@
     "title": "Notifications",
     "emptyTitle": "No notifications yet",
     "emptyDescription": "Line-expiry, customer debt, and company balance reminders will show up here.",
-    "pendingLabel": "Scheduled for {date}",
     "lineExpiringSoon": {
       "title": "Line expiring soon",
       "body": "SIM {sim} expires in 3 days. Customer: {customer}."

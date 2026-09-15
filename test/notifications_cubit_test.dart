@@ -155,19 +155,24 @@ void main() {
       expect(rows, isEmpty);
     });
 
-    test('scheduling again for the same customer stacks another pending reminder rather than silently no-oping', () async {
+    test('scheduling again for the same customer replaces the old reminder instead of stacking a second one', () async {
+      // Reproduces the "inbox fills up with a pile of old+new reminders"
+      // report: scheduleDebtReminder used to just insert another row on
+      // every call, so re-testing (or re-scheduling by mistake) silently
+      // accumulated duplicate rows for the same customer forever.
       await cubit.scheduleDebtReminder(customerId: 'cust-1', customerName: 'Mahmoud', amountOwed: 120, days: 5);
       final first = cubit.pendingDebtReminder('cust-1');
 
-      // A second call from the widget (e.g. cancel then reschedule, or a
-      // double tap) must still leave a real, findable pending reminder —
-      // this is the exact path the customer detail page's row exercises.
-      await cubit.cancelDebtReminder('cust-1');
       await cubit.scheduleDebtReminder(customerId: 'cust-1', customerName: 'Mahmoud', amountOwed: 120, days: 1);
       final second = cubit.pendingDebtReminder('cust-1');
 
       expect(second, isNotNull);
       expect(second!.id, isNot(first!.id));
+
+      final rows = await (db.select(db.notificationsTable)
+            ..where((t) => t.relatedEntityId.equals('cust-1') & t.type.equals(notificationTypeToRow(NotificationType.customerDebtReminder))))
+          .get();
+      expect(rows, hasLength(1), reason: 'only the latest reminder should remain — the old one must be cancelled, not left behind');
     });
   });
 
@@ -287,5 +292,51 @@ void main() {
     expect(cubit.state.notifications.single.read, isTrue);
     final row = await (db.select(db.notificationsTable)..where((t) => t.id.equals(id))).getSingle();
     expect(row.read, isTrue);
+  });
+
+  group('cold start resilience (the real-device root cause)', () {
+    test(
+      'a native failure while re-arming old alarms on startup must not leave the inbox/pending state empty',
+      () async {
+        // This is the actual bug behind the field report: "close the app,
+        // reopen it, the debt-reminder button is back to unscheduled and
+        // the inbox is empty" — even though the reminder is genuinely
+        // still saved. NotificationsCubit._init() calls _rearmAllPending()
+        // then _loadFromDrift() right after; _rearmAllPending() used to
+        // call the real OS scheduler with no try/catch, so a native
+        // failure while re-arming ANY one row (the same class of
+        // real-device-only failure exercised above) threw straight out of
+        // the constructor's unawaited _init() call — _loadFromDrift()
+        // never ran, so state.notifications stayed empty for the rest of
+        // that app session no matter what was actually saved locally.
+        await cubit.scheduleDebtReminder(customerId: 'cust-1', customerName: 'Mahmoud', amountOwed: 120, days: 2);
+        expect(cubit.pendingDebtReminder('cust-1'), isNotNull);
+
+        // Simulate the app being fully closed and reopened: a brand new
+        // NotificationsCubit instance against the same (persisted)
+        // database, with a scheduler that fails on the very first native
+        // call it receives — exactly what _rearmAllPending hits first on
+        // cold start.
+        final coldStartScheduler = _FakeScheduler()..failNextCall = true;
+        final coldStartCubit = NotificationsCubit(
+          db: db,
+          auth: _FakeAuthService(ownerId),
+          syncEngine: null,
+          scheduler: coldStartScheduler,
+        );
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+
+        expect(
+          coldStartCubit.pendingDebtReminder('cust-1'),
+          isNotNull,
+          reason: 'the reminder is still in the database — the cold-start reload must still find it '
+              'even though re-arming its OS alarm failed',
+        );
+        expect(coldStartCubit.state.notifications, isNotEmpty, reason: 'the inbox must never be silently left empty after a failed rearm');
+
+        await coldStartCubit.close();
+      },
+    );
   });
 }

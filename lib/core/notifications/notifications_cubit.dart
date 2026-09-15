@@ -98,6 +98,20 @@ class NotificationsCubit extends Cubit<NotificationsState> {
   /// both a genuine device reboot (Android clears `AlarmManager` alarms
   /// then, the plugin's own boot receiver only catches what it had
   /// already persisted natively) and a fresh install/first run.
+  ///
+  /// This used to be the actual root cause of the inbox/debt-reminder
+  /// button looking reset on every app restart: `_init()` calls this
+  /// then `_loadFromDrift()` right after (see `_init()` above), and this
+  /// loop called the real OS plugin with no try/catch — a single native
+  /// scheduling failure (the same class of real-device-only failure
+  /// `_insertAndSchedule` was fixed against) threw straight out of
+  /// `_init()`'s `unawaited(...)` call, silently killing it before
+  /// `_loadFromDrift()` ever ran. That left `state.notifications` empty
+  /// for the entire app session — every cold start, regardless of what
+  /// was actually saved locally — until some unrelated action happened
+  /// to call `_loadFromDrift()` itself. Isolating each row's OS call
+  /// like this guarantees `_init()` always reaches `_loadFromDrift()`,
+  /// so the in-app state always reflects the database again.
   Future<void> _rearmAllPending() async {
     final db = _db!;
     final ownerId = _auth!.currentOwnerId!;
@@ -106,7 +120,13 @@ class NotificationsCubit extends Cubit<NotificationsState> {
           ..where((t) => t.ownerId.equals(ownerId) & t.fireAt.isBiggerThanValue(now)))
         .get();
     for (final row in rows) {
-      await _scheduler.scheduleAt(id: row.osNotificationId, title: row.title, body: row.body, at: row.fireAt);
+      try {
+        await _scheduler.scheduleAt(id: row.osNotificationId, title: row.title, body: row.body, at: row.fireAt);
+      } catch (_) {
+        // This one row's OS alarm didn't re-arm; every other row (and,
+        // critically, the state reload right after this method returns)
+        // must still proceed.
+      }
     }
   }
 
@@ -279,6 +299,12 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     required int days,
   }) async {
     if (!_isReal) return;
+    // Same "clear the old one first" pattern scheduleLineReminders uses —
+    // without this, tapping "Schedule reminder" again for a customer who
+    // already has one pending (or re-testing the feature repeatedly)
+    // just stacks another row instead of replacing it, so the inbox
+    // fills up with duplicate reminders for the same customer over time.
+    await cancelDebtReminder(customerId);
     await _insertAndSchedule(
       type: NotificationType.customerDebtReminder,
       title: 'notifications.customerDebtReminder.title'.tr(),

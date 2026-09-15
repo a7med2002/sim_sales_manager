@@ -5943,3 +5943,108 @@ a cancel failure alike.
 
 **Verified**: `flutter analyze` — no issues. `flutter test` — 32/32
 passing (1 pre-existing unrelated skip), 16 notification tests total.
+
+## Fixed (root cause, confirmed with a regression test): notifications inbox/debt-reminder button looked reset on every real app restart
+
+The previous fix above (reordering `_insertAndSchedule`/`_cancelWhere`
+around the native scheduler call) was correct but only covered *half*
+the real bug. On-device testing showed the inbox came up empty on
+every cold app start, and the debt-reminder button always looked
+unscheduled again after fully closing and reopening the app — even
+though the reminder was genuinely still saved. Scheduling a new
+reminder would then suddenly dump a pile of old *and* new
+notifications into the inbox at once, unsorted-looking.
+
+Root cause: `NotificationsCubit._init()` (which runs the moment the
+top-bar bell icon or any other page first calls
+`getIt<NotificationsCubit>()`, i.e. right after login on every app
+start) calls `_rearmAllPending()` — which re-arms every still-pending
+row's OS alarm — and then `_loadFromDrift()` immediately after, which
+is what actually populates `state.notifications` from the database.
+`_rearmAllPending()`'s loop called the real
+`flutter_local_notifications` plugin with **no try/catch**. On this
+real device that call can throw (same class of failure the earlier fix
+addressed for scheduling a single new reminder — permission/exact-alarm
+restrictions, OEM quirks). Since `_init()` is invoked via
+`unawaited(_init())` from the constructor, that exception silently
+killed `_init()` mid-way — `_loadFromDrift()` right after it **never
+ran**. `state.notifications` stayed at its empty default for the
+*entire app session*, regardless of what was actually saved locally,
+until some unrelated action happened to call `_loadFromDrift()` itself
+(e.g. scheduling something new) — which is exactly why the inbox
+looked empty on open, then suddenly dumped everything (old test data
+included) the first time any scheduling action ran that session, then
+went back to looking empty/reset on the next cold start.
+
+**Fix**: wrapped each row's OS re-arm call in `_rearmAllPending()` in
+its own try/catch, same isolation pattern as the rest of this file —
+one row's native failure can never again stop the loop or block
+`_loadFromDrift()` from running right after it. `_init()` now always
+reaches the state reload regardless of the OS scheduler's behavior.
+
+Also fixed a second, related contributor to the "messy pile of
+notifications" symptom: `scheduleDebtReminder` used to just insert
+another row every time it was called, so re-testing the feature (or
+tapping "Schedule" again for a customer who already had one pending)
+silently stacked duplicate reminders for the same customer instead of
+replacing the old one — unlike `scheduleLineReminders`, which already
+cancelled old reminders first. `scheduleDebtReminder` now calls
+`cancelDebtReminder` before inserting the new one, so there's only ever
+one active debt reminder per customer, matching the line-reminder
+pattern.
+
+Added `test/notifications_cubit_test.dart`'s
+"cold start resilience" group, which reproduces the exact real-device
+failure: schedules a reminder, then constructs a **second**
+`NotificationsCubit` against the same database with a scheduler that
+fails on its first call (simulating what `_rearmAllPending` hits on
+cold start) and asserts the reminder is still found afterward.
+Confirmed this test actually catches the regression by temporarily
+reverting the fix and re-running it — it failed with the exact
+`_rearmAllPending` → `_init` stack trace this bug produces on-device,
+then passed again once the fix was restored. Also updated the
+duplicate-stacking test to assert the new replace behavior instead of
+the old (buggy) stacking one.
+
+**Verified**: `flutter analyze` — no issues. `flutter test` — 33/33
+passing (1 pre-existing unrelated skip), 17 notification tests total,
+including a regression test independently confirmed to fail without
+the fix and pass with it.
+
+## Fixed: Notifications inbox showed still-pending (unfired) reminders, with contradictory wording
+
+Field report with a screenshot: a line-expiry reminder scheduled for a
+future date showed up in the "Notifications" list *immediately*,
+labelled "Scheduled for 10 Oct 2026" — but its own body text read "SIM
+... expires **today**." The wording is written to be read at the
+moment the reminder actually fires (`lineExpired`'s body always says
+"expires today", `lineExpiringSoon`'s always says "3 days left" —
+true only at their respective fire times); showing that same fixed
+text days or weeks ahead of time, next to a future date, is
+self-contradictory. This matched every symptom described: a debt
+reminder or line reminder appeared in the inbox the instant it was
+scheduled instead of behaving like a real OS notification tray, where
+nothing shows up until it actually happens.
+
+**Fix**: `NotificationsState.sortedByNewest` (the only thing
+`NotificationsPage` reads) now filters out any notification whose
+`fireAt` is still in the future before sorting — a still-pending
+reminder is simply not in the inbox list at all until it actually
+fires, at which point its wording is accurate again. This only affects
+the general inbox page: `NotificationsCubit.pendingDebtReminder` (used
+by Customer Detail's own "Scheduled — will fire on ..." + Cancel row)
+reads the raw, unfiltered `notifications` list directly, so that
+still-future status display is untouched — it's a deliberate status
+indicator for one specific reminder, not "unread inbox noise" like the
+general list. Simplified `_NotificationTile` accordingly (dropped the
+now-dead `isPending` branch and the `notifications.pendingLabel`
+translation key it was the only caller of, in both `ar.json`/`en.json`).
+
+Added `test/notifications_state_test.dart` (pure-Dart, no Drift/mocks
+needed) asserting: a future notification never appears in
+`sortedByNewest`; already-fired ones sort newest-first; `unreadCount`
+only counts fired+unread ones.
+
+**Verified**: `flutter analyze` — no issues. `flutter test` — 36/36
+passing (1 pre-existing unrelated skip), covering all notification
+logic including the new inbox-filtering rule.

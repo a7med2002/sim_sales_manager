@@ -127,7 +127,10 @@ class _NotificationTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final unread = !notification.read && !notification.isPending;
+    // Every row reaching this tile already fired (see
+    // NotificationsState.sortedByNewest) — no need to special-case a
+    // still-pending one here.
+    final unread = !notification.read;
 
     return GestureDetector(
       onTap: onTap,
@@ -158,9 +161,7 @@ class _NotificationTile extends StatelessWidget {
                   Text(notification.body, style: AppTextStyles.body(colors.textSecondary)),
                   const SizedBox(height: 4),
                   Text(
-                    notification.isPending
-                        ? 'notifications.pendingLabel'.tr(namedArgs: {'date': formatDateTime(notification.fireAt)})
-                        : formatDateTime(notification.fireAt),
+                    formatDateTime(notification.fireAt),
                     style: AppTextStyles.body(colors.textSecondary).copyWith(fontSize: 11),
                   ),
                 ],
