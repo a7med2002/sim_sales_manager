@@ -5,6 +5,7 @@ import 'package:drift/native.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'tables/activity_log_table.dart';
+import 'tables/additional_services_table.dart';
 import 'tables/catalog_tables.dart';
 import 'tables/companies_table.dart';
 import 'tables/customers_table.dart';
@@ -43,6 +44,7 @@ part 'app_database.g.dart';
     NumberUpdateProviderCacheTable,
     PendingDeletesTable,
     NotificationsTable,
+    AdditionalServicesTable,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -70,7 +72,7 @@ class AppDatabase extends _$AppDatabase {
   // there (including anything still only-local and unsynced) — this is
   // additive only, nothing here can lose data.
   @override
-  int get schemaVersion => 11;
+  int get schemaVersion => 12;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -142,6 +144,12 @@ class AppDatabase extends _$AppDatabase {
             // notifications feature's local-only inbox + scheduling
             // source of truth.
             await m.createTable(notificationsTable);
+          }
+          if (from < 12) {
+            // See additional_services_table.dart's doc comment — the
+            // "Additional Service" per-line data top-up feature's
+            // history/ledger table.
+            await m.createTable(additionalServicesTable);
           }
         },
       );

@@ -33,6 +33,12 @@ class _FakeCompanyCatalog implements CompanyCatalog {
 
   @override
   void addShipment({required String companyId, required double totalAmount, required double amountPaid}) {}
+
+  @override
+  void recordAdditionalServiceCharge({required String companyId, required double amount}) {}
+
+  @override
+  void reverseAdditionalServiceCharge({required String companyId, required double amount}) {}
 }
 
 class _AddedLine {

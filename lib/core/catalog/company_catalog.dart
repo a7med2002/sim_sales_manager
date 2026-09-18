@@ -33,4 +33,14 @@ abstract class CompanyCatalog {
   /// available-to-sell by [totalAmount], and whatever wasn't paid now
   /// ([totalAmount] - [amountPaid]) adds to what's owed to the company.
   void addShipment({required String companyId, required double totalAmount, required double amountPaid});
+
+  /// Records an "Additional Service" data top-up's cost against a
+  /// company's balance — increases consumed, decreases available-to-sell.
+  /// Unlike [recordSale], does not bump operations count or profit
+  /// generated (this isn't a new Line being sold).
+  void recordAdditionalServiceCharge({required String companyId, required double amount});
+
+  /// Undoes a previously-recorded [recordAdditionalServiceCharge] — call
+  /// when the Line it was charged against gets deleted. Exact inverse.
+  void reverseAdditionalServiceCharge({required String companyId, required double amount});
 }

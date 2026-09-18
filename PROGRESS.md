@@ -6265,3 +6265,166 @@ correctness fixes uncovered along the way, not test scaffolding.
 **Verified**: `flutter analyze` — no issues. `flutter test` — 38/38
 passing (1 pre-existing unrelated skip; down from 41 — removed exactly
 the 3 tests covering the removed diagnostic-only code, nothing else).
+
+## Added: "Additional Service" data top-up per line
+
+New feature: some lines run out of GB before the end of the month. A
+new "Additional Service" button inside every Line card (Customer
+Detail) lets the seller activate a top-up — they pick how much to
+deduct from the supplying company's balance (not a fixed amount) and,
+optionally, how much (if anything) to add to the customer's debt for
+it. GB added is informational only (this app has never tracked live
+data usage anywhere) — defaults to 30, editable. The line's own
+`retailPrice` is never touched.
+
+**Architecture decision**: a brand-new `additional_services` table/
+entity, entirely separate from `Line`/`retailPrice`/`amountRemaining` —
+confirmed by reading `Line.applyPayment` that `amountRemaining` is
+*recomputed from scratch* (`retailPrice - amountPaid`) on every
+payment, so any direct bump to it would be silently wiped out by the
+next payment on that line. Keeping this as its own ledger also gives
+the full per-line history the user asked for (one row per top-up, not
+a mutated running total) with zero risk to the existing line/payment
+logic.
+
+- **Company balance**: `Company.applyAdditionalServiceCharge`/
+  `reverseAdditionalServiceCharge` (mirrors `applySale`/`reverseSale`
+  but deliberately never touches `operationsCount`/`profitGenerated` —
+  this isn't a new line sale). `CompanyCatalog` interface gained both
+  methods; `CompaniesCubit._loadFromDrift` now also folds
+  `additional_services.amount_deducted` into `consumed` so a reload
+  always reflects it correctly, not just the optimistic bump.
+- **Customer debt**: `CustomersState.totalOwedFor` now adds
+  not-yet-`collected` `amountCharged` on top of lines' own
+  `amountRemaining` — the *only* change to existing debt math, purely
+  additive.
+- **Collecting the charge later**: its own dedicated "تم التحصيل" /
+  "Collect" action per history entry (`markAdditionalServiceCollected`)
+  — confirmed with the user as the preferred design over merging it
+  into the line's existing "Add payment" flow, to keep the blast radius
+  on existing code at zero. Also cancels any pending debt-reminder
+  notification if collecting it fully settles that customer's debt
+  (same call `addPayment` already makes).
+- **Deleting a line** now also deletes (locally + tombstoned push) any
+  additional-service rows charged against it, and reverses their
+  company-balance deduction — otherwise they'd be orphaned rows still
+  counting against a company's balance/a customer's debt for a line
+  that no longer exists.
+- **Deliberately not touched**: `updateLine` (reassigning a line to a
+  different company) never moves already-recorded service charges —
+  each row keeps a snapshot of whichever company its balance was
+  actually deducted from at creation time, which is the accounting-
+  correct behavior (an already-happened deduction shouldn't retroactively
+  move to a different company).
+- Schema: `schemaVersion` 11 → 12, new `additional_services` table
+  (`lib/core/database/tables/additional_services_table.dart`), synced
+  via `SyncEngine.pushPendingAdditionalServices`/`pullAdditionalServices`
+  (registered in `syncAll` right after the existing lines push/pull),
+  Supabase migration `0017_additional_services.sql`.
+- UI: `additional_service_sheet.dart` (new bottom sheet, same shell as
+  `add_payment_sheet.dart`, same balance-exceeded/negative-dip
+  validation `line_form_sheet.dart` already established) +
+  `line_card.dart` (new button, disabled when the line's company was
+  permanently detached; a full per-service history list when any
+  exist).
+
+Planned with the user via an explicit plan-mode research pass first
+(read the real `Line`/`Company`/sync code before designing, not
+guessing) plus two `AskUserQuestion` confirmations on the two genuinely
+open product decisions (collect-later mechanism, history vs. summary
+display) before writing any code.
+
+**Verified**: `flutter analyze` — no issues. `flutter test` — 47/47
+passing (1 pre-existing unrelated skip), including new coverage in
+`test/company_entity_test.dart` (the two new `Company` methods) and a
+new `test/customers_state_test.dart` (`totalOwedFor`/
+`additionalServicesFor` with collected/uncollected/zero-charge cases).
+`test/new_sale_cubit_test.dart`'s `_FakeCompanyCatalog` updated with
+no-op implementations of the two new `CompanyCatalog` interface
+methods so it still compiles. Not yet manually tested on-device.
+
+## Investigated field report: "only one Additional Service allowed per line" + added edit/undo
+
+On-device report after the feature above: the seller could only add one
+"Additional Service" per line — adding a second to the same line
+appeared blocked. Wrote a new `test/customers_cubit_additional_service_test.dart`
+that exercises `CustomersCubit.addAdditionalService` directly (through
+a full get_it-backed `CustomersCubit`, not just the pure `CustomersState`
+math already covered) to get real evidence instead of guessing: calling
+it twice, five times, on the same line — **all pass**. Both rows persist
+to Drift independently, the company balance is deducted independently
+for each, and there is no cap anywhere in `addAdditionalService`,
+`CustomersState`, or the `additional_services` table's schema. This
+rules out a data-layer bug entirely. The one remaining gate that can
+make a second activation look blocked is legitimate, existing
+behavior: `AdditionalServiceSheet`'s own balance-exceeded validation
+(same rule `line_form_sheet.dart` already enforces for a new sale) —
+if the company's remaining balance is smaller than the second amount
+being entered, the submit button greys out with a red explanation
+text under the deduction field. Reported this finding back to the user
+with the test as evidence rather than asserting a fix for a bug that
+couldn't be reproduced in code.
+
+Also implemented the two related feature requests from the same
+report, both clear/well-defined regardless of the above:
+
+- **Edit an existing "Additional Service" entry**
+  (`CustomersCubit.updateAdditionalService`) — corrects
+  `gbAdded`/`amountDeducted`/`amountCharged` on a row already saved (a
+  seller mistyped a number). The company-balance correction is atomic:
+  reverses the *old* `amountDeducted` then records the *new* one, so
+  the balance lands exactly right regardless of which direction the
+  correction goes. `AdditionalServiceSheet` now doubles as the edit
+  form (`existing:` param) — pre-fills the fields, and its balance
+  check uses a new `_effectiveAvailable` (the company's live balance
+  *plus* this row's own current deduction, since editing "returns" the
+  old amount before applying the new one) so a same-or-smaller
+  correction is never wrongly blocked. A small pencil icon on each
+  history row (`line_card.dart`) opens it.
+- **Undo "mark collected"**
+  (`CustomersCubit.markAdditionalServiceUncollected`) — flips
+  `collected` back to `false`; `totalOwedFor` picks this up
+  automatically (it already sums live over `!collected` rows, see the
+  entry above), so the charge is back on the customer's debt with no
+  separate "re-open" step. Tapping the green "Collected" badge itself
+  (now with a small undo icon next to it) triggers this.
+- Generalized the old `_persistAdditionalServiceCollected` into
+  `_persistAdditionalServiceUpdate(AdditionalService)`, shared by
+  collect/uncollect/edit — one write path instead of three near-copies.
+
+**Verified**: `flutter analyze` — no issues. `flutter test` — 53/53
+passing (1 pre-existing unrelated skip) — 6 new tests covering
+multiple-per-line (the reported issue), edit (company-balance
+reversal, Drift persistence), and undo (debt reappears, is a no-op if
+never collected).
+
+## Clarified: "only one Additional Service per line" is the actual intended rule, not a bug
+
+Follow-up from the investigation above — the user confirmed this is a
+deliberate business rule, not something to work around: **exactly one**
+Additional Service allowed per line, ever. Corrections go through
+`updateAdditionalService` (already built above), not a second entry.
+
+**Changed**: `CustomersCubit.addAdditionalService` now returns early
+(no-op — doesn't touch the company balance, Drift, or the activity
+log) if the line already has one. `line_card.dart`'s "Additional
+Service" button is disabled (same greyed-out treatment as the existing
+"no company" case) once `additionalServices.isNotEmpty` for that line
+— the pencil-edit icon on the existing entry is the only way to change
+it from then on. Deliberately enforced only at the app layer (cubit
+guard + disabled button), not a database `UNIQUE` constraint — the
+`additional_services` table was only created this session, adding a
+retroactive schema constraint now would need its own migration/table-
+recreate step for devices that already ran schema v12, which is more
+schema-change risk than this single-seller-editing-their-own-data
+scenario actually needs.
+
+Rewrote the "multiple per line" tests in
+`test/customers_cubit_additional_service_test.dart` to assert the
+opposite of before (a second `addAdditionalService` call is now a
+verified no-op — same row, same company-balance-charge count, same
+Drift row count) plus a new test confirming the cap is genuinely
+per-line (a second, different line can still get its own).
+
+**Verified**: `flutter analyze` — no issues. `flutter test` — 54/54
+passing (1 pre-existing unrelated skip).

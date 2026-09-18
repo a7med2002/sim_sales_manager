@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+import '../../domain/entities/additional_service.dart';
 import '../../domain/entities/customer.dart';
 import '../../domain/entities/line.dart';
 
@@ -12,6 +13,7 @@ enum CustomersTab { active, debtors, deleted }
 class CustomersState extends Equatable {
   final List<Customer> customers;
   final List<Line> lines;
+  final List<AdditionalService> additionalServices;
   final CustomersTab tab;
   final String searchQuery;
   final CustomerStatus? statusFilter;
@@ -20,6 +22,7 @@ class CustomersState extends Equatable {
   const CustomersState({
     this.customers = const [],
     this.lines = const [],
+    this.additionalServices = const [],
     this.tab = CustomersTab.active,
     this.searchQuery = '',
     this.statusFilter,
@@ -67,11 +70,21 @@ class CustomersState extends Equatable {
 
   List<Line> linesFor(String customerId) => lines.where((l) => l.customerId == customerId).toList();
 
+  List<AdditionalService> additionalServicesFor(String lineId) =>
+      additionalServices.where((s) => s.lineId == lineId).toList()..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
   double totalSpentFor(String customerId) =>
       linesFor(customerId).fold(0.0, (sum, l) => sum + l.retailPrice);
 
+  /// A line's own remaining balance, plus any not-yet-collected
+  /// "Additional Service" charges against that customer's lines — kept
+  /// as a separate additive term rather than folded into `Line` itself
+  /// (see additional_services_table.dart's doc comment on why).
   double totalOwedFor(String customerId) =>
-      linesFor(customerId).fold(0.0, (sum, l) => sum + l.amountRemaining);
+      linesFor(customerId).fold(0.0, (sum, l) => sum + l.amountRemaining) +
+      additionalServices
+          .where((s) => s.customerId == customerId && !s.collected)
+          .fold(0.0, (sum, s) => sum + s.amountCharged);
 
   DateTime? lastPurchaseFor(String customerId) {
     final customerLines = linesFor(customerId);
@@ -82,6 +95,7 @@ class CustomersState extends Equatable {
   CustomersState copyWith({
     List<Customer>? customers,
     List<Line>? lines,
+    List<AdditionalService>? additionalServices,
     CustomersTab? tab,
     String? searchQuery,
     bool clearStatusFilter = false,
@@ -92,6 +106,7 @@ class CustomersState extends Equatable {
     return CustomersState(
       customers: customers ?? this.customers,
       lines: lines ?? this.lines,
+      additionalServices: additionalServices ?? this.additionalServices,
       tab: tab ?? this.tab,
       searchQuery: searchQuery ?? this.searchQuery,
       statusFilter: clearStatusFilter ? null : (statusFilter ?? this.statusFilter),
@@ -100,5 +115,5 @@ class CustomersState extends Equatable {
   }
 
   @override
-  List<Object?> get props => [customers, lines, tab, searchQuery, statusFilter, tagFilter];
+  List<Object?> get props => [customers, lines, additionalServices, tab, searchQuery, statusFilter, tagFilter];
 }

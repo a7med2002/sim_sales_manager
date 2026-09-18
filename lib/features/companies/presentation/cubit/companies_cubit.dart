@@ -150,6 +150,9 @@ class CompaniesCubit extends Cubit<CompaniesState> implements CompanyCatalog {
     final shipmentRows = companyIds.isEmpty
         ? <ShipmentsTableData>[]
         : await (db.select(db.shipmentsTable)..where((s) => s.ownerId.equals(ownerId) & s.companyId.isIn(companyIds))).get();
+    final additionalServiceRows = companyIds.isEmpty
+        ? <AdditionalServicesTableData>[]
+        : await (db.select(db.additionalServicesTable)..where((s) => s.ownerId.equals(ownerId) & s.companyId.isIn(companyIds))).get();
 
     final companies = companyRows.map((row) {
       final packages = packageRows
@@ -159,8 +162,15 @@ class CompaniesCubit extends Cubit<CompaniesState> implements CompanyCatalog {
 
       final companyLines = lineRows.where((l) => l.companyId == row.id);
       final companyShipments = shipmentRows.where((s) => s.companyId == row.id);
+      final companyAdditionalServices = additionalServiceRows.where((s) => s.companyId == row.id);
 
-      final consumed = companyLines.fold(0.0, (sum, l) => sum + l.wholesaleCost);
+      // "Additional Service" top-ups consume from the same shipment pool
+      // as a Line's own wholesale cost, just not tied to a new Line sale
+      // (see additional_services_table.dart's doc comment) — folded in
+      // here so a reload/sync always reflects it, not just the
+      // optimistic recordAdditionalServiceCharge bump.
+      final consumed = companyLines.fold(0.0, (sum, l) => sum + l.wholesaleCost) +
+          companyAdditionalServices.fold(0.0, (sum, s) => sum + s.amountDeducted);
       final totalShipped = companyShipments.fold(0.0, (sum, s) => sum + s.totalAmount);
       // Clamped to zero unless this company opted into "allow negative
       // balance" (see companies_table.dart's doc comment) — without
@@ -418,6 +428,16 @@ class CompaniesCubit extends Cubit<CompaniesState> implements CompanyCatalog {
   @override
   void addShipment({required String companyId, required double totalAmount, required double amountPaid}) {
     _replace(companyId, (c) => c.applyShipment(totalAmount: totalAmount, amountPaid: amountPaid));
+  }
+
+  @override
+  void recordAdditionalServiceCharge({required String companyId, required double amount}) {
+    _replace(companyId, (c) => c.applyAdditionalServiceCharge(amount: amount));
+  }
+
+  @override
+  void reverseAdditionalServiceCharge({required String companyId, required double amount}) {
+    _replace(companyId, (c) => c.reverseAdditionalServiceCharge(amount: amount));
   }
 
   /// Updates the in-memory `Company` list — always used for the

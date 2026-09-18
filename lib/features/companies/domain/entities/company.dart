@@ -180,6 +180,73 @@ class Company extends Equatable {
     );
   }
 
+  /// Applies an "Additional Service" data top-up's cost against this
+  /// company's balance — same consumed/available-to-sell mechanics as
+  /// [applySale], but deliberately leaves [operationsCount]/
+  /// [profitGenerated] untouched: this isn't a new Line being sold, just
+  /// an extra charge against an existing one (see
+  /// `additional_services_table.dart`'s doc comment for why this is
+  /// tracked as its own ledger rather than folded into the Line itself).
+  Company applyAdditionalServiceCharge({required double amount}) {
+    final newConsumed = consumed + amount;
+    final rawAvailable = availableToSell - amount;
+    final newAvailable = allowNegativeBalance ? rawAvailable : rawAvailable.clamp(0, double.infinity).toDouble();
+    final total = newConsumed + newAvailable;
+    final newUsagePercent = total <= 0 ? 0 : ((newConsumed / total) * 100).round();
+
+    return Company(
+      id: id,
+      name: name,
+      initials: initials,
+      notes: notes,
+      pinned: pinned,
+      status: status,
+      packages: packages,
+      operationsCount: operationsCount,
+      profitGenerated: profitGenerated,
+      usagePercent: newUsagePercent,
+      consumed: newConsumed,
+      availableToSell: newAvailable,
+      owedToCompany: owedToCompany,
+      catalogCompanyId: catalogCompanyId,
+      numberUpdateProvider: numberUpdateProvider,
+      logoUrl: logoUrl,
+      numberUpdateUrl: numberUpdateUrl,
+      allowNegativeBalance: allowNegativeBalance,
+    );
+  }
+
+  /// Undoes a previously-applied [applyAdditionalServiceCharge] — e.g.
+  /// the Line it was charged against gets deleted. Exact inverse, same
+  /// operations/profit-untouched reasoning.
+  Company reverseAdditionalServiceCharge({required double amount}) {
+    final newConsumed = (consumed - amount).clamp(0, double.infinity).toDouble();
+    final newAvailable = availableToSell + amount;
+    final total = newConsumed + newAvailable;
+    final newUsagePercent = total <= 0 ? 0 : ((newConsumed / total) * 100).round();
+
+    return Company(
+      id: id,
+      name: name,
+      initials: initials,
+      notes: notes,
+      pinned: pinned,
+      status: status,
+      packages: packages,
+      operationsCount: operationsCount,
+      profitGenerated: profitGenerated,
+      usagePercent: newUsagePercent,
+      consumed: newConsumed,
+      availableToSell: newAvailable,
+      owedToCompany: owedToCompany,
+      catalogCompanyId: catalogCompanyId,
+      numberUpdateProvider: numberUpdateProvider,
+      logoUrl: logoUrl,
+      numberUpdateUrl: numberUpdateUrl,
+      allowNegativeBalance: allowNegativeBalance,
+    );
+  }
+
   /// Applies a new shipment (balance top-up) to this company: the full
   /// amount grows available-to-sell (the pool a shipment adds to), and
   /// whatever wasn't paid now adds to what's owed to the company.

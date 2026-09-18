@@ -506,7 +506,29 @@
       "retailSalePrice": "Retail sale price",
       "profit": "Profit",
       "remaining": "Remaining",
-      "addPayment": "Add Payment"
+      "addPayment": "Add Payment",
+      "additionalService": {
+        "button": "Additional Service",
+        "sheetTitle": "Additional Service",
+        "explanation": "Use this when the line's data runs out before month's end. The amount is deducted from the company's balance and is not added to the line's sale price.",
+        "gbLabel": "GB added",
+        "deductLabel": "Amount deducted from {company}'s balance",
+        "availableBalanceLabel": "Available balance",
+        "chargeLabel": "Amount charged to customer (optional)",
+        "chargeHint": "Leave empty if you're not charging the customer for this",
+        "exceedsBalance": "This amount exceeds the company's available balance.",
+        "willDipNegative": "This will take the company's balance negative.",
+        "submit": "Activate service",
+        "editTitle": "Edit Additional Service",
+        "editSubmit": "Save changes",
+        "editTooltip": "Edit",
+        "undoCollectedTooltip": "Undo collected",
+        "historyTitle": "Additional service history",
+        "collected": "Collected",
+        "markCollected": "Collect",
+        "uncollectedLabel": "Uncollected",
+        "noCompany": "Can't activate — this line isn't linked to a company right now."
+      }
     },
     "paymentStatus": {
       "paid": "Paid",

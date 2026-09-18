@@ -18,6 +18,7 @@ import '../../../../core/notifications/notifications_cubit.dart';
 import '../../../../core/sync/connectivity_service.dart';
 import '../../../../core/sync/sync_engine.dart';
 import '../../../../core/utils/uuid.dart';
+import '../../domain/entities/additional_service.dart';
 import '../../domain/entities/customer.dart';
 import '../../domain/entities/line.dart';
 import 'customers_state.dart';
@@ -86,8 +87,10 @@ class CustomersCubit extends Cubit<CustomersState> implements CustomerCatalog {
       try {
         await engine.pushPendingCustomers(ownerId);
         await engine.pushPendingLines(ownerId);
+        await engine.pushPendingAdditionalServices(ownerId);
         await engine.pullCustomers(ownerId);
         await engine.pullLines(ownerId);
+        await engine.pullAdditionalServices(ownerId);
       } catch (_) {
         // Offline or transient failure — proceed with local data.
       }
@@ -100,6 +103,7 @@ class CustomersCubit extends Cubit<CustomersState> implements CustomerCatalog {
     final ownerId = _auth!.currentOwnerId!;
     final customerRows = await (db.select(db.customersTable)..where((c) => c.ownerId.equals(ownerId))).get();
     final lineRows = await (db.select(db.linesTable)..where((l) => l.ownerId.equals(ownerId))).get();
+    final additionalServiceRows = await (db.select(db.additionalServicesTable)..where((s) => s.ownerId.equals(ownerId))).get();
 
     // Lines only store real companyId/packageId (FKs) — the display
     // strings (companyName/companyInitials/packageName) come from
@@ -114,7 +118,22 @@ class CustomersCubit extends Cubit<CustomersState> implements CustomerCatalog {
     emit(state.copyWith(
       customers: customerRows.map(_customerFromRow).toList(),
       lines: lineRows.map((row) => _lineFromRow(row, companiesById)).toList(),
+      additionalServices: additionalServiceRows.map(_additionalServiceFromRow).toList(),
     ));
+  }
+
+  AdditionalService _additionalServiceFromRow(AdditionalServicesTableData row) {
+    return AdditionalService(
+      id: row.id,
+      lineId: row.lineId,
+      customerId: row.customerId,
+      companyId: row.companyId,
+      amountDeducted: row.amountDeducted,
+      amountCharged: row.amountCharged,
+      gbAdded: row.gbAdded,
+      collected: row.collected,
+      createdAt: row.createdAt,
+    );
   }
 
   Line _lineFromRow(LinesTableData row, Map<String, CompanySummary> companiesById) {
@@ -518,13 +537,25 @@ class CustomersCubit extends Cubit<CustomersState> implements CustomerCatalog {
 
   void deleteLine(String id) {
     final line = state.lines.firstWhere((l) => l.id == id);
+    // Any "Additional Service" top-ups charged against this line go with
+    // it — otherwise they'd be orphaned rows still counting toward the
+    // company's consumed balance and (if uncollected) the customer's
+    // debt, for a line that no longer exists.
+    final lineServices = state.additionalServices.where((s) => s.lineId == id).toList();
     if (_isReal) {
       final db = _db!;
       final ownerId = _auth!.currentOwnerId!;
       (db.delete(db.linesTable)..where((t) => t.ownerId.equals(ownerId) & t.id.equals(id))).go();
       unawaited(_syncEngine?.recordAndPushDelete(entityTable: 'lines', id: id, ownerId: ownerId) ?? Future.value());
+      for (final service in lineServices) {
+        (db.delete(db.additionalServicesTable)..where((t) => t.ownerId.equals(ownerId) & t.id.equals(service.id))).go();
+        unawaited(_syncEngine?.recordAndPushDelete(entityTable: 'additional_services', id: service.id, ownerId: ownerId) ?? Future.value());
+      }
     }
-    emit(state.copyWith(lines: state.lines.where((l) => l.id != id).toList()));
+    emit(state.copyWith(
+      lines: state.lines.where((l) => l.id != id).toList(),
+      additionalServices: state.additionalServices.where((s) => s.lineId != id).toList(),
+    ));
     // Same reasoning as updateLine above: without this, the company's
     // consumed/available balance would keep counting a Line that no
     // longer exists until the next full reload recomputes it from Drift.
@@ -533,7 +564,14 @@ class CustomersCubit extends Cubit<CustomersState> implements CustomerCatalog {
     // to reverse against.
     final lineCompanyId = line.companyId;
     if (lineCompanyId != null) {
-      getIt<CompanyCatalog>().reverseSale(companyId: lineCompanyId, wholesaleCost: line.wholesaleCost, profit: line.profit);
+      final companyCatalog = getIt<CompanyCatalog>();
+      companyCatalog.reverseSale(companyId: lineCompanyId, wholesaleCost: line.wholesaleCost, profit: line.profit);
+      for (final service in lineServices) {
+        final serviceCompanyId = service.companyId;
+        if (serviceCompanyId != null) {
+          companyCatalog.reverseAdditionalServiceCharge(companyId: serviceCompanyId, amount: service.amountDeducted);
+        }
+      }
     }
     unawaited(getIt<NotificationsCubit>().cancelLineReminders(id));
     getIt<ActivityLogger>().log(ActivityActionType.delete, 'Deleted line ${line.simNumber}.');
@@ -558,6 +596,172 @@ class CustomersCubit extends Cubit<CustomersState> implements CustomerCatalog {
       isFullCollection ? ActivityActionType.fullCollection : ActivityActionType.edit,
       'Collected ${amount.toStringAsFixed(2)} on ${line.simNumber} (${line.companyName}).',
     );
+  }
+
+  /// "Additional Service" — a data top-up when a line's GB runs out
+  /// before month's end: [amountDeducted] comes off the supplying
+  /// company's balance, [gbAdded] is a purely informational record (this
+  /// app doesn't track live GB usage anywhere), and [amountCharged] —
+  /// optional, defaults to 0 — is what, if anything, the seller passes
+  /// on to the customer as debt. Deliberately never touches the line's
+  /// own `retailPrice`/`amountRemaining` — see
+  /// additional_services_table.dart's doc comment.
+  void addAdditionalService({
+    required String lineId,
+    required double amountDeducted,
+    required double amountCharged,
+    required double gbAdded,
+  }) {
+    if (amountDeducted <= 0) return;
+    final line = state.lines.firstWhere((l) => l.id == lineId);
+    final companyId = line.companyId;
+    if (companyId == null) return;
+    // Exactly one Additional Service allowed per line, by design — a
+    // mistake gets corrected via updateAdditionalService, not by adding
+    // a second row. line_card.dart's "Additional Service" button is
+    // already disabled once one exists; this is the same rule enforced
+    // at the data layer too, in case that guard is ever bypassed.
+    if (state.additionalServices.any((s) => s.lineId == lineId)) return;
+
+    final service = AdditionalService(
+      id: generateUuidV4(),
+      lineId: lineId,
+      customerId: line.customerId,
+      companyId: companyId,
+      amountDeducted: amountDeducted,
+      amountCharged: amountCharged,
+      gbAdded: gbAdded,
+      collected: false,
+      createdAt: DateTime.now(),
+    );
+    emit(state.copyWith(additionalServices: [...state.additionalServices, service]));
+    if (_isReal) unawaited(_persistNewAdditionalService(service));
+    getIt<CompanyCatalog>().recordAdditionalServiceCharge(companyId: companyId, amount: amountDeducted);
+    getIt<ActivityLogger>().log(
+      ActivityActionType.create,
+      'Added additional service (+${gbAdded.toStringAsFixed(0)}GB, -${amountDeducted.toStringAsFixed(2)} from ${line.companyName}) to ${line.simNumber}.',
+    );
+  }
+
+  /// Marks one "Additional Service" charge as collected from the
+  /// customer — its own dedicated action, independent of the line's
+  /// "Add payment" flow (see additional_services_table.dart's doc
+  /// comment on why these stay separate).
+  void markAdditionalServiceCollected(String serviceId) {
+    final service = state.additionalServices.firstWhere((s) => s.id == serviceId);
+    if (service.collected) return;
+    final updated = service.copyWith(collected: true);
+    emit(state.copyWith(
+      additionalServices: state.additionalServices.map((s) => s.id == serviceId ? updated : s).toList(),
+    ));
+    if (_isReal) unawaited(_persistAdditionalServiceUpdate(updated));
+    unawaited(getIt<NotificationsCubit>().cancelDebtRemindersIfSettled(
+      customerId: service.customerId,
+      totalOwed: state.totalOwedFor(service.customerId),
+    ));
+    getIt<ActivityLogger>().log(
+      ActivityActionType.fullCollection,
+      'Collected additional-service charge of ${service.amountCharged.toStringAsFixed(2)}.',
+    );
+  }
+
+  /// Undoes [markAdditionalServiceCollected] — e.g. the seller marked it
+  /// collected by mistake, or the customer's payment fell through. Puts
+  /// [amountCharged] straight back into `totalOwedFor` (a live sum over
+  /// `!collected` rows — see `CustomersState.totalOwedFor`'s doc
+  /// comment), no separate "re-open debt" step needed.
+  void markAdditionalServiceUncollected(String serviceId) {
+    final service = state.additionalServices.firstWhere((s) => s.id == serviceId);
+    if (!service.collected) return;
+    final updated = service.copyWith(collected: false);
+    emit(state.copyWith(
+      additionalServices: state.additionalServices.map((s) => s.id == serviceId ? updated : s).toList(),
+    ));
+    if (_isReal) unawaited(_persistAdditionalServiceUpdate(updated));
+    getIt<ActivityLogger>().log(
+      ActivityActionType.edit,
+      'Marked additional-service charge of ${service.amountCharged.toStringAsFixed(2)} as not collected (undo).',
+    );
+  }
+
+  /// Corrects an existing "Additional Service" row — e.g. the seller
+  /// mistyped an amount. [companyId]/[lineId]/[customerId] are never
+  /// editable here (this fixes numbers, not what the charge belongs to);
+  /// the amount actually deducted from the company's balance moves by
+  /// reversing the old value and recording the new one, atomically, so
+  /// the balance ends up exactly where it should regardless of which
+  /// direction the correction goes.
+  void updateAdditionalService({
+    required String serviceId,
+    required double amountDeducted,
+    required double amountCharged,
+    required double gbAdded,
+  }) {
+    if (amountDeducted <= 0) return;
+    final service = state.additionalServices.firstWhere((s) => s.id == serviceId);
+    final updated = service.copyWith(amountDeducted: amountDeducted, amountCharged: amountCharged, gbAdded: gbAdded);
+    emit(state.copyWith(
+      additionalServices: state.additionalServices.map((s) => s.id == serviceId ? updated : s).toList(),
+    ));
+    if (_isReal) unawaited(_persistAdditionalServiceUpdate(updated));
+    final companyId = service.companyId;
+    if (companyId != null) {
+      final companyCatalog = getIt<CompanyCatalog>();
+      companyCatalog.reverseAdditionalServiceCharge(companyId: companyId, amount: service.amountDeducted);
+      companyCatalog.recordAdditionalServiceCharge(companyId: companyId, amount: amountDeducted);
+    }
+    getIt<ActivityLogger>().log(ActivityActionType.edit, 'Edited additional-service charge on a line.');
+  }
+
+  Future<void> _persistNewAdditionalService(AdditionalService service) async {
+    final db = _db!;
+    final ownerId = _auth!.currentOwnerId!;
+    try {
+      await db.into(db.additionalServicesTable).insert(AdditionalServicesTableCompanion.insert(
+            id: service.id,
+            ownerId: ownerId,
+            lineId: service.lineId,
+            customerId: service.customerId,
+            companyId: Value(service.companyId),
+            amountDeducted: service.amountDeducted,
+            amountCharged: Value(service.amountCharged),
+            gbAdded: Value(service.gbAdded),
+            collected: Value(service.collected),
+            createdAt: service.createdAt,
+            synced: const Value(false),
+            updatedAt: DateTime.now(),
+          ));
+      if (_syncEngine != null) {
+        await _syncEngine.pushPendingAdditionalServices(ownerId);
+      }
+    } catch (_) {
+      // Offline or transient failure — row stays local, next sync retries.
+    }
+  }
+
+  /// Shared by `markAdditionalServiceCollected`/`markAdditionalServiceUncollected`/
+  /// `updateAdditionalService` — [service] already carries whichever
+  /// fields changed, so this just writes its current values wholesale.
+  Future<void> _persistAdditionalServiceUpdate(AdditionalService service) async {
+    final db = _db!;
+    final ownerId = _auth!.currentOwnerId!;
+    try {
+      await (db.update(db.additionalServicesTable)..where((t) => t.ownerId.equals(ownerId) & t.id.equals(service.id))).write(
+        AdditionalServicesTableCompanion(
+          amountDeducted: Value(service.amountDeducted),
+          amountCharged: Value(service.amountCharged),
+          gbAdded: Value(service.gbAdded),
+          collected: Value(service.collected),
+          synced: const Value(false),
+          updatedAt: Value(DateTime.now()),
+        ),
+      );
+      if (_syncEngine != null) {
+        await _syncEngine.pushPendingAdditionalServices(ownerId);
+      }
+    } catch (_) {
+      // Offline or transient failure — row stays local, next sync retries.
+    }
   }
 
   Future<void> _persistLineUpdate(String id) async {

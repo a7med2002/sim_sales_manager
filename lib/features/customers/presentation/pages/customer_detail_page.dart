@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/catalog/company_catalog.dart';
+import '../../../../core/catalog/company_summary.dart';
 import '../../../../core/di/service_locator.dart';
 import '../../../../core/notifications/notifications_cubit.dart';
 import '../../../../core/notifications/notifications_state.dart';
@@ -20,6 +21,7 @@ import '../../domain/entities/line.dart';
 import '../cubit/customers_cubit.dart';
 import '../cubit/customers_state.dart';
 import '../widgets/add_payment_sheet.dart';
+import '../widgets/additional_service_sheet.dart';
 import '../widgets/customer_form_sheet.dart';
 import '../widgets/line_card.dart';
 import '../widgets/line_form_sheet.dart';
@@ -44,6 +46,14 @@ class CustomerDetailPage extends StatelessWidget {
         final companies = getIt<CompanyCatalog>().activeCompanies;
         final totalSpent = state.totalSpentFor(customerId);
         final totalOwed = state.totalOwedFor(customerId);
+
+        CompanySummary? companyFor(String? companyId) {
+          if (companyId == null) return null;
+          for (final c in companies) {
+            if (c.id == companyId) return c;
+          }
+          return null;
+        }
 
         void addLine(
           String sim,
@@ -168,6 +178,32 @@ class CustomerDetailPage extends StatelessWidget {
                           line: line,
                           onAdd: (amount) => cubit.addPayment(line.id, amount),
                         ),
+                        onAddService: () => AdditionalServiceSheet.show(
+                          context,
+                          line: line,
+                          company: companyFor(line.companyId),
+                          onSave: (gb, deduct, charge) => cubit.addAdditionalService(
+                            lineId: line.id,
+                            amountDeducted: deduct,
+                            amountCharged: charge,
+                            gbAdded: gb,
+                          ),
+                        ),
+                        onMarkServiceCollected: (serviceId) => cubit.markAdditionalServiceCollected(serviceId),
+                        onUndoServiceCollected: (serviceId) => cubit.markAdditionalServiceUncollected(serviceId),
+                        onEditService: (service) => AdditionalServiceSheet.show(
+                          context,
+                          line: line,
+                          company: companyFor(line.companyId),
+                          existing: service,
+                          onSave: (gb, deduct, charge) => cubit.updateAdditionalService(
+                            serviceId: service.id,
+                            amountDeducted: deduct,
+                            amountCharged: charge,
+                            gbAdded: gb,
+                          ),
+                        ),
+                        additionalServices: state.additionalServicesFor(line.id),
                       ),
                     ),
                   ),

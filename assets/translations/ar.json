@@ -506,7 +506,29 @@
       "retailSalePrice": "سعر البيع للعميل",
       "profit": "الربح",
       "remaining": "المتبقي",
-      "addPayment": "إضافة دفعة"
+      "addPayment": "إضافة دفعة",
+      "additionalService": {
+        "button": "خدمة إضافية",
+        "sheetTitle": "خدمة إضافية",
+        "explanation": "استخدم هذا عندما تنتهي جيجابايت الشريحة قبل نهاية الشهر. المبلغ يُخصم من رصيد الشركة ولا يُضاف إلى سعر بيع الشريحة.",
+        "gbLabel": "الجيجابايت المضافة",
+        "deductLabel": "المبلغ المخصوم من رصيد {company}",
+        "availableBalanceLabel": "الرصيد المتاح",
+        "chargeLabel": "مبلغ على الزبون (اختياري)",
+        "chargeHint": "اتركه فارغاً إذا لم تُحصّل شيئاً من الزبون",
+        "exceedsBalance": "المبلغ أكبر من الرصيد المتاح لهذه الشركة.",
+        "willDipNegative": "سيصبح رصيد الشركة سالباً بعد هذه العملية.",
+        "submit": "تفعيل الخدمة",
+        "editTitle": "تعديل الخدمة الإضافية",
+        "editSubmit": "حفظ التعديلات",
+        "editTooltip": "تعديل",
+        "undoCollectedTooltip": "تراجع عن التحصيل",
+        "historyTitle": "سجل الخدمات الإضافية",
+        "collected": "تم التحصيل",
+        "markCollected": "تحصيل",
+        "uncollectedLabel": "غير محصّل",
+        "noCompany": "لا يمكن تفعيل الخدمة — هذه الشريحة غير مرتبطة بشركة حالياً."
+      }
     },
     "paymentStatus": {
       "paid": "مدفوع",

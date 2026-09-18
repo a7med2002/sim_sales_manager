@@ -76,6 +76,7 @@ class SyncEngine {
     await _step(() => pushPendingPackages(ownerId));
     await _step(() => pushPendingCustomers(ownerId));
     await _step(() => pushPendingLines(ownerId));
+    await _step(() => pushPendingAdditionalServices(ownerId));
     await _step(() => pushPendingShipments(ownerId));
     await _step(() => pushPendingSettings(ownerId));
     // Flush any permanent deletes still waiting on their remote
@@ -88,6 +89,7 @@ class SyncEngine {
     await _step(() => pullPackages(ownerId));
     await _step(() => pullCustomers(ownerId));
     await _step(() => pullLines(ownerId));
+    await _step(() => pullAdditionalServices(ownerId));
     await _step(() => pushPendingActivityLog(ownerId));
     await _step(() => pushPendingSupportRequests(ownerId));
     await _step(() => pushPendingNumberUpdateLog(ownerId));
@@ -410,6 +412,63 @@ class SyncEngine {
       paymentStatus: Value(row['payment_status'] as String? ?? 'unpaid'),
       amountPaid: Value((row['amount_paid'] as num).toDouble()),
       amountRemaining: Value((row['amount_remaining'] as num).toDouble()),
+      updatedAt: DateTime.parse(row['updated_at'] as String).toLocal(),
+    );
+  }
+
+  // ── additional services ──────────────────────────────────────────────
+
+  Future<void> pushPendingAdditionalServices(String ownerId) async {
+    final pending = await (_db.select(_db.additionalServicesTable)
+          ..where((t) => t.ownerId.equals(ownerId) & t.synced.equals(false)))
+        .get();
+    if (pending.isEmpty) return;
+
+    await _client.from('additional_services').upsert(pending.map(_additionalServiceToRow).toList());
+
+    for (final row in pending) {
+      await (_db.update(_db.additionalServicesTable)..where((t) => t.id.equals(row.id)))
+          .write(const AdditionalServicesTableCompanion(synced: Value(true)));
+    }
+  }
+
+  Future<void> pullAdditionalServices(String ownerId) async {
+    final rows = await _client.from('additional_services').select().eq('owner_id', ownerId);
+    if (rows.isEmpty) return;
+    final tombstoned = await _tombstonedIds(ownerId, 'additional_services');
+    final fresh = tombstoned.isEmpty ? rows : rows.where((r) => !tombstoned.contains(r['id'])).toList();
+    if (fresh.isEmpty) return;
+    await _db.batch((batch) {
+      batch.insertAllOnConflictUpdate(_db.additionalServicesTable, fresh.map(_additionalServiceFromRow).toList());
+    });
+  }
+
+  Map<String, dynamic> _additionalServiceToRow(AdditionalServicesTableData s) => {
+        'id': s.id,
+        'owner_id': s.ownerId,
+        'line_id': s.lineId,
+        'customer_id': s.customerId,
+        'company_id': s.companyId,
+        'amount_deducted': s.amountDeducted,
+        'amount_charged': s.amountCharged,
+        'gb_added': s.gbAdded,
+        'collected': s.collected,
+        'created_at': s.createdAt.toUtc().toIso8601String(),
+        'updated_at': s.updatedAt.toUtc().toIso8601String(),
+      };
+
+  AdditionalServicesTableCompanion _additionalServiceFromRow(Map<String, dynamic> row) {
+    return AdditionalServicesTableCompanion.insert(
+      id: row['id'] as String,
+      ownerId: row['owner_id'] as String,
+      lineId: row['line_id'] as String,
+      customerId: row['customer_id'] as String,
+      companyId: Value(row['company_id'] as String?),
+      amountDeducted: (row['amount_deducted'] as num).toDouble(),
+      amountCharged: Value((row['amount_charged'] as num).toDouble()),
+      gbAdded: Value((row['gb_added'] as num).toDouble()),
+      collected: Value(row['collected'] as bool? ?? false),
+      createdAt: DateTime.parse(row['created_at'] as String).toLocal(),
       updatedAt: DateTime.parse(row['updated_at'] as String).toLocal(),
     );
   }

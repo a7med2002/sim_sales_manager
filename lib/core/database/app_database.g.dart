@@ -9243,6 +9243,734 @@ class NotificationsTableCompanion
   }
 }
 
+class $AdditionalServicesTableTable extends AdditionalServicesTable
+    with TableInfo<$AdditionalServicesTableTable, AdditionalServicesTableData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AdditionalServicesTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _ownerIdMeta = const VerificationMeta(
+    'ownerId',
+  );
+  @override
+  late final GeneratedColumn<String> ownerId = GeneratedColumn<String>(
+    'owner_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _syncedMeta = const VerificationMeta('synced');
+  @override
+  late final GeneratedColumn<bool> synced = GeneratedColumn<bool>(
+    'synced',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("synced" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _lineIdMeta = const VerificationMeta('lineId');
+  @override
+  late final GeneratedColumn<String> lineId = GeneratedColumn<String>(
+    'line_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _customerIdMeta = const VerificationMeta(
+    'customerId',
+  );
+  @override
+  late final GeneratedColumn<String> customerId = GeneratedColumn<String>(
+    'customer_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _companyIdMeta = const VerificationMeta(
+    'companyId',
+  );
+  @override
+  late final GeneratedColumn<String> companyId = GeneratedColumn<String>(
+    'company_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _amountDeductedMeta = const VerificationMeta(
+    'amountDeducted',
+  );
+  @override
+  late final GeneratedColumn<double> amountDeducted = GeneratedColumn<double>(
+    'amount_deducted',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _amountChargedMeta = const VerificationMeta(
+    'amountCharged',
+  );
+  @override
+  late final GeneratedColumn<double> amountCharged = GeneratedColumn<double>(
+    'amount_charged',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _gbAddedMeta = const VerificationMeta(
+    'gbAdded',
+  );
+  @override
+  late final GeneratedColumn<double> gbAdded = GeneratedColumn<double>(
+    'gb_added',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(30),
+  );
+  static const VerificationMeta _collectedMeta = const VerificationMeta(
+    'collected',
+  );
+  @override
+  late final GeneratedColumn<bool> collected = GeneratedColumn<bool>(
+    'collected',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("collected" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    ownerId,
+    synced,
+    updatedAt,
+    id,
+    lineId,
+    customerId,
+    companyId,
+    amountDeducted,
+    amountCharged,
+    gbAdded,
+    collected,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'additional_services';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AdditionalServicesTableData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('owner_id')) {
+      context.handle(
+        _ownerIdMeta,
+        ownerId.isAcceptableOrUnknown(data['owner_id']!, _ownerIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_ownerIdMeta);
+    }
+    if (data.containsKey('synced')) {
+      context.handle(
+        _syncedMeta,
+        synced.isAcceptableOrUnknown(data['synced']!, _syncedMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('line_id')) {
+      context.handle(
+        _lineIdMeta,
+        lineId.isAcceptableOrUnknown(data['line_id']!, _lineIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_lineIdMeta);
+    }
+    if (data.containsKey('customer_id')) {
+      context.handle(
+        _customerIdMeta,
+        customerId.isAcceptableOrUnknown(data['customer_id']!, _customerIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_customerIdMeta);
+    }
+    if (data.containsKey('company_id')) {
+      context.handle(
+        _companyIdMeta,
+        companyId.isAcceptableOrUnknown(data['company_id']!, _companyIdMeta),
+      );
+    }
+    if (data.containsKey('amount_deducted')) {
+      context.handle(
+        _amountDeductedMeta,
+        amountDeducted.isAcceptableOrUnknown(
+          data['amount_deducted']!,
+          _amountDeductedMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_amountDeductedMeta);
+    }
+    if (data.containsKey('amount_charged')) {
+      context.handle(
+        _amountChargedMeta,
+        amountCharged.isAcceptableOrUnknown(
+          data['amount_charged']!,
+          _amountChargedMeta,
+        ),
+      );
+    }
+    if (data.containsKey('gb_added')) {
+      context.handle(
+        _gbAddedMeta,
+        gbAdded.isAcceptableOrUnknown(data['gb_added']!, _gbAddedMeta),
+      );
+    }
+    if (data.containsKey('collected')) {
+      context.handle(
+        _collectedMeta,
+        collected.isAcceptableOrUnknown(data['collected']!, _collectedMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  AdditionalServicesTableData map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AdditionalServicesTableData(
+      ownerId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}owner_id'],
+      )!,
+      synced: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}synced'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      lineId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}line_id'],
+      )!,
+      customerId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}customer_id'],
+      )!,
+      companyId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}company_id'],
+      ),
+      amountDeducted: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}amount_deducted'],
+      )!,
+      amountCharged: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}amount_charged'],
+      )!,
+      gbAdded: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}gb_added'],
+      )!,
+      collected: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}collected'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $AdditionalServicesTableTable createAlias(String alias) {
+    return $AdditionalServicesTableTable(attachedDatabase, alias);
+  }
+}
+
+class AdditionalServicesTableData extends DataClass
+    implements Insertable<AdditionalServicesTableData> {
+  final String ownerId;
+  final bool synced;
+  final DateTime updatedAt;
+  final String id;
+  final String lineId;
+  final String customerId;
+  final String? companyId;
+  final double amountDeducted;
+  final double amountCharged;
+  final double gbAdded;
+
+  /// Whether the seller has collected [amountCharged] from the customer
+  /// yet — flipped by its own dedicated "Mark collected" action, never by
+  /// the Line's own "Add payment" flow (see class doc comment on why
+  /// these stay independent).
+  final bool collected;
+
+  /// The actual moment this top-up was activated — kept separate from
+  /// [TenantColumns.updatedAt] (which changes again when [collected]
+  /// flips) so the per-line history list has a stable, real creation
+  /// date to sort/display by.
+  final DateTime createdAt;
+  const AdditionalServicesTableData({
+    required this.ownerId,
+    required this.synced,
+    required this.updatedAt,
+    required this.id,
+    required this.lineId,
+    required this.customerId,
+    this.companyId,
+    required this.amountDeducted,
+    required this.amountCharged,
+    required this.gbAdded,
+    required this.collected,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['owner_id'] = Variable<String>(ownerId);
+    map['synced'] = Variable<bool>(synced);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['id'] = Variable<String>(id);
+    map['line_id'] = Variable<String>(lineId);
+    map['customer_id'] = Variable<String>(customerId);
+    if (!nullToAbsent || companyId != null) {
+      map['company_id'] = Variable<String>(companyId);
+    }
+    map['amount_deducted'] = Variable<double>(amountDeducted);
+    map['amount_charged'] = Variable<double>(amountCharged);
+    map['gb_added'] = Variable<double>(gbAdded);
+    map['collected'] = Variable<bool>(collected);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  AdditionalServicesTableCompanion toCompanion(bool nullToAbsent) {
+    return AdditionalServicesTableCompanion(
+      ownerId: Value(ownerId),
+      synced: Value(synced),
+      updatedAt: Value(updatedAt),
+      id: Value(id),
+      lineId: Value(lineId),
+      customerId: Value(customerId),
+      companyId: companyId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(companyId),
+      amountDeducted: Value(amountDeducted),
+      amountCharged: Value(amountCharged),
+      gbAdded: Value(gbAdded),
+      collected: Value(collected),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory AdditionalServicesTableData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AdditionalServicesTableData(
+      ownerId: serializer.fromJson<String>(json['ownerId']),
+      synced: serializer.fromJson<bool>(json['synced']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      id: serializer.fromJson<String>(json['id']),
+      lineId: serializer.fromJson<String>(json['lineId']),
+      customerId: serializer.fromJson<String>(json['customerId']),
+      companyId: serializer.fromJson<String?>(json['companyId']),
+      amountDeducted: serializer.fromJson<double>(json['amountDeducted']),
+      amountCharged: serializer.fromJson<double>(json['amountCharged']),
+      gbAdded: serializer.fromJson<double>(json['gbAdded']),
+      collected: serializer.fromJson<bool>(json['collected']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'ownerId': serializer.toJson<String>(ownerId),
+      'synced': serializer.toJson<bool>(synced),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'id': serializer.toJson<String>(id),
+      'lineId': serializer.toJson<String>(lineId),
+      'customerId': serializer.toJson<String>(customerId),
+      'companyId': serializer.toJson<String?>(companyId),
+      'amountDeducted': serializer.toJson<double>(amountDeducted),
+      'amountCharged': serializer.toJson<double>(amountCharged),
+      'gbAdded': serializer.toJson<double>(gbAdded),
+      'collected': serializer.toJson<bool>(collected),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  AdditionalServicesTableData copyWith({
+    String? ownerId,
+    bool? synced,
+    DateTime? updatedAt,
+    String? id,
+    String? lineId,
+    String? customerId,
+    Value<String?> companyId = const Value.absent(),
+    double? amountDeducted,
+    double? amountCharged,
+    double? gbAdded,
+    bool? collected,
+    DateTime? createdAt,
+  }) => AdditionalServicesTableData(
+    ownerId: ownerId ?? this.ownerId,
+    synced: synced ?? this.synced,
+    updatedAt: updatedAt ?? this.updatedAt,
+    id: id ?? this.id,
+    lineId: lineId ?? this.lineId,
+    customerId: customerId ?? this.customerId,
+    companyId: companyId.present ? companyId.value : this.companyId,
+    amountDeducted: amountDeducted ?? this.amountDeducted,
+    amountCharged: amountCharged ?? this.amountCharged,
+    gbAdded: gbAdded ?? this.gbAdded,
+    collected: collected ?? this.collected,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  AdditionalServicesTableData copyWithCompanion(
+    AdditionalServicesTableCompanion data,
+  ) {
+    return AdditionalServicesTableData(
+      ownerId: data.ownerId.present ? data.ownerId.value : this.ownerId,
+      synced: data.synced.present ? data.synced.value : this.synced,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      id: data.id.present ? data.id.value : this.id,
+      lineId: data.lineId.present ? data.lineId.value : this.lineId,
+      customerId: data.customerId.present
+          ? data.customerId.value
+          : this.customerId,
+      companyId: data.companyId.present ? data.companyId.value : this.companyId,
+      amountDeducted: data.amountDeducted.present
+          ? data.amountDeducted.value
+          : this.amountDeducted,
+      amountCharged: data.amountCharged.present
+          ? data.amountCharged.value
+          : this.amountCharged,
+      gbAdded: data.gbAdded.present ? data.gbAdded.value : this.gbAdded,
+      collected: data.collected.present ? data.collected.value : this.collected,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AdditionalServicesTableData(')
+          ..write('ownerId: $ownerId, ')
+          ..write('synced: $synced, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('id: $id, ')
+          ..write('lineId: $lineId, ')
+          ..write('customerId: $customerId, ')
+          ..write('companyId: $companyId, ')
+          ..write('amountDeducted: $amountDeducted, ')
+          ..write('amountCharged: $amountCharged, ')
+          ..write('gbAdded: $gbAdded, ')
+          ..write('collected: $collected, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    ownerId,
+    synced,
+    updatedAt,
+    id,
+    lineId,
+    customerId,
+    companyId,
+    amountDeducted,
+    amountCharged,
+    gbAdded,
+    collected,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AdditionalServicesTableData &&
+          other.ownerId == this.ownerId &&
+          other.synced == this.synced &&
+          other.updatedAt == this.updatedAt &&
+          other.id == this.id &&
+          other.lineId == this.lineId &&
+          other.customerId == this.customerId &&
+          other.companyId == this.companyId &&
+          other.amountDeducted == this.amountDeducted &&
+          other.amountCharged == this.amountCharged &&
+          other.gbAdded == this.gbAdded &&
+          other.collected == this.collected &&
+          other.createdAt == this.createdAt);
+}
+
+class AdditionalServicesTableCompanion
+    extends UpdateCompanion<AdditionalServicesTableData> {
+  final Value<String> ownerId;
+  final Value<bool> synced;
+  final Value<DateTime> updatedAt;
+  final Value<String> id;
+  final Value<String> lineId;
+  final Value<String> customerId;
+  final Value<String?> companyId;
+  final Value<double> amountDeducted;
+  final Value<double> amountCharged;
+  final Value<double> gbAdded;
+  final Value<bool> collected;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const AdditionalServicesTableCompanion({
+    this.ownerId = const Value.absent(),
+    this.synced = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.id = const Value.absent(),
+    this.lineId = const Value.absent(),
+    this.customerId = const Value.absent(),
+    this.companyId = const Value.absent(),
+    this.amountDeducted = const Value.absent(),
+    this.amountCharged = const Value.absent(),
+    this.gbAdded = const Value.absent(),
+    this.collected = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  AdditionalServicesTableCompanion.insert({
+    required String ownerId,
+    this.synced = const Value.absent(),
+    required DateTime updatedAt,
+    required String id,
+    required String lineId,
+    required String customerId,
+    this.companyId = const Value.absent(),
+    required double amountDeducted,
+    this.amountCharged = const Value.absent(),
+    this.gbAdded = const Value.absent(),
+    this.collected = const Value.absent(),
+    required DateTime createdAt,
+    this.rowid = const Value.absent(),
+  }) : ownerId = Value(ownerId),
+       updatedAt = Value(updatedAt),
+       id = Value(id),
+       lineId = Value(lineId),
+       customerId = Value(customerId),
+       amountDeducted = Value(amountDeducted),
+       createdAt = Value(createdAt);
+  static Insertable<AdditionalServicesTableData> custom({
+    Expression<String>? ownerId,
+    Expression<bool>? synced,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? id,
+    Expression<String>? lineId,
+    Expression<String>? customerId,
+    Expression<String>? companyId,
+    Expression<double>? amountDeducted,
+    Expression<double>? amountCharged,
+    Expression<double>? gbAdded,
+    Expression<bool>? collected,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (ownerId != null) 'owner_id': ownerId,
+      if (synced != null) 'synced': synced,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (id != null) 'id': id,
+      if (lineId != null) 'line_id': lineId,
+      if (customerId != null) 'customer_id': customerId,
+      if (companyId != null) 'company_id': companyId,
+      if (amountDeducted != null) 'amount_deducted': amountDeducted,
+      if (amountCharged != null) 'amount_charged': amountCharged,
+      if (gbAdded != null) 'gb_added': gbAdded,
+      if (collected != null) 'collected': collected,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  AdditionalServicesTableCompanion copyWith({
+    Value<String>? ownerId,
+    Value<bool>? synced,
+    Value<DateTime>? updatedAt,
+    Value<String>? id,
+    Value<String>? lineId,
+    Value<String>? customerId,
+    Value<String?>? companyId,
+    Value<double>? amountDeducted,
+    Value<double>? amountCharged,
+    Value<double>? gbAdded,
+    Value<bool>? collected,
+    Value<DateTime>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return AdditionalServicesTableCompanion(
+      ownerId: ownerId ?? this.ownerId,
+      synced: synced ?? this.synced,
+      updatedAt: updatedAt ?? this.updatedAt,
+      id: id ?? this.id,
+      lineId: lineId ?? this.lineId,
+      customerId: customerId ?? this.customerId,
+      companyId: companyId ?? this.companyId,
+      amountDeducted: amountDeducted ?? this.amountDeducted,
+      amountCharged: amountCharged ?? this.amountCharged,
+      gbAdded: gbAdded ?? this.gbAdded,
+      collected: collected ?? this.collected,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (ownerId.present) {
+      map['owner_id'] = Variable<String>(ownerId.value);
+    }
+    if (synced.present) {
+      map['synced'] = Variable<bool>(synced.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (lineId.present) {
+      map['line_id'] = Variable<String>(lineId.value);
+    }
+    if (customerId.present) {
+      map['customer_id'] = Variable<String>(customerId.value);
+    }
+    if (companyId.present) {
+      map['company_id'] = Variable<String>(companyId.value);
+    }
+    if (amountDeducted.present) {
+      map['amount_deducted'] = Variable<double>(amountDeducted.value);
+    }
+    if (amountCharged.present) {
+      map['amount_charged'] = Variable<double>(amountCharged.value);
+    }
+    if (gbAdded.present) {
+      map['gb_added'] = Variable<double>(gbAdded.value);
+    }
+    if (collected.present) {
+      map['collected'] = Variable<bool>(collected.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AdditionalServicesTableCompanion(')
+          ..write('ownerId: $ownerId, ')
+          ..write('synced: $synced, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('id: $id, ')
+          ..write('lineId: $lineId, ')
+          ..write('customerId: $customerId, ')
+          ..write('companyId: $companyId, ')
+          ..write('amountDeducted: $amountDeducted, ')
+          ..write('amountCharged: $amountCharged, ')
+          ..write('gbAdded: $gbAdded, ')
+          ..write('collected: $collected, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -9272,6 +10000,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $PendingDeletesTableTable(this);
   late final $NotificationsTableTable notificationsTable =
       $NotificationsTableTable(this);
+  late final $AdditionalServicesTableTable additionalServicesTable =
+      $AdditionalServicesTableTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -9292,6 +10022,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     numberUpdateProviderCacheTable,
     pendingDeletesTable,
     notificationsTable,
+    additionalServicesTable,
   ];
 }
 
@@ -15987,6 +16718,364 @@ typedef $$NotificationsTableTableProcessedTableManager =
       NotificationsTableData,
       PrefetchHooks Function()
     >;
+typedef $$AdditionalServicesTableTableCreateCompanionBuilder =
+    AdditionalServicesTableCompanion Function({
+      required String ownerId,
+      Value<bool> synced,
+      required DateTime updatedAt,
+      required String id,
+      required String lineId,
+      required String customerId,
+      Value<String?> companyId,
+      required double amountDeducted,
+      Value<double> amountCharged,
+      Value<double> gbAdded,
+      Value<bool> collected,
+      required DateTime createdAt,
+      Value<int> rowid,
+    });
+typedef $$AdditionalServicesTableTableUpdateCompanionBuilder =
+    AdditionalServicesTableCompanion Function({
+      Value<String> ownerId,
+      Value<bool> synced,
+      Value<DateTime> updatedAt,
+      Value<String> id,
+      Value<String> lineId,
+      Value<String> customerId,
+      Value<String?> companyId,
+      Value<double> amountDeducted,
+      Value<double> amountCharged,
+      Value<double> gbAdded,
+      Value<bool> collected,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+
+class $$AdditionalServicesTableTableFilterComposer
+    extends Composer<_$AppDatabase, $AdditionalServicesTableTable> {
+  $$AdditionalServicesTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get ownerId => $composableBuilder(
+    column: $table.ownerId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get synced => $composableBuilder(
+    column: $table.synced,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get lineId => $composableBuilder(
+    column: $table.lineId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get customerId => $composableBuilder(
+    column: $table.customerId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get companyId => $composableBuilder(
+    column: $table.companyId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get amountDeducted => $composableBuilder(
+    column: $table.amountDeducted,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get amountCharged => $composableBuilder(
+    column: $table.amountCharged,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get gbAdded => $composableBuilder(
+    column: $table.gbAdded,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get collected => $composableBuilder(
+    column: $table.collected,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$AdditionalServicesTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $AdditionalServicesTableTable> {
+  $$AdditionalServicesTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get ownerId => $composableBuilder(
+    column: $table.ownerId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get synced => $composableBuilder(
+    column: $table.synced,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get lineId => $composableBuilder(
+    column: $table.lineId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get customerId => $composableBuilder(
+    column: $table.customerId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get companyId => $composableBuilder(
+    column: $table.companyId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get amountDeducted => $composableBuilder(
+    column: $table.amountDeducted,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get amountCharged => $composableBuilder(
+    column: $table.amountCharged,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get gbAdded => $composableBuilder(
+    column: $table.gbAdded,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get collected => $composableBuilder(
+    column: $table.collected,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$AdditionalServicesTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $AdditionalServicesTableTable> {
+  $$AdditionalServicesTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get ownerId =>
+      $composableBuilder(column: $table.ownerId, builder: (column) => column);
+
+  GeneratedColumn<bool> get synced =>
+      $composableBuilder(column: $table.synced, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get lineId =>
+      $composableBuilder(column: $table.lineId, builder: (column) => column);
+
+  GeneratedColumn<String> get customerId => $composableBuilder(
+    column: $table.customerId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get companyId =>
+      $composableBuilder(column: $table.companyId, builder: (column) => column);
+
+  GeneratedColumn<double> get amountDeducted => $composableBuilder(
+    column: $table.amountDeducted,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get amountCharged => $composableBuilder(
+    column: $table.amountCharged,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get gbAdded =>
+      $composableBuilder(column: $table.gbAdded, builder: (column) => column);
+
+  GeneratedColumn<bool> get collected =>
+      $composableBuilder(column: $table.collected, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$AdditionalServicesTableTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $AdditionalServicesTableTable,
+          AdditionalServicesTableData,
+          $$AdditionalServicesTableTableFilterComposer,
+          $$AdditionalServicesTableTableOrderingComposer,
+          $$AdditionalServicesTableTableAnnotationComposer,
+          $$AdditionalServicesTableTableCreateCompanionBuilder,
+          $$AdditionalServicesTableTableUpdateCompanionBuilder,
+          (
+            AdditionalServicesTableData,
+            BaseReferences<
+              _$AppDatabase,
+              $AdditionalServicesTableTable,
+              AdditionalServicesTableData
+            >,
+          ),
+          AdditionalServicesTableData,
+          PrefetchHooks Function()
+        > {
+  $$AdditionalServicesTableTableTableManager(
+    _$AppDatabase db,
+    $AdditionalServicesTableTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$AdditionalServicesTableTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$AdditionalServicesTableTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$AdditionalServicesTableTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> ownerId = const Value.absent(),
+                Value<bool> synced = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<String> id = const Value.absent(),
+                Value<String> lineId = const Value.absent(),
+                Value<String> customerId = const Value.absent(),
+                Value<String?> companyId = const Value.absent(),
+                Value<double> amountDeducted = const Value.absent(),
+                Value<double> amountCharged = const Value.absent(),
+                Value<double> gbAdded = const Value.absent(),
+                Value<bool> collected = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => AdditionalServicesTableCompanion(
+                ownerId: ownerId,
+                synced: synced,
+                updatedAt: updatedAt,
+                id: id,
+                lineId: lineId,
+                customerId: customerId,
+                companyId: companyId,
+                amountDeducted: amountDeducted,
+                amountCharged: amountCharged,
+                gbAdded: gbAdded,
+                collected: collected,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String ownerId,
+                Value<bool> synced = const Value.absent(),
+                required DateTime updatedAt,
+                required String id,
+                required String lineId,
+                required String customerId,
+                Value<String?> companyId = const Value.absent(),
+                required double amountDeducted,
+                Value<double> amountCharged = const Value.absent(),
+                Value<double> gbAdded = const Value.absent(),
+                Value<bool> collected = const Value.absent(),
+                required DateTime createdAt,
+                Value<int> rowid = const Value.absent(),
+              }) => AdditionalServicesTableCompanion.insert(
+                ownerId: ownerId,
+                synced: synced,
+                updatedAt: updatedAt,
+                id: id,
+                lineId: lineId,
+                customerId: customerId,
+                companyId: companyId,
+                amountDeducted: amountDeducted,
+                amountCharged: amountCharged,
+                gbAdded: gbAdded,
+                collected: collected,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$AdditionalServicesTableTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $AdditionalServicesTableTable,
+      AdditionalServicesTableData,
+      $$AdditionalServicesTableTableFilterComposer,
+      $$AdditionalServicesTableTableOrderingComposer,
+      $$AdditionalServicesTableTableAnnotationComposer,
+      $$AdditionalServicesTableTableCreateCompanionBuilder,
+      $$AdditionalServicesTableTableUpdateCompanionBuilder,
+      (
+        AdditionalServicesTableData,
+        BaseReferences<
+          _$AppDatabase,
+          $AdditionalServicesTableTable,
+          AdditionalServicesTableData
+        >,
+      ),
+      AdditionalServicesTableData,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -16025,4 +17114,9 @@ class $AppDatabaseManager {
       $$PendingDeletesTableTableTableManager(_db, _db.pendingDeletesTable);
   $$NotificationsTableTableTableManager get notificationsTable =>
       $$NotificationsTableTableTableManager(_db, _db.notificationsTable);
+  $$AdditionalServicesTableTableTableManager get additionalServicesTable =>
+      $$AdditionalServicesTableTableTableManager(
+        _db,
+        _db.additionalServicesTable,
+      );
 }

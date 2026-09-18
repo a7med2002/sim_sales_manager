@@ -40,4 +40,36 @@ void main() {
     expect(reversed.operationsCount, 2); // 3 - 1, never below 0 in general
     expect(reversed.availableToSell, 400 + 999);
   });
+
+  group('applyAdditionalServiceCharge / reverseAdditionalServiceCharge', () {
+    test('deducts from availableToSell into consumed without touching operationsCount/profitGenerated', () {
+      final charged = company.applyAdditionalServiceCharge(amount: 25);
+      expect(charged.consumed, 125);
+      expect(charged.availableToSell, 375);
+      expect(charged.operationsCount, company.operationsCount, reason: 'not a new line sale — must not bump this');
+      expect(charged.profitGenerated, company.profitGenerated, reason: 'no profit concept for a service charge itself');
+    });
+
+    test('reverseAdditionalServiceCharge undoes applyAdditionalServiceCharge exactly', () {
+      final charged = company.applyAdditionalServiceCharge(amount: 25);
+      final reversed = charged.reverseAdditionalServiceCharge(amount: 25);
+      expect(reversed.consumed, company.consumed);
+      expect(reversed.availableToSell, company.availableToSell);
+      expect(reversed.usagePercent, company.usagePercent);
+    });
+
+    test('clamps availableToSell to zero unless allowNegativeBalance is on', () {
+      final charged = company.applyAdditionalServiceCharge(amount: 999);
+      expect(charged.availableToSell, 0);
+
+      final negativeAllowed = company.copyWith(allowNegativeBalance: true).applyAdditionalServiceCharge(amount: 999);
+      expect(negativeAllowed.availableToSell, 400 - 999);
+    });
+
+    test('reverseAdditionalServiceCharge never drives consumed negative', () {
+      final reversed = company.reverseAdditionalServiceCharge(amount: 999);
+      expect(reversed.consumed, 0);
+      expect(reversed.availableToSell, 400 + 999);
+    });
+  });
 }
