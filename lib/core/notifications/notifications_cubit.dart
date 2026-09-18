@@ -59,9 +59,27 @@ class NotificationsCubit extends Cubit<NotificationsState> {
 
   bool get _isReal => _db != null && _auth?.currentOwnerId != null;
 
+  /// Whether Android will actually let a scheduled reminder be seen —
+  /// see `NotificationScheduler.areNotificationsEnabled`'s doc comment.
+  /// `NotificationsPage` checks this to warn the seller when it's `false`,
+  /// since a "successfully scheduled" reminder that Android silently
+  /// drops at display time looks identical to a working one from
+  /// anywhere else in this app.
+  Future<bool> notificationsEnabled() => _scheduler.areNotificationsEnabled();
+
   Future<void> _init() async {
-    await _scheduler.init();
-    await _scheduler.requestPermission();
+    // Same isolation reasoning as _rearmAllPending below: neither of these
+    // may ever be allowed to throw past this point and skip the rest of
+    // _init, or the state reload at the very end (the actual source of
+    // truth for the in-app inbox/debt-reminder-button state) would never
+    // run at all.
+    try {
+      await _scheduler.init();
+      await _scheduler.requestPermission();
+    } catch (_) {
+      // Scheduling/permission setup failed — still proceed so the local
+      // database is at least correctly reflected in-app.
+    }
     // Pulls back whatever survived on Supabase before anything else —
     // this is what lets a still-future reminder recover after the local
     // database was wiped (cleared app storage, reinstall) instead of

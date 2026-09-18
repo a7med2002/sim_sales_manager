@@ -6048,3 +6048,220 @@ only counts fired+unread ones.
 **Verified**: `flutter analyze` — no issues. `flutter test` — 36/36
 passing (1 pre-existing unrelated skip), covering all notification
 logic including the new inbox-filtering rule.
+
+## Added: a real, on-device-verifiable diagnosis for "reminder never showed while the app was closed"
+
+Field report: a company hitting zero balance showed its alert
+correctly while the app was open (fires via `showNow()` — an always-
+reliable path since it runs synchronously while the app is already
+running); a debt reminder scheduled for the next day, however, never
+appeared on the phone at all while the app was closed (`scheduleAt()`
+→ Android `AlarmManager`, a genuinely different code path) — even
+though the reminder correctly showed up in the in-app inbox once the
+app was reopened, proving the data layer (this session's earlier
+fixes) is working correctly. This narrows the remaining gap to Android
+itself declining to actually display the notification at fire time,
+which happens silently with no crash and no visible error anywhere in
+this app.
+
+The single most likely concrete cause: Android's notification runtime
+permission (required since Android 13) is only ever prompted for
+**once** — `flutter_local_notifications`' `requestNotificationsPermission()`
+silently returns `false` forever after a first denial (or a later
+manual revoke from Settings), with no further OS prompt and nothing in
+this app that previously surfaced that state anywhere.
+
+**What was added** (a real capability, not a guess dressed up as a
+fix):
+- `NotificationScheduler.areNotificationsEnabled()` — wraps the
+  plugin's `AndroidFlutterLocalNotificationsPlugin.areNotificationsEnabled()`,
+  exposed through `NotificationsCubit.notificationsEnabled()`.
+- `NotificationsPage` now checks this once per visit and, only when it
+  comes back `false`, shows an actionable warning card explaining
+  reminders can't be seen while the app is closed until this is
+  re-enabled — with a real "Open notification settings" button.
+- A small native bridge (`MainActivity.kt` + `notification_settings_bridge.dart`,
+  a plain `MethodChannel` — no new package needed) sends the seller
+  straight to this app's OS notification-settings screen
+  (`Settings.ACTION_APP_NOTIFICATION_SETTINGS`) with one tap, with
+  `ACTION_APPLICATION_DETAILS_SETTINGS` (the app-info page, where
+  OEM-specific battery/auto-start toggles usually live too) as a
+  fallback. Deliberately did **not** wire up
+  `ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` — that's a Play-Store-
+  policy-sensitive permission this app has no justified use for
+  requesting outright; the app-info fallback still gets the seller to
+  the right neighborhood to find it themselves per-OEM.
+- Also closed the same "unguarded native call blocks `_loadFromDrift`"
+  gap in `_scheduler.init()`/`requestPermission()` inside `_init()`
+  itself (only `_rearmAllPending` had been fixed before) — both now run
+  inside the same try/catch, for the identical reason.
+
+This doesn't *guarantee* every future reminder fires — that also
+depends on the seller actually having the permission granted and not
+having this app killed by aggressive OEM battery management (a real,
+widely-documented Android ecosystem limitation no app's code can fully
+override) — but it turns an invisible, undiagnosable failure into
+something the app itself detects and gives the seller one tap to fix.
+
+Added two more regression tests (scheduler.init()/requestPermission()
+failing must not empty the inbox either, mirroring the existing
+_rearmAllPending one) and a `notificationsEnabled()` passthrough test.
+
+**Verified**: `flutter analyze` — no issues. `flutter test` — 38/38
+passing (1 pre-existing unrelated skip).
+
+## Added: real diagnostics for "reminder never arrived while closed" — permission ruled out, so we need the actual native error
+
+Field report (after the permission-check fix above): notification
+permission is confirmed already granted, and the same failure happens
+for multiple sellers, not one device — ruling out both the permission
+theory and a single-device OEM quirk as the *sole* explanation. A
+company-hits-zero-balance alert (fires via `showNow()` while the app is
+already open — an always-reliable path) worked fine; a debt reminder
+scheduled a day out (`scheduleAt()` → Android `AlarmManager`, the one
+path that has to survive the app being closed) never showed up.
+
+The uncomfortable realization: every previous fix in this file that
+wrapped a `_scheduler.scheduleAt`/`init`/`requestPermission` call in a
+try/catch (to stop a real, demonstrated native failure from blocking
+`_loadFromDrift`) was *correct* for that goal, but also means the
+actual exception text has never once been seen — just silently
+swallowed every time. Guessing at a cause again (permission, battery
+optimization, ...) without that text risks repeating the same
+diagnose-guess-build-fail cycle. So instead of another guess, this
+adds the means to actually capture and see it:
+
+- `NotificationsCubit.lastScheduleError` — every one of those existing
+  catch blocks now records `error.toString()` here instead of
+  discarding it (`_recordScheduleError`).
+- `NotificationsPage` shows a red card with the raw (selectable, for
+  copy/screenshot) error text whenever `lastScheduleError` is non-null.
+- `NotificationsCubit.scheduleTestNotification()` + a new "Test
+  notification" card on the same page — schedules a real OS
+  notification 20 seconds out (not written to the `notifications`
+  table; a pure probe) and immediately reports success or the raw
+  failure text. This turns each diagnostic cycle from "wait a full day
+  to find out a real reminder didn't arrive" into "tap a button, close
+  the app, wait 20 seconds."
+
+Added 3 tests for `scheduleTestNotification` (success arms an alarm and
+returns null; failure returns+records the exact exception text; never
+writes to the notifications table) and extended the existing
+native-failure test to also assert `lastScheduleError` gets captured.
+
+**This build is explicitly a diagnostic step, not a claimed fix** —
+the actual root cause is still unknown pending the real error text (or
+a clean "test notification" success/failure) from the user's device.
+
+**Verified**: `flutter analyze` — no issues. `flutter test` — 41/41
+passing (1 pre-existing unrelated skip).
+
+## Found and fixed the actual root cause: R8 was silently breaking every scheduled reminder in every release build
+
+The diagnostic build above worked exactly as intended — the "Test
+notification" button's dialog captured the real native exception on
+the user's device:
+
+```
+PlatformException(error, Missing type parameter., null,
+java.lang.RuntimeException: Missing type parameter.
+  at A0.a.<init>(SourceFile:10)
+  at com.dexterous.flutterlocalnotifications.FlutterLocalNotificationsPlugin.loadScheduledNotifications
+  at com.dexterous.flutterlocalnotifications.FlutterLocalNotificationsPlugin.saveScheduledNotification
+  at com.dexterous.flutterlocalnotifications.FlutterLocalNotificationsPlugin.zonedSchedule
+  at com.dexterous.flutterlocalnotifications.FlutterLocalNotificationsPlugin.onMethodCall
+```
+
+`A0.a` is an R8-obfuscated class name — confirmed R8 code shrinking is
+active in release builds (`build/app/outputs/mapping/release/mapping.txt`
+exists) even though `isMinifyEnabled` was never explicitly set in
+`android/app/build.gradle.kts` — apparently Flutter's Gradle plugin
+defaults release builds to it. `flutter_local_notifications` 18.0.1
+(this app's pinned version) persists scheduled notifications to disk
+via Gson, which needs each class's generic type `Signature` attribute
+preserved at runtime to reconstruct `TypeToken`s — R8 strips that
+attribute by default unless told to keep it. With zero custom ProGuard
+rules in this project, **every** `zonedSchedule` call — i.e. every
+line-expiry and customer-debt reminder, on every seller's device, in
+every release build ever shipped — threw this exception the instant it
+tried to persist itself, before the OS alarm was ever actually armed.
+This is a confirmed, reported upstream issue
+(github.com/MaikuB/flutter_local_notifications/issues/2265); the
+plugin's own README says version 19+ bundles the needed consumer
+ProGuard rules automatically, but versions before that (18.0.1, what
+this app has) require adding them manually.
+
+This fully explains every symptom across this entire investigation:
+why `showNow()`-based alerts (company balance/owed — fire immediately
+while the app is already running, no persistence step involved) always
+worked; why `scheduleAt()`-based reminders (line expiry, customer debt
+— genuinely scheduled ahead) never once fired while the app was
+closed; why it was 100% reproducible across multiple sellers' devices
+rather than an intermittent per-device permission/OEM issue; and why
+confirming notification permission was already granted didn't change
+anything — the failure happens before Android's alarm/notification
+system is ever reached at all.
+
+**Fix**: added `android/app/proguard-rules.pro` with the specific
+keep rules `flutter_local_notifications`' own model classes and Gson
+need (`-keepattributes Signature`/`*Annotation*`, `sun.misc.Unsafe`,
+`com.google.gson.**`, `com.dexterous.flutterlocalnotifications.**`),
+and wired it into `android/app/build.gradle.kts`'s release build type
+via `isMinifyEnabled = true` (made explicit) + `proguardFiles(...)`.
+Deliberately did **not** upgrade `flutter_local_notifications` itself
+to a newer major version (latest is 22.3.1, which bundles these rules
+automatically and wouldn't need this file at all) — that crosses three
+breaking-change boundaries (18→20 renamed several methods' parameters
+to named-only, 20→21 raised minimum Android/iOS/Flutter/Dart SDK
+versions, 21→22 removed the ProGuard requirement this fix works around)
+that would need real API-surface changes across every call site in
+`notification_scheduler.dart` and careful re-testing — far riskier than
+a scoped, standard, officially-documented ProGuard fix for the version
+already in use.
+
+**Verified**: `flutter analyze` — no issues. `flutter build apk
+--release --target-platform android-arm64` — succeeds, produces a
+`mapping.txt` confirming R8 still runs (with the new rules applied this
+time).
+
+**CONFIRMED FIXED on-device** — the user tested with the "Test
+notification" button (closed the app, waited 20 seconds) and it
+arrived successfully. This is the actual, final resolution to the
+multi-day "reminder never arrives while the app is closed" investigation
+that spanned this session: ephemeral widget state → real-device
+scheduler exceptions swallowed without being surfaced →
+`_rearmAllPending`/`_init` cold-start gaps → inbox showing pending
+items early → permission ruled out → down to this, the true root
+cause.
+
+## Removed the test/debug-only diagnostic UI now that the bug above is confirmed fixed
+
+Explicit request: nothing experimental/test-only should ship in the
+production app the sellers actually use. Removed the "Test
+notification" card (`scheduleTestNotification`, the 20-second-probe
+button) and the raw-exception "last error" card
+(`lastScheduleError`/`_recordScheduleError`) entirely — both from
+`NotificationsPage` and their backing methods on `NotificationsCubit` —
+along with their translation keys (`notifications.test.*`,
+`notifications.lastError.*`, and `common.close`, which existed only
+for the test dialog) and their tests. Reverted the three catch blocks
+that used to record `lastScheduleError` back to plain silent
+`catch (_) {}`, unchanged otherwise from the real correctness fix they
+implement (each still isolates a native scheduling failure from
+blocking `_loadFromDrift`/deletion — that part stays).
+
+Kept everything that's a genuine production feature, not a debug tool:
+the permission-status banner (`_PermissionWarningBanner`,
+`NotificationsCubit.notificationsEnabled()`,
+`NotificationScheduler.areNotificationsEnabled()`, the native
+`MainActivity.kt`/`notification_settings_bridge.dart` bridge to open
+OS notification settings) — a real seller with notifications actually
+disabled has a legitimate reason to see this warning and one-tap fix
+it; it isn't a developer-only diagnostic. Also kept the ProGuard fix,
+the `_rearmAllPending`/`_insertAndSchedule` try/catch isolation, the
+inbox pending-item filtering, and the debt-reminder dedup — all real
+correctness fixes uncovered along the way, not test scaffolding.
+
+**Verified**: `flutter analyze` — no issues. `flutter test` — 38/38
+passing (1 pre-existing unrelated skip; down from 41 — removed exactly
+the 3 tests covering the removed diagnostic-only code, nothing else).

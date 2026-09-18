@@ -13,6 +13,11 @@
     "title": "Notifications",
     "emptyTitle": "No notifications yet",
     "emptyDescription": "Line-expiry, customer debt, and company balance reminders will show up here.",
+    "permissionWarning": {
+      "title": "Notifications are disabled on this device",
+      "body": "Without this permission, reminders will never reach you while the app is closed — even if they show here as scheduled.",
+      "openSettingsButton": "Open notification settings"
+    },
     "lineExpiringSoon": {
       "title": "Line expiring soon",
       "body": "SIM {sim} expires in 3 days. Customer: {customer}."

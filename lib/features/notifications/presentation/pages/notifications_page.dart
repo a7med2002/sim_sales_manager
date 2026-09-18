@@ -6,6 +6,7 @@ import '../../../../core/di/service_locator.dart';
 import '../../../../core/navigation/route_names.dart';
 import '../../../../core/notifications/app_notification.dart';
 import '../../../../core/notifications/notification_type.dart';
+import '../../../../core/notifications/notification_settings_bridge.dart';
 import '../../../../core/notifications/notifications_cubit.dart';
 import '../../../../core/notifications/notifications_state.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -67,6 +68,7 @@ class _NotificationsView extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: AppSpacing.md),
+                const _PermissionWarningBanner(),
                 if (items.isEmpty)
                   EmptyState(
                     icon: Icons.notifications_none_rounded,
@@ -100,6 +102,77 @@ class _NotificationsView extends StatelessWidget {
       case NotificationType.lineExpired:
         break;
     }
+  }
+}
+
+/// Checks, once per time this page opens, whether Android will actually
+/// let a scheduled reminder be seen — see
+/// `NotificationScheduler.areNotificationsEnabled`'s doc comment for why
+/// this is a real, distinct failure mode from "did it get scheduled."
+/// Renders nothing while unknown/enabled; only shows up as an actionable
+/// warning once the check comes back `false`.
+class _PermissionWarningBanner extends StatefulWidget {
+  const _PermissionWarningBanner();
+
+  @override
+  State<_PermissionWarningBanner> createState() => _PermissionWarningBannerState();
+}
+
+class _PermissionWarningBannerState extends State<_PermissionWarningBanner> {
+  bool? _enabled;
+
+  @override
+  void initState() {
+    super.initState();
+    getIt<NotificationsCubit>().notificationsEnabled().then((enabled) {
+      if (mounted) setState(() => _enabled = enabled);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_enabled != false) return const SizedBox.shrink();
+    final colors = context.colors;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+      padding: const EdgeInsets.all(AppSpacing.cardPadding),
+      decoration: BoxDecoration(
+        color: colors.warning.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(AppRadii.card),
+        border: Border.all(color: colors.warning.withValues(alpha: 0.4)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.notifications_off_rounded, size: 18, color: colors.warning),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text('notifications.permissionWarning.title'.tr(), style: AppTextStyles.cardTitle(colors.textPrimary)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text('notifications.permissionWarning.body'.tr(), style: AppTextStyles.body(colors.textSecondary)),
+          const SizedBox(height: AppSpacing.sm),
+          SizedBox(
+            height: 40,
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: NotificationSettingsBridge.openNotificationSettings,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: colors.warning,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.button)),
+                elevation: 0,
+              ),
+              child: Text('notifications.permissionWarning.openSettingsButton'.tr(), style: AppTextStyles.body(Colors.white)),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

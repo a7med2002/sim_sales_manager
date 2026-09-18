@@ -38,6 +38,19 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
+            // Flutter's Gradle plugin already runs R8 on release builds by
+            // default (confirmed by build/app/outputs/mapping/release/mapping.txt
+            // existing) even though isMinifyEnabled was never set here
+            // explicitly — this just makes that explicit and, critically,
+            // wires in proguard-rules.pro: without it R8 ran with no
+            // awareness of flutter_local_notifications' Gson-based
+            // persistence, silently breaking every scheduled reminder on
+            // every release build. See proguard-rules.pro's doc comment.
+            isMinifyEnabled = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
 }

@@ -55,6 +55,26 @@ class NotificationScheduler {
     return true;
   }
 
+  /// Whether Android currently actually lets this app show notifications —
+  /// distinct from [requestPermission]'s one-shot result at cold start:
+  /// Android only shows that OS prompt once, ever, so a seller who denied
+  /// it (or later revoked it from Settings) never gets asked again, and
+  /// `requestNotificationsPermission()` just silently returns `false` from
+  /// then on with no further UI. This is what actually explains "the
+  /// reminder never showed while the app was closed" even though the row
+  /// is saved correctly and its OS alarm still fires on schedule — the
+  /// alarm fires, `AndroidScheduleMode` still runs, but Android drops the
+  /// notification itself right before display because permission isn't
+  /// granted. `NotificationsPage` polls this to show a real, actionable
+  /// warning instead of a reminder that looks scheduled but can never
+  /// actually be seen. `true` on iOS/non-Android, where this isn't
+  /// resolvable the same way and isn't this app's primary target anyway.
+  Future<bool> areNotificationsEnabled() async {
+    final androidPlugin = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    if (androidPlugin == null) return true;
+    return await androidPlugin.areNotificationsEnabled() ?? false;
+  }
+
   NotificationDetails get _details => const NotificationDetails(
         android: AndroidNotificationDetails(_channelId, _channelName, channelDescription: _channelDescription),
         iOS: DarwinNotificationDetails(),

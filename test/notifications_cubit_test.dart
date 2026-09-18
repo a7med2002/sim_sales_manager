@@ -42,11 +42,28 @@ class _FakeScheduler extends NotificationScheduler {
     }
   }
 
-  @override
-  Future<void> init() async {}
+  bool notificationsEnabledValue = true;
+
+  /// Separate from [failNextCall] (which drives scheduleAt/cancel/showNow
+  /// in the tests below) so a test targeting init/requestPermission's
+  /// try/catch doesn't get its failure silently consumed by whichever of
+  /// those two happens to run first — and vice versa for the existing
+  /// _rearmAllPending-focused cold-start test.
+  bool failInit = false;
 
   @override
-  Future<bool> requestPermission() async => true;
+  Future<void> init() async {
+    if (failInit) throw Exception('simulated native plugin failure');
+  }
+
+  @override
+  Future<bool> requestPermission() async {
+    if (failInit) throw Exception('simulated native plugin failure');
+    return true;
+  }
+
+  @override
+  Future<bool> areNotificationsEnabled() async => notificationsEnabledValue;
 
   @override
   Future<void> scheduleAt({required int id, required String title, required String body, required DateTime at}) async {
@@ -338,5 +355,38 @@ void main() {
         await coldStartCubit.close();
       },
     );
+
+    test(
+      'a native failure in scheduler.init()/requestPermission() itself must not leave the inbox/pending state empty either',
+      () async {
+        await cubit.scheduleDebtReminder(customerId: 'cust-1', customerName: 'Mahmoud', amountOwed: 120, days: 2);
+        expect(cubit.pendingDebtReminder('cust-1'), isNotNull);
+
+        final coldStartScheduler = _FakeScheduler()..failInit = true;
+        final coldStartCubit = NotificationsCubit(
+          db: db,
+          auth: _FakeAuthService(ownerId),
+          syncEngine: null,
+          scheduler: coldStartScheduler,
+        );
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+
+        expect(coldStartCubit.pendingDebtReminder('cust-1'), isNotNull);
+        expect(coldStartCubit.state.notifications, isNotEmpty);
+
+        await coldStartCubit.close();
+      },
+    );
+  });
+
+  group('notificationsEnabled', () {
+    test('passes through the scheduler\'s real permission check', () async {
+      scheduler.notificationsEnabledValue = false;
+      expect(await cubit.notificationsEnabled(), isFalse);
+
+      scheduler.notificationsEnabledValue = true;
+      expect(await cubit.notificationsEnabled(), isTrue);
+    });
   });
 }
