@@ -244,8 +244,7 @@ sim_sales_manager/
 ├── test/                      # unit and cubit tests
 ├── design/
 │   ├── APP_CONTEXT.md         # full product specification
-│   ├── DESIGN_SYSTEM.md       # colors, typography, spacing, shared widgets
-│   └── screenshots/
+│   └── DESIGN_SYSTEM.md       # colors, typography, spacing, shared widgets
 ├── android/  ios/  linux/  macos/  windows/  web/   # platform runners
 ├── CLAUDE.md                  # engineering rules for the project
 └── PROGRESS.md                # detailed change log and decisions
@@ -344,22 +343,24 @@ Ideas that would take the project further:
 
 ## 9. Screenshots
 
-> Captured from the project's design reference in [`design/screenshots`](design/screenshots). Replace them with fresh device captures as the UI evolves.
+Screenshots from a real device are coming soon.
+
+<!--
+  To add screenshots: put the PNG files in docs/screenshots/ (a folder outside
+  the Flutter assets, so they never end up inside the APK), then uncomment
+  and adjust this table. Use %20 in place of spaces in file names.
 
 <table>
   <tr>
-    <td align="center"><img src="design/screenshots/login.png" width="200" alt="Login"/><br/><sub><b>Login</b></sub></td>
-    <td align="center"><img src="design/screenshots/home1.png" width="200" alt="Home dashboard"/><br/><sub><b>Home dashboard</b></sub></td>
-    <td align="center"><img src="design/screenshots/new%20sale%20-%202.png" width="200" alt="New sale"/><br/><sub><b>New Sale flow</b></sub></td>
-    <td align="center"><img src="design/screenshots/companies.png" width="200" alt="Companies"/><br/><sub><b>Companies</b></sub></td>
-  </tr>
-  <tr>
-    <td align="center"><img src="design/screenshots/customers.png" width="200" alt="Customers"/><br/><sub><b>Customers</b></sub></td>
-    <td align="center"><img src="design/screenshots/customer%20details.png" width="200" alt="Customer details"/><br/><sub><b>Customer details</b></sub></td>
-    <td align="center"><img src="design/screenshots/numbers%20update.png" width="200" alt="Number update"/><br/><sub><b>Number Update</b></sub></td>
-    <td align="center"><img src="design/screenshots/dark%20mode.png" width="200" alt="Dark mode"/><br/><sub><b>Dark mode</b></sub></td>
+    <td align="center"><img src="docs/screenshots/login.png" width="200" alt="Login"/><br/><sub><b>Login</b></sub></td>
+    <td align="center"><img src="docs/screenshots/home.png" width="200" alt="Home dashboard"/><br/><sub><b>Home dashboard</b></sub></td>
+    <td align="center"><img src="docs/screenshots/new-sale.png" width="200" alt="New sale"/><br/><sub><b>New Sale flow</b></sub></td>
+    <td align="center"><img src="docs/screenshots/customer-details.png" width="200" alt="Customer details"/><br/><sub><b>Customer details</b></sub></td>
   </tr>
 </table>
+-->
+
+In the meantime, the visual language (colors, typography, spacing, shared widgets) is documented in [`design/DESIGN_SYSTEM.md`](design/DESIGN_SYSTEM.md), and every screen is described in [`design/APP_CONTEXT.md`](design/APP_CONTEXT.md).
 
 ---
 
