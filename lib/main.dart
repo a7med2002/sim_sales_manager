@@ -10,6 +10,7 @@ import 'core/auth/auth_service.dart';
 import 'core/config/env.dart';
 import 'core/database/app_database.dart';
 import 'core/di/service_locator.dart';
+import 'core/navigation/force_logout.dart';
 import 'core/navigation/new_sale_launcher.dart';
 import 'core/navigation/route_names.dart';
 import 'core/sync/bloc/sync_bloc.dart';
@@ -94,7 +95,6 @@ void main() async {
     setupServiceLocator();
   }
 
-  getIt<SyncBloc>().add(const SyncStarted());
   NewSaleLauncher.register((context) => NewSaleSheet.show(context));
   runApp(SimSalesManagerApp(initialRoute: startRoute));
 }
@@ -140,6 +140,7 @@ class SimSalesManagerApp extends StatefulWidget {
 class _SimSalesManagerAppState extends State<SimSalesManagerApp> {
   final _navigatorKey = GlobalKey<NavigatorState>();
   StreamSubscription<AuthState>? _authSubscription;
+  bool _isForceLoggingOut = false;
 
   @override
   void initState() {
@@ -158,6 +159,36 @@ class _SimSalesManagerAppState extends State<SimSalesManagerApp> {
             }
           });
     }
+    // `SyncBloc` detects an admin deactivating this seller's account
+    // (its `profiles` Realtime subscription, plus a periodic/
+    // connectivity-triggered fallback) but has no `BuildContext` of its
+    // own to act on it — this is the one place that owns the navigator
+    // key, so it registers the actual handler. See force_logout.dart.
+    ForceLogout.register(_handleForceLogout);
+    // Start sync only after the forced-logout handler is ready. On a
+    // warm launch the first online sync checks whether this account is
+    // still active, and must be able to act on a disabled result.
+    getIt<SyncBloc>().add(const SyncStarted());
+  }
+
+  /// Same effect as `core/navigation/logout.dart`'s manual "Logout" flow
+  /// (sign out, reset every get_it singleton so a different account
+  /// signing in afterward never briefly sees this one's cached data,
+  /// clear the nav stack down to Login) plus a message explaining *why*
+  /// this one wasn't the seller's own choice.
+  Future<void> _handleForceLogout() async {
+    if (_isForceLoggingOut) return;
+    _isForceLoggingOut = true;
+    if (Env.isConfigured) {
+      await getIt<AuthService>().signOut();
+      await getIt.reset();
+      setupServiceLocator();
+    }
+    if (!mounted) return;
+    _navigatorKey.currentState?.pushNamedAndRemoveUntil(RouteNames.login, (route) => false);
+    ScaffoldMessenger.maybeOf(context)
+      ?..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text('login.errors.accountDisabled'.tr())));
   }
 
   @override

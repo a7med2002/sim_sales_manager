@@ -44,6 +44,22 @@ class AuthService {
     return row['role'] as String;
   }
 
+  /// Whether this account is still active — an admin deactivating a
+  /// seller (Admin → Users, `set_active`) both bans further sign-ins and
+  /// flips `profiles.is_active`, but a session already signed in on some
+  /// other device keeps its access token working until it next needs
+  /// refreshing. `SyncBloc` calls this (via its `profiles` Realtime
+  /// subscription and, as a fallback, on every periodic/connectivity-
+  /// triggered sync) to force that session out promptly instead of
+  /// waiting on an unbounded natural token-refresh failure. Defaults to
+  /// `true` when signed out — nothing to force out.
+  Future<bool> fetchIsActive() async {
+    final userId = currentOwnerId;
+    if (userId == null) return true;
+    final row = await _client.from('profiles').select('is_active').eq('id', userId).single();
+    return row['is_active'] as bool? ?? true;
+  }
+
   /// Calls the `admin-manage-user` Edge Function (service-role account
   /// management — create/activate/deactivate a seller, change a role).
   /// The function itself re-verifies the caller is an active admin via

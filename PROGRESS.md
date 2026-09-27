@@ -1,5 +1,20 @@
 # PROGRESS.md
 
+## In progress: force active sessions out after account deactivation
+
+- `AuthService.fetchIsActive` checks the signed-in account's profile.
+- `SyncBloc` subscribes to the owner's `profiles` row for immediate
+  deactivation events and checks again on online syncs / periodic ticks.
+- `ForceLogout` connects that event to the app navigator; the handler signs
+  out, clears account-scoped singletons, and returns to Login.
+- Migration `0018_profiles_realtime.sql` adds `profiles` to Supabase Realtime.
+- Added localized Arabic and English messages explaining why the session
+  ended. Sync startup now happens after the logout handler is registered,
+  and duplicate deactivation events are coalesced.
+- Remaining: apply migration `0018` to the Supabase project and verify the
+  flow with an active session on one device and account deactivation from
+  another. Static analysis has not been run in this continuation.
+
 ## ⚠️ Data status: MOCK ONLY — no real backend yet
 Every screen currently reads from hardcoded/dummy data held in a Cubit
 (`HomeMockData`, `HomeCubit`). There is **no Drift database and no

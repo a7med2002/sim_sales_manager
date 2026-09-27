@@ -142,7 +142,8 @@
       "passwordTooShort": "Password must be at least 6 characters.",
       "invalidCredentials": "Incorrect email or password.",
       "networkError": "Couldn't reach the server. Check your connection and try again.",
-      "unexpected": "Something went wrong. Please try again later."
+      "unexpected": "Something went wrong. Please try again later.",
+      "accountDisabled": "Your account has been deactivated. Contact your administrator for help."
     }
   },
   "forgotPassword": {
