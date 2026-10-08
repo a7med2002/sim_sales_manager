@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="assets/images/logo_full.png" alt="eSIM Dafter logo" width="280" />
+
 # eSIM Dafter
 
 **An offline-first sales, inventory and debt-tracking app for independent eSIM / SIM resellers.**
@@ -369,9 +371,10 @@ In the meantime, the visual language (colors, typography, spacing, shared widget
 Built and maintained by **Ahmed**. Feedback, ideas and pull requests are always welcome.
 
 [![GitHub](https://img.shields.io/badge/GitHub-a7med2002-181717?logo=github&logoColor=white)](https://github.com/a7med2002)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0A66C2?logo=linkedin&logoColor=white)](https://www.linkedin.com/in/YOUR-LINKEDIN-HANDLE)
-[![X](https://img.shields.io/badge/X-Follow-000000?logo=x&logoColor=white)](https://x.com/YOUR-X-HANDLE)
-[![Email](https://img.shields.io/badge/Email-Contact-EA4335?logo=gmail&logoColor=white)](mailto:YOUR-EMAIL@example.com)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0A66C2?logo=linkedin&logoColor=white)](https://www.linkedin.com/in/ahmedmeqdad0)
+[![X](https://img.shields.io/badge/X-Follow-000000?logo=x&logoColor=white)](https://x.com/ahmedmeqdad0)
+[![Instagram](https://img.shields.io/badge/Instagram-Follow-E4405F?logo=instagram&logoColor=white)](https://www.instagram.com/ahmedmeqdad0/)
+[![Email](https://img.shields.io/badge/Email-Contact-EA4335?logo=gmail&logoColor=white)](mailto:ahmd2002mqdad@gmail.com)
 
 <!-- TODO: replace the LinkedIn, X and Email placeholders above with your real links. -->
 

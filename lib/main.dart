@@ -41,8 +41,8 @@ import 'features/support_feedback/presentation/pages/support_feedback_page.dart'
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await EasyLocalization.ensureInitialized();
 
+  await EasyLocalization.ensureInitialized();
   // Only connects when real project credentials are supplied via
   // `--dart-define` (see core/config/env.dart) — otherwise the app runs
   // fully offline against the local Drift database, per CLAUDE.md's
@@ -185,10 +185,15 @@ class _SimSalesManagerAppState extends State<SimSalesManagerApp> {
       setupServiceLocator();
     }
     if (!mounted) return;
-    _navigatorKey.currentState?.pushNamedAndRemoveUntil(RouteNames.login, (route) => false);
+    _navigatorKey.currentState?.pushNamedAndRemoveUntil(
+      RouteNames.login,
+      (route) => false,
+    );
     ScaffoldMessenger.maybeOf(context)
       ?..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text('login.errors.accountDisabled'.tr())));
+      ..showSnackBar(
+        SnackBar(content: Text('login.errors.accountDisabled'.tr())),
+      );
   }
 
   @override
