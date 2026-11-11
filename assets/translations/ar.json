@@ -128,11 +128,15 @@
     "title": "تسجيل الدخول",
     "subtitle": "أدر مبيعات شرائحك، أرصدتك وأرباحك.",
     "usernameLabel": "البريد الإلكتروني",
-    "usernamePlaceholder": "owner@simmanager.app",
+    "usernamePlaceholder": "owner@email.com",
     "passwordLabel": "كلمة المرور",
     "rememberMe": "تذكرني",
     "forgotPassword": "نسيت كلمة المرور؟",
     "signIn": "تسجيل الدخول",
+    "continueWithGoogle": "المتابعة باستخدام Google",
+    "or": "أو",
+    "noAccount": "جديد على eSIM Dafter؟",
+    "createAccount": "إنشاء حساب",
     "demoNotice": "تجريبي: أي اسم مستخدم مع كلمة مرور 6 أحرف فأكثر.",
     "credentialsErrorTitle": "أدخل بيانات الدخول للمتابعة.",
     "usernameHelper": "استخدم البريد الإلكتروني الذي زوّدك به المسؤول.",
@@ -142,8 +146,31 @@
       "passwordTooShort": "يجب أن تتكوّن كلمة المرور من 6 أحرف على الأقل.",
       "invalidCredentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
       "networkError": "تعذر الوصول للخادم. تحقق من اتصالك وحاول مجددًا.",
+      "invalidEmail": "أدخل بريدًا إلكترونيًا صحيحًا.",
       "unexpected": "حدث خطأ غير متوقع. حاول مرة أخرى لاحقًا.",
-      "accountDisabled": "تم تعطيل حسابك. تواصل مع المسؤول للمساعدة."
+      "accountDisabled": "تم تعطيل حسابك. تواصل مع المسؤول للمساعدة.",
+      "googleUnavailable": "تسجيل الدخول باستخدام Google غير متاح في الوضع التجريبي.",
+      "googleFailed": "تعذر تسجيل الدخول باستخدام Google. حاول مرة أخرى."
+    }
+  },
+  "signUp": {
+    "title": "إنشاء حساب",
+    "subtitle": "أنشئ مساحة عملك وأدر مبيعات الشرائح.",
+    "nameLabel": "اسمك",
+    "namePlaceholder": "أدخل اسمك",
+    "confirmPasswordLabel": "تأكيد كلمة المرور",
+    "createAccount": "إنشاء حساب",
+    "haveAccount": "لديك حساب بالفعل؟",
+    "signIn": "تسجيل الدخول",
+    "confirmationTitle": "تحقق من بريدك الإلكتروني",
+    "confirmationDescription": "أرسلنا رابط تأكيد إلى {email}. افتحه لتفعيل حسابك.",
+    "backToSignIn": "العودة لتسجيل الدخول",
+    "errors": {
+      "nameRequired": "أدخل اسمك.",
+      "invalidEmail": "أدخل بريدًا إلكترونيًا صحيحًا.",
+      "passwordTooShort": "يجب أن تتكوّن كلمة المرور من 6 أحرف على الأقل.",
+      "passwordMismatch": "كلمتا المرور غير متطابقتين.",
+      "generic": "تعذر إنشاء الحساب. تحقق من البيانات وحاول مرة أخرى."
     }
   },
   "forgotPassword": {

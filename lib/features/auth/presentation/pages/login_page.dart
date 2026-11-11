@@ -11,6 +11,8 @@ import '../../../../core/widgets/language_switch.dart';
 import '../cubit/login_cubit.dart';
 import '../cubit/login_state.dart';
 import '../widgets/auth_text_field.dart';
+import '../widgets/google_auth_button.dart';
+import 'sign_up_page.dart';
 import 'forgot_password_page.dart';
 
 class LoginPage extends StatelessWidget {
@@ -36,6 +38,7 @@ class _LoginView extends StatelessWidget {
           children: [
             BlocConsumer<LoginCubit, LoginState>(
               listener: (context, state) {
+                if (ModalRoute.of(context)?.isCurrent != true) return;
                 if (state.status == LoginStatus.success) {
                   Navigator.of(context).pushReplacementNamed(
                     state.isAdmin ? RouteNames.adminHub : RouteNames.home,
@@ -164,7 +167,9 @@ class _LoginView extends StatelessWidget {
                                   ),
                                   elevation: 0,
                                 ),
-                                child: state.status == LoginStatus.submitting
+                                child:
+                                    state.status == LoginStatus.submitting &&
+                                        !state.isGoogleSubmitting
                                     ? SizedBox(
                                         width: 20,
                                         height: 20,
@@ -179,6 +184,51 @@ class _LoginView extends StatelessWidget {
                                           colors.onPrimaryAction,
                                         ),
                                       ),
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.md),
+                            AuthDivider(label: 'login.or'.tr()),
+                            const SizedBox(height: AppSpacing.md),
+                            GoogleAuthButton(
+                              isLoading: state.isGoogleSubmitting,
+                              isDisabled:
+                                  state.status == LoginStatus.submitting,
+                              onPressed: context
+                                  .read<LoginCubit>()
+                                  .signInWithGoogle,
+                            ),
+                            const SizedBox(height: AppSpacing.md),
+                            Center(
+                              child: Wrap(
+                                alignment: WrapAlignment.center,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
+                                  Text(
+                                    'login.noAccount'.tr(),
+                                    style: AppTextStyles.body(
+                                      colors.textSecondary,
+                                    ),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      final cubit = context.read<LoginCubit>();
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute<void>(
+                                          builder: (_) => BlocProvider.value(
+                                            value: cubit,
+                                            child: const SignUpPage(),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    child: Text(
+                                      'login.createAccount'.tr(),
+                                      style: AppTextStyles.cardTitle(
+                                        colors.textPrimary,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],

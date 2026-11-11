@@ -1,4 +1,10 @@
+import 'dart:io';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+
+import '../config/deep_links.dart';
+import '../config/env.dart';
 
 /// Thin wrapper around Supabase Auth — every tenant-scoped Drift row
 /// needs a real `ownerId`, and this is the one place that knows how to
@@ -20,6 +26,72 @@ class AuthService {
     return _client.auth.signInWithPassword(email: email, password: password);
   }
 
+  Future<AuthResponse> signUp({
+    required String email,
+    required String password,
+    required String displayName,
+  }) {
+    return _client.auth.signUp(
+      email: email,
+      password: password,
+      emailRedirectTo: DeepLinks.emailConfirmationCallback,
+      data: {'display_name': displayName},
+    );
+  }
+
+  Future<bool> signInWithGoogle() {
+    if (!Platform.isAndroid) {
+      return _client.auth.signInWithOAuth(
+        OAuthProvider.google,
+        redirectTo: DeepLinks.googleSignInCallback,
+      );
+    }
+    return _signInWithGoogleNatively();
+  }
+
+  Future<bool> _signInWithGoogleNatively() async {
+    if (Env.googleWebClientId.isEmpty) {
+      throw const AuthException(
+        'Google sign-in is not configured. Add GOOGLE_WEB_CLIENT_ID.',
+      );
+    }
+
+    final googleSignIn = GoogleSignIn(
+      serverClientId: Env.googleWebClientId,
+      scopes: const ['email'],
+    );
+    // Clear this app's cached Google selection so Google displays account
+    // selection again. This does not remove Google accounts from the device
+    // or sign the user out of the Supabase session.
+    await googleSignIn.signOut();
+    final account = await googleSignIn.signIn();
+    if (account == null) return false;
+
+    final googleAuth = await account.authentication;
+    final idToken = googleAuth.idToken;
+    final accessToken = googleAuth.accessToken;
+    if (idToken == null || accessToken == null) {
+      throw const AuthException(
+        'Google did not return the required sign-in tokens.',
+      );
+    }
+
+    await _client.auth.signInWithIdToken(
+      provider: OAuthProvider.google,
+      idToken: idToken,
+      accessToken: accessToken,
+    );
+    return true;
+  }
+
+  /// OAuth-only users do not have an app password to change. Supabase's
+  /// provider list also covers accounts whose email identity was linked
+  /// to Google, so those users keep the password action.
+  bool get hasPasswordIdentity {
+    final providers = _client.auth.currentUser?.appMetadata['providers'];
+    return providers is List && providers.contains('email');
+  }
+
   Future<void> signOut() => _client.auth.signOut();
 
   /// Re-authenticates with [currentPassword] to verify it's correct
@@ -27,10 +99,16 @@ class AuthService {
   /// again is the standard way), then updates to [newPassword]. Throws
   /// an `AuthException` from the re-auth step if the current password
   /// is wrong, before ever touching the real password.
-  Future<void> changePassword({required String currentPassword, required String newPassword}) async {
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
     final email = _client.auth.currentUser?.email;
     if (email == null) throw StateError('No signed-in user');
-    await _client.auth.signInWithPassword(email: email, password: currentPassword);
+    await _client.auth.signInWithPassword(
+      email: email,
+      password: currentPassword,
+    );
     await _client.auth.updateUser(UserAttributes(password: newPassword));
   }
 
@@ -40,7 +118,11 @@ class AuthService {
   Future<String> fetchCurrentRole() async {
     final userId = currentOwnerId;
     if (userId == null) throw StateError('No signed-in user');
-    final row = await _client.from('profiles').select('role').eq('id', userId).single();
+    final row = await _client
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .single();
     return row['role'] as String;
   }
 
@@ -56,7 +138,11 @@ class AuthService {
   Future<bool> fetchIsActive() async {
     final userId = currentOwnerId;
     if (userId == null) return true;
-    final row = await _client.from('profiles').select('is_active').eq('id', userId).single();
+    final row = await _client
+        .from('profiles')
+        .select('is_active')
+        .eq('id', userId)
+        .single();
     return row['is_active'] as bool? ?? true;
   }
 
@@ -66,11 +152,18 @@ class AuthService {
   /// their own JWT before doing anything privileged; this client never
   /// holds a service-role key. Throws with the function's own error
   /// message on failure (e.g. "Admin role required", a 403).
-  Future<Map<String, dynamic>> callAdminManageUser(Map<String, dynamic> body) async {
-    final response = await _client.functions.invoke('admin-manage-user', body: body);
+  Future<Map<String, dynamic>> callAdminManageUser(
+    Map<String, dynamic> body,
+  ) async {
+    final response = await _client.functions.invoke(
+      'admin-manage-user',
+      body: body,
+    );
     final data = response.data;
     if (response.status >= 400) {
-      final message = data is Map && data['error'] != null ? data['error'].toString() : 'Request failed (${response.status})';
+      final message = data is Map && data['error'] != null
+          ? data['error'].toString()
+          : 'Request failed (${response.status})';
       throw Exception(message);
     }
     return data is Map<String, dynamic> ? data : <String, dynamic>{};

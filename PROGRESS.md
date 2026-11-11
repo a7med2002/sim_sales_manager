@@ -1,5 +1,24 @@
 # PROGRESS.md
 
+## In progress: public seller registration and Google sign-in
+
+- Added a registration screen in the existing auth style with email/password
+  registration, email-confirmation state, and a shared Google action.
+- Login and registration share one auth Cubit so an OAuth callback or email
+  confirmation received after returning to the app completes the active flow.
+- Added the `login-callback` deep link on Android; iOS already accepts the
+  shared custom URL scheme. Added migration `0019_signup_profile_display_name.sql`
+  to read display names from email signup and Google metadata while retaining
+  the database's `seller` default role.
+- The Settings password action is hidden for accounts without an email
+  identity; it remains available to existing email/password users and linked
+  accounts. Admin routing and role management remain unchanged.
+- Remaining manual setup: enable Google provider and register redirect URLs in
+  Supabase/Google Cloud; configure email confirmation/SMTP; apply migration
+  `0019`. Then verify the signup/login flows on device. `flutter analyze
+  --no-pub` passes with no issues; device and auth-provider testing awaits that
+  manual setup.
+
 ## In progress: force active sessions out after account deactivation
 
 - `AuthService.fetchIsActive` checks the signed-in account's profile.

@@ -167,7 +167,7 @@ Colors, spacing, radii and text styles live in `core/theme`, and reusable widget
 - **Support and Feedback** — suggestions and bug reports with an optional photo and a recorded voice note (live level meter and preview).
 - **In-app updates** — checks a Supabase `app_releases` table and installs new APKs, with optional mandatory updates and release notes.
 - **Settings** — profile, change password, dark / light theme, currency symbol, language switch, and a "Data and Sync" section.
-- **Authentication** — email and password, persistent sessions, forgot / reset password via deep link. There is intentionally **no public sign-up**: admins provision every account.
+- **Authentication** — public seller sign-up with email/password confirmation or Google, persistent sessions, and forgot / reset password via deep link. Admins retain account and role management.
 - **Localization** — English and Arabic (RTL), including the pre-login screens.
 
 ---
@@ -280,7 +280,7 @@ dart run build_runner build
 ### 2. Set up Supabase
 
 1. Create a new Supabase project.
-2. Apply every file in [`supabase/migrations`](supabase/migrations) **in numeric order** (`0001` to `0017`), either in the dashboard's **SQL Editor** or with `supabase db push`. This creates the tables, RLS policies, and the `support-attachments`, `company-logos` and `app-releases` storage buckets.
+2. Apply every file in [`supabase/migrations`](supabase/migrations) **in numeric order** (`0001` to `0019`), either in the dashboard's **SQL Editor** or with `supabase db push`. This creates the tables, RLS policies, and the `support-attachments`, `company-logos` and `app-releases` storage buckets.
 3. Deploy the admin Edge Function:
    ```bash
    supabase functions deploy admin-manage-user
@@ -289,7 +289,7 @@ dart run build_runner build
    ```sql
    update public.profiles set role = 'admin' where id = '<your-user-uuid>';
    ```
-   From then on, sellers are created from the in-app **Admin → Users** screen (there is no public sign-up).
+   Public seller registration is available in the app. Admins can also create seller accounts from **Admin → Users**.
 
 ### 3. Configure credentials
 

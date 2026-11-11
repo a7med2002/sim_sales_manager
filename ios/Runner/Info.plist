@@ -30,10 +30,10 @@
 		<array>
 			<dict>
 				<key>CFBundleURLName</key>
-				<string>com.simsalesmanager.resetpassword</string>
+				<string>com.esimdafter.auth</string>
 				<key>CFBundleURLSchemes</key>
 				<array>
-					<string>simsalesmanager</string>
+					<string>esimdafter</string>
 				</array>
 			</dict>
 		</array>

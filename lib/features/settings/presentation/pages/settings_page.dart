@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/auth/auth_service.dart';
+import '../../../../core/config/env.dart';
 import '../../../../core/di/service_locator.dart';
 import '../../../../core/navigation/logout.dart';
 import '../../../../core/settings/settings_cubit.dart';
@@ -252,19 +254,22 @@ class _SettingsViewState extends State<_SettingsView> {
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
-            Text(
-              'settings.accountSectionTitle'.tr(),
-              style: AppTextStyles.overline(colors.textSecondary),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            _SectionCard(
-              padding: EdgeInsets.zero,
-              child: ListRow(
-                icon: Icons.lock_outline_rounded,
-                title: 'settings.changePassword'.tr(),
-                onTap: () => ChangePasswordSheet.show(context),
+            if (!Env.isConfigured ||
+                getIt<AuthService>().hasPasswordIdentity) ...[
+              Text(
+                'settings.accountSectionTitle'.tr(),
+                style: AppTextStyles.overline(colors.textSecondary),
               ),
-            ),
+              const SizedBox(height: AppSpacing.sm),
+              _SectionCard(
+                padding: EdgeInsets.zero,
+                child: ListRow(
+                  icon: Icons.lock_outline_rounded,
+                  title: 'settings.changePassword'.tr(),
+                  onTap: () => ChangePasswordSheet.show(context),
+                ),
+              ),
+            ],
             const SizedBox(height: AppSpacing.lg),
             Text(
               'settings.dataSyncSectionTitle'.tr(),
@@ -392,14 +397,20 @@ class _DataSyncSection extends StatelessWidget {
                 Row(
                   children: [
                     Icon(
-                      allSynced ? Icons.cloud_done_outlined : Icons.cloud_off_outlined,
+                      allSynced
+                          ? Icons.cloud_done_outlined
+                          : Icons.cloud_off_outlined,
                       color: allSynced ? colors.success : colors.warning,
                       size: 20,
                     ),
                     const SizedBox(width: AppSpacing.xs),
                     Expanded(
                       child: Text(
-                        allSynced ? 'settings.dataSync.allSynced'.tr() : 'settings.dataSync.pendingCount'.tr(namedArgs: {'count': '$pending'}),
+                        allSynced
+                            ? 'settings.dataSync.allSynced'.tr()
+                            : 'settings.dataSync.pendingCount'.tr(
+                                namedArgs: {'count': '$pending'},
+                              ),
                         style: AppTextStyles.cardTitle(colors.textPrimary),
                       ),
                     ),
@@ -408,7 +419,9 @@ class _DataSyncSection extends StatelessWidget {
                 if (state.lastSyncedAt != null) ...[
                   const SizedBox(height: 4),
                   Text(
-                    'settings.dataSync.lastSynced'.tr(namedArgs: {'date': formatDateTime(state.lastSyncedAt!)}),
+                    'settings.dataSync.lastSynced'.tr(
+                      namedArgs: {'date': formatDateTime(state.lastSyncedAt!)},
+                    ),
                     style: AppTextStyles.body(colors.textSecondary),
                   ),
                 ],
@@ -417,15 +430,35 @@ class _DataSyncSection extends StatelessWidget {
                   width: double.infinity,
                   height: 44,
                   child: OutlinedButton.icon(
-                    onPressed: state.status == SyncStatus.syncing ? null : () => context.read<SyncBloc>().add(const SyncRequested()),
+                    onPressed: state.status == SyncStatus.syncing
+                        ? null
+                        : () => context.read<SyncBloc>().add(
+                            const SyncRequested(),
+                          ),
                     icon: state.status == SyncStatus.syncing
-                        ? SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: colors.textPrimary))
-                        : Icon(Icons.sync_rounded, size: 18, color: colors.textPrimary),
-                    label: Text('settings.dataSync.syncNow'.tr(), style: AppTextStyles.body(colors.textPrimary)),
+                        ? SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: colors.textPrimary,
+                            ),
+                          )
+                        : Icon(
+                            Icons.sync_rounded,
+                            size: 18,
+                            color: colors.textPrimary,
+                          ),
+                    label: Text(
+                      'settings.dataSync.syncNow'.tr(),
+                      style: AppTextStyles.body(colors.textPrimary),
+                    ),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: colors.textPrimary,
                       side: BorderSide(color: colors.border),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.button)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadii.button),
+                      ),
                     ),
                   ),
                 ),
@@ -435,10 +468,17 @@ class _DataSyncSection extends StatelessWidget {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.warning_amber_rounded, size: 16, color: colors.danger),
+                    Icon(
+                      Icons.warning_amber_rounded,
+                      size: 16,
+                      color: colors.danger,
+                    ),
                     const SizedBox(width: AppSpacing.xs),
                     Expanded(
-                      child: Text('settings.dataSync.clearDataWarning'.tr(), style: AppTextStyles.body(colors.textSecondary)),
+                      child: Text(
+                        'settings.dataSync.clearDataWarning'.tr(),
+                        style: AppTextStyles.body(colors.textSecondary),
+                      ),
                     ),
                   ],
                 ),

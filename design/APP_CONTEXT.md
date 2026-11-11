@@ -33,11 +33,10 @@ Bottom navigation bar (fixed, mobile-first) with 5 items:
 
 ## Authentication
 - Simple login screen: username/email + password, "remember me" checkbox, "forgot password" link.
-- **No public self-signup.** Every seller account is provisioned by an admin (Admin → Users,
-  via the `admin-manage-user` Edge Function) and the login/password handed to them directly —
-  there is no "Create account" flow anywhere in the app. A newly-provisioned seller lands on
-  an empty dashboard on first login — no customers, companies, or lines yet; they build up
-  their own data from scratch, same as the original single-user app did.
+- **Public self-signup is enabled.** A seller can create an account with email/password
+  (confirmed by email) or Google. New users always receive the `seller` role from the
+  database and land on an empty dashboard. Admins can still provision accounts through
+  Admin → Users and continue to manage roles and account activation.
 - Every authenticated user has a `role` — `seller` (default) or `admin`. After login, a
   `seller` lands on the normal Home dashboard; an `admin` lands on the same app but with an
   additional Admin section available (see below).

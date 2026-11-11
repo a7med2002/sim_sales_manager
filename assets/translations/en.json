@@ -128,11 +128,15 @@
     "title": "Sign in",
     "subtitle": "Manage your SIM sales, balances and profit.",
     "usernameLabel": "Email",
-    "usernamePlaceholder": "owner@simmanager.app",
+    "usernamePlaceholder": "owner@email.com",
     "passwordLabel": "Password",
     "rememberMe": "Remember me",
     "forgotPassword": "Forgot password?",
     "signIn": "Sign in",
+    "continueWithGoogle": "Continue with Google",
+    "or": "or",
+    "noAccount": "New to eSIM Dafter?",
+    "createAccount": "Create account",
     "demoNotice": "Demo: any username with password 6+ characters.",
     "credentialsErrorTitle": "Enter your credentials to continue.",
     "usernameHelper": "Use the email your admin gave you.",
@@ -142,8 +146,31 @@
       "passwordTooShort": "Password must be at least 6 characters.",
       "invalidCredentials": "Incorrect email or password.",
       "networkError": "Couldn't reach the server. Check your connection and try again.",
+      "invalidEmail": "Enter a valid email address.",
       "unexpected": "Something went wrong. Please try again later.",
-      "accountDisabled": "Your account has been deactivated. Contact your administrator for help."
+      "accountDisabled": "Your account has been deactivated. Contact your administrator for help.",
+      "googleUnavailable": "Google sign-in is unavailable in demo mode.",
+      "googleFailed": "Couldn't sign in with Google. Try again."
+    }
+  },
+  "signUp": {
+    "title": "Create account",
+    "subtitle": "Set up your workspace and manage your SIM sales.",
+    "nameLabel": "Your name",
+    "namePlaceholder": "Enter your name",
+    "confirmPasswordLabel": "Confirm password",
+    "createAccount": "Create account",
+    "haveAccount": "Already have an account?",
+    "signIn": "Sign in",
+    "confirmationTitle": "Check your email",
+    "confirmationDescription": "We sent a confirmation link to {email}. Open it to activate your account.",
+    "backToSignIn": "Back to sign in",
+    "errors": {
+      "nameRequired": "Enter your name.",
+      "invalidEmail": "Enter a valid email address.",
+      "passwordTooShort": "Password must be at least 6 characters.",
+      "passwordMismatch": "Passwords don't match.",
+      "generic": "Couldn't create your account. Check your details and try again."
     }
   },
   "forgotPassword": {
