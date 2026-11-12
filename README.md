@@ -1,387 +1,319 @@
 <div align="center">
 
-<img src="assets/images/logo_full.png" alt="eSIM Dafter logo" width="280" />
+<img src="assets/icons/icon.png" alt="eSIM Dafter logo" width="110" />
 
 # eSIM Dafter
 
-**An offline-first sales, inventory and debt-tracking app for independent eSIM / SIM resellers.**
-
-Buy bundles wholesale from supplier companies, resell them to your customers, and always know your profit, your balances and who owes you money — even with no internet connection.
+**Offline-first eSIM & SIM sales management for independent sellers.**
+Track supplier balances, customers, lines, payments, and profit — with or without internet.
 
 ![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter&logoColor=white)
 ![Dart](https://img.shields.io/badge/Dart-%5E3.11-0175C2?logo=dart&logoColor=white)
 ![Supabase](https://img.shields.io/badge/Backend-Supabase-3ECF8E?logo=supabase&logoColor=white)
-![Drift](https://img.shields.io/badge/Local%20DB-Drift%20%2F%20SQLite-6C4AB6)
-![State](https://img.shields.io/badge/State-Bloc%20%2F%20Cubit-1389FD)
+![Drift](https://img.shields.io/badge/Local%20DB-Drift%20(SQLite)-orange)
+![State](https://img.shields.io/badge/State-Bloc%20%2F%20Cubit-blueviolet)
 ![Platform](https://img.shields.io/badge/Platform-Android-3DDC84?logo=android&logoColor=white)
-![i18n](https://img.shields.io/badge/Languages-English%20%7C%20%D8%A7%D9%84%D8%B9%D8%B1%D8%A8%D9%8A%D8%A9-informational)
+![Version](https://img.shields.io/badge/version-1.1.0%2B11-blue)
+
+[Download APK](#-download-apk) · [Features](#-features) · [Architecture](#-architecture) · [Screenshots](#-screenshots) · [Contact](#-social-links)
 
 </div>
 
 ---
 
-## Table of Contents
+## 📖 Project Overview
 
-1. [Project Overview](#1-project-overview)
-2. [Tech Stack](#2-tech-stack)
-3. [Architecture](#3-architecture)
-4. [Features](#4-features)
-5. [Testing](#5-testing)
-6. [Folder Structure](#6-folder-structure)
-7. [How to Run the Project](#7-how-to-run-the-project)
-8. [Future Improvements](#8-future-improvements)
-9. [Screenshots](#9-screenshots)
-10. [Social Links](#10-social-links)
+**eSIM Dafter** (*dafter* = "notebook / ledger" in Arabic) replaces the paper notebook and scattered spreadsheets that SIM and eSIM resellers rely on. A seller buys stock from supplier companies, sells lines to customers, collects payments (often in installments), and needs to know at any moment:
 
----
+- How much balance is left with each supplier?
+- Which customers still owe money?
+- Which lines expire soon?
+- What is my real profit?
 
-## 1. Project Overview
+The app answers all of these from a single, fast, **offline-first** interface. Every action is written to a local SQLite database first and synchronized to the cloud in the background, so the seller can keep working with a weak or missing connection and never lose data.
 
-**eSIM Dafter** (formerly *SIM Sales Manager*) is a mobile-first business app for independent sellers who buy eSIM / SIM packages in bulk from telecom supplier companies at wholesale prices and resell them one by one to customers at retail prices.
-
-It replaces the notebook-and-spreadsheet workflow with a single app that tracks:
-
-- **Profit** — automatically calculated per sale (retail price minus wholesale cost).
-- **Supplier balances** — every company has a balance pool that shipments top up and sales consume.
-- **Customer debts** — partial and unpaid payments, with per-customer and per-line breakdowns.
-- **Expiry dates** — every sold line has an expiry, with reminders before it lapses.
-
-### Why it is interesting from an engineering point of view
-
-- **Offline-first.** A local Drift (SQLite) database is the single source of truth. The UI never waits on the network; a background sync engine reconciles with Supabase whenever a connection is available — including flaky mobile data.
-- **Multi-tenant by design.** Many independent sellers share one deployment, each with fully private data enforced server-side by Postgres Row Level Security. An **admin role** manages accounts and a shared "ready-made company" catalog from inside the same app.
-- **Bilingual with real RTL support.** Full English and Arabic (Modern Standard Arabic) localization, dark and light themes, and a strict shared design system.
-- **Notifications that survive a closed app.** Reminders are scheduled with the OS alarm system, so they fire even when the app process is not running.
-
-> This app is distributed directly (as an APK) rather than through an app store, so it ships with its own **in-app update system** backed by Supabase Storage.
+The app is **Arabic-first (RTL)** with full English support, light/dark themes, and a configurable currency symbol (default `₪`). It is distributed directly to sellers as an APK (one license per device) and ships with its own **in-app update mechanism**.
 
 ---
 
-## 2. Tech Stack
+## 🧰 Tech Stack
 
-| Area | Technology |
-| --- | --- |
-| **Framework / Language** | Flutter, Dart (`sdk: ^3.11.0`) |
-| **State management** | `flutter_bloc` — **Cubit** by default, full **Bloc** only for the event-driven sync engine — plus `equatable` |
-| **Local database** | [Drift](https://drift.simonbinder.eu/) on SQLite (`sqlite3`), schema migrations up to v12 |
-| **Backend** | [Supabase](https://supabase.com/) — Postgres + Row Level Security, Auth, Storage, Realtime, Edge Functions (Deno / TypeScript) |
-| **Dependency injection** | `get_it` (composition root in `core/di`) |
-| **Connectivity** | `connectivity_plus` with a real reachability probe |
-| **Localization** | `easy_localization` — English & Arabic, RTL-aware |
+| Layer | Technology |
+|---|---|
+| **Framework** | Flutter (Dart SDK `^3.11`) |
+| **State Management** | `flutter_bloc` (Bloc / Cubit) + `equatable` |
+| **Dependency Injection** | `get_it` (composition root in `core/di`) |
+| **Local Database** | `drift` + `sqlite3` (source of truth, versioned migrations) |
+| **Backend / BaaS** | `supabase_flutter` — Auth, Postgres (RLS), Storage, Realtime |
+| **Authentication** | Supabase Auth (email + password), Google Sign-In, deep-link callbacks |
+| **Connectivity** | `connectivity_plus` |
+| **Localization** | `easy_localization` (Arabic / English, RTL) |
 | **Charts** | `fl_chart` |
-| **Export** | `excel`, `pdf`, `share_plus` — PDF / Excel / CSV |
-| **Notifications** | `flutter_local_notifications` + `timezone` (OS-level scheduled alarms) |
-| **Media** | `image_picker`, `record`, `audioplayers` (photo and voice-note attachments) |
-| **Web content** | `webview_flutter` (supplier portals used by Number Update) |
-| **Platform helpers** | `url_launcher` (WhatsApp / SMS), `device_info_plus`, `package_info_plus`, `open_filex`, `http`, `path_provider` |
-| **Tooling** | `build_runner`, `drift_dev`, `flutter_lints`, `flutter_launcher_icons`, `flutter_native_splash` |
-| **Typography** | IBM Plex Sans Arabic (400 / 500 / 600 / 700) |
+| **Export & Sharing** | `excel`, `pdf`, CSV, `share_plus`, `open_filex` |
+| **Notifications** | `flutter_local_notifications` + `timezone` (scheduled, local) |
+| **Media** | `image_picker`, `record`, `audioplayers` |
+| **Web Integration** | `webview_flutter`, `http`, `url_launcher` |
+| **Device / App Info** | `device_info_plus`, `package_info_plus`, `path_provider` |
+| **Tooling** | `build_runner`, `drift_dev`, `flutter_launcher_icons`, `flutter_native_splash`, `flutter_lints` |
+| **Typography** | IBM Plex Sans Arabic (bundled) |
 
 ---
 
-## 3. Architecture
+## 🏗 Architecture
 
-The project follows a **feature-first Clean Architecture**: a shared `core/` layer and self-contained `features/`, each split into `data`, `domain` and `presentation`.
+The project follows a **feature-first, layered architecture** built around an **offline-first** data flow.
+
+### High-level data flow
 
 ```mermaid
 flowchart LR
-    UI["Pages & Widgets"] --> C["Cubits"]
-    C --> DB[("Drift / SQLite<br/>source of truth")]
-    C -. "narrow interfaces" .-> CAT["CompanyCatalog<br/>CustomerCatalog"]
-
-    SB["SyncBloc<br/>(connectivity + 3-min timer)"] --> SE["SyncEngine"]
-    SE <--> DB
-    SE <-->|"push / pull"| SUP[("Supabase<br/>Postgres + RLS")]
-
-    C --> NS["NotificationScheduler"]
-    NS --> OS["OS AlarmManager"]
-    ADM["Admin app section"] -->|"JWT"| EF["Edge Function<br/>admin-manage-user"]
-    EF --> SUP
+    UI[Pages & Widgets] --> C[Cubits / Blocs]
+    C --> DB[(Drift / SQLite<br/>source of truth)]
+    DB --> C
+    SE[SyncEngine] <--> DB
+    SE <--> SB[(Supabase<br/>Postgres + RLS)]
+    SB -. Realtime .-> N[Admin notifications]
+    CS[ConnectivityService] --> SB2[SyncBloc]
+    SB2 --> SE
 ```
 
-### Key design decisions
+### Key architectural decisions
 
-**Offline-first data flow**
+- **Offline-first.** Every feature reads and writes the local Drift database first. Rows carry a `synced` flag; the `SyncEngine` pushes unsynced rows (`upsert`) and then pulls the server state, in a dependency-safe order (companies → packages → customers → lines → …).
+- **Resilient sync.** Each sync step is isolated, so a failure in one table never blocks the rest. Permanent deletes are tracked in a `pending_deletes` table and flushed *before* pulling, preventing deleted rows from being resurrected.
+- **Visible backup status.** `SyncBloc` + `SyncStatusIndicator` tell the seller how many changes are not yet backed up, so they know when it's safe to clear data or switch devices.
+- **Multi-tenant by design.** Every tenant table carries an `owner_id` (`TenantColumns`) and is protected by Postgres **Row Level Security**. A `profiles.role` (`seller` / `admin`) gates the admin area.
+- **Strict feature boundaries.** Feature modules never import each other. Cross-feature access goes through narrow interfaces in `core/` (`CompanyCatalog`, `CustomerCatalog`) and named routes (`RouteNames`).
+- **Composition root.** `core/di/service_locator.dart` is the single place that wires app-lifetime singletons (Cubits, database, sync, auth).
+- **Graceful degradation.** If Supabase is not configured, the app runs fully offline against Drift. `flutter test` automatically forces this mode for predictable tests.
+- **Store-less distribution.** Updates are published as rows in an `app_releases` table plus an APK in Supabase Storage; the app compares build numbers and offers (or forces) the update.
 
-1. Every write goes to the local Drift database **immediately**, tagged `synced = false` with an `updated_at` timestamp.
-2. The UI updates optimistically — it never blocks on the network.
-3. `SyncBloc` triggers `SyncEngine.syncAll` on app start, on connectivity changes, on demand ("Sync now"), and every 3 minutes as a safety net. Push always runs before pull.
-4. Conflict resolution is **last-write-wins** on `updated_at` — a deliberate simplification, not an oversight.
+### Per-feature layering
 
-**Reliability details worth calling out**
-
-- **Fault-isolated sync steps.** Each table's push/pull runs in its own `try/catch`, so one failing table can never silently starve the rest of the chain.
-- **Delete tombstones.** Permanent deletes are recorded in a `pending_deletes` table until the server confirms them, so a pull can never resurrect a row that was deliberately removed.
-- **Pending-changes indicator.** The app counts every unsynced row and tombstone and shows it in the top bar and in Settings, so a seller knows whether it is safe to uninstall or switch devices.
-- **Optimistic company balances.** Balance mutations (`applySale` / `reverseSale` / `applyShipment` / `applyAdditionalServiceCharge`) update the UI instantly, while every reload recomputes balances from persisted rows so estimates can never drift permanently.
-
-**Multi-tenancy and roles**
-
-- Every tenant table carries an `owner_id`, protected by an RLS policy of `owner_id = auth.uid()`.
-- A shared `company_catalog` / `package_catalog` is readable by everyone and writable only by admins. "Import Ready-Made Company" **copies** from it once — it is never a live link, so each seller's data stays independent.
-- Privileged account operations (create seller, activate / deactivate, change role) go through a Supabase **Edge Function** that verifies the caller's JWT is an admin. The client never holds a service-role key.
-
-**Decoupling between features**
-
-Features do not import each other. Cross-feature access goes through narrow interfaces in `core/catalog` (`CompanyCatalog`, `CustomerCatalog`), and `core/di/service_locator.dart` is the single composition root that knows the concrete Cubits.
-
-**Design system, not magic numbers**
-
-Colors, spacing, radii and text styles live in `core/theme`, and reusable widgets (stat cards, filter pills, list rows, empty states, top bar) live in `core/widgets`. Feature pages contain no hard-coded colors or spacing.
-
----
-
-## 4. Features
-
-### Sales and inventory
-
-- **New Sale flow** — a multi-step sheet available from anywhere: pick or create a customer, choose company and package, set the retail price (live profit preview), then record payment.
-- **Companies** — Active / Archived / Deleted tabs, logo upload, pinning, per-supplier balance cards (consumed, available, owed), and optional **"allow negative balance"** as a one-time credit-line grace.
-- **Import Ready-Made Company** — copy a supplier and its packages from the admin-curated catalog.
-- **Shipments and Operations** — record prepaid or credit-limit top-ups; browse and filter every sale operation.
-- **Additional Service** — when a line runs out of data before month end, activate a top-up on that line: deduct a chosen amount from the company balance and optionally charge the customer, without touching the line's sale price. One per line, editable, with a separate "collected" toggle.
-
-### Customers and debts
-
-- Customers with status (normal / troubled / blocked), tags, pinning, notes, soft delete, and a **Debtors** tab.
-- Customer detail page with every line, expiry color-coding, per-line payments, and one-tap **WhatsApp / SMS** buttons.
-- Debt reminders: schedule a "remind me in N days" notification that cancels itself once the debt is settled.
-
-### Insight and reporting
-
-- **Home dashboard** with period filters (today, week, month, 3 / 6 months, year, custom range), clickable stat cards, and balance-per-supplier progress cards.
-- **Profits** with trend and best-companies charts; **Reports** with detailed operation tables.
-- **Numbers** — every sold number with status filters.
-- **Export** to PDF, Excel and CSV (branded files) from Numbers, Reports and Shipments and Operations.
-- **Activity Log** — a full audit trail, including the device name on each login.
-
-### Automation
-
-- **Number Update** — automated refresh of a number's status through five supplier integrations, some via an in-app WebView, with a trial order and per-number provider cache.
-- **Notifications** — line-expiry reminders (3 days before and on the day), customer debt reminders, low company balance alerts, and unpaid-shipment alerts. Scheduled through the OS alarm system so they arrive even when the app is closed, and backed up to Supabase so they survive a reinstall.
-
-### Platform features
-
-- **Offline-first sync** with a visible sync status and pending-changes count.
-- **Admin panel** — dashboard, company catalog management, user management (create, activate, change role), and a support inbox with a **live in-app notification** for new requests (Supabase Realtime).
-- **Support and Feedback** — suggestions and bug reports with an optional photo and a recorded voice note (live level meter and preview).
-- **In-app updates** — checks a Supabase `app_releases` table and installs new APKs, with optional mandatory updates and release notes.
-- **Settings** — profile, change password, dark / light theme, currency symbol, language switch, and a "Data and Sync" section.
-- **Authentication** — public seller sign-up with email/password confirmation or Google, persistent sessions, and forgot / reset password via deep link. Admins retain account and role management.
-- **Localization** — English and Arabic (RTL), including the pre-login screens.
-
----
-
-## 5. Testing
-
-The project has **50+ automated tests** that run without a device, an emulator, or a Supabase project.
-
-```bash
-flutter test          # run the whole suite
-flutter analyze       # static analysis (kept at zero issues)
+```text
+feature/
+├── domain/
+│   └── entities/        # Pure Dart models (Equatable)
+├── data/                # Exporters / providers (where needed)
+└── presentation/
+    ├── cubit/           # State + business logic
+    ├── pages/           # Screens
+    └── widgets/         # Feature-specific UI (sheets, cards, forms)
 ```
 
-| Suite | What it covers |
-| --- | --- |
-| `app_database_test.dart` | Multi-tenant Drift schema: ownership, catalog-vs-company independence, derived balance math |
-| `company_entity_test.dart` | `applySale` / `reverseSale` symmetry and the additional-service balance methods |
-| `new_sale_cubit_test.dart` | The full New Sale flow, including inline customer creation and balance deduction |
-| `notifications_cubit_test.dart` | Scheduling, cancellation, de-duplication, cold-start resilience, and native-failure isolation |
-| `notifications_state_test.dart` | Inbox filtering and ordering (a pending reminder never shows early) |
-| `customers_state_test.dart` | Debt math, including uncollected additional-service charges |
-| `customers_cubit_additional_service_test.dart` | One-per-line rule, edit, undo-collect, and company-balance reversal |
-| `period_filter_matcher_test.dart` | Date-range matching behind every "Custom" period filter |
+---
 
-**How the tests are built**
+## ✨ Features
 
-- A real Drift database runs **in memory** (`AppDatabase.forTesting(NativeDatabase.memory())`), so tests exercise real queries and migrations instead of mocks.
-- Platform-facing pieces (the notification scheduler, auth, company catalog) are replaced with small hand-written fakes that can simulate native failures on demand.
-- `Env.isConfigured` is forced to `false` under `flutter test`, so the suite never touches the network.
-- Several tests are **regression tests written from real bugs** — each was confirmed to fail without its fix.
+### 🧾 Sales & Inventory
+- **New Sale wizard** — 4 guided steps: *Customer → Package & Price → Payment → Confirm*, with inline customer creation.
+- **Supplier companies** — manage companies and their packages; **import ready-made** companies from an admin-curated shared catalog.
+- **Shipments & operations** — record stock purchases with paid/unpaid remainders; browse the full operations history.
+- **Balance tracking** — live "available to sell" balance per supplier on the dashboard.
 
-> A legacy widget-test suite (`widget_test.dart`) is currently paused: it depended on seeded mock data that has since been removed, and needs a rewrite against real Drift fixtures.
+### 👥 Customers & Lines
+- Customer profiles with contact launcher (call / message).
+- Lines (SIM / eSIM) with purchase & expiry dates, wholesale cost, retail price, auto-computed profit, and payment status.
+- **Installment payments** and **additional services** per customer.
+- Historical snapshots keep sold lines displaying correctly even if a company is later renamed, archived, or deleted.
+
+### 📊 Insights
+- **Dashboard** with total sales, profit, uncollected amounts, new lines, plus sales/profit and profit-trend charts.
+- **Profits** and **Reports** pages with period filters (preset ranges + custom date range).
+- **Numbers** directory of all sold numbers with search, filters, and pagination (50 / 100 / 200 / All).
+- **Activity log** — an audit trail of important actions.
+
+### 📤 Export
+- Export tables to **CSV, Excel (.xlsx), and PDF** and share them directly (Reports, Numbers, Shipments & Operations).
+
+### 🔔 Smart Notifications
+Locally scheduled — no server push needed:
+- Line expiring in 3 days / line expired today
+- Customer debt reminders (auto-cancelled once paid)
+- Company low-balance alert
+- Amount owed to a supplier after a shipment
+- *(Admin)* Live alert when a seller submits a support request
+
+### 🔄 Number Update
+- Refresh subscription numbers through supported provider endpoints (Liyan, QuickLine, Areen, Aloha) and WebView-based flows for providers that require a browser context (SmileSim, Sky), with a local result log and provider cache.
+
+### 🔐 Authentication & Security
+- Email/password sign-up and sign-in, forgot/reset password via deep links (`esimdafter://`).
+- Google Sign-In (native on Android, OAuth redirect elsewhere).
+- Cached role for offline startup; automatic **force-logout** when an admin deactivates an account.
+- Change-password flow in Settings.
+
+### 🛠 Admin Console
+- **Company catalog** management (shared templates for sellers).
+- **User management** — create, activate/deactivate seller accounts.
+- **Support & Feedback inbox** with image/voice attachments and realtime updates.
+- Admin dashboard with seller, catalog, and request statistics.
+
+### 💬 Support & Feedback
+- Sellers can send suggestions or report problems with **image and voice attachments**.
+
+### ⚙️ Personalization & Updates
+- Arabic / English with RTL, light / dark mode, custom currency symbol.
+- **In-app updates** — checks for new releases, downloads the APK, and hands off to the Android installer; supports **mandatory** updates.
 
 ---
 
-## 6. Folder Structure
+## 📁 Folder Structure
 
 ```text
 sim_sales_manager/
-├── lib/
-│   ├── main.dart                  # bootstrap, session restore, routing
-│   ├── core/
-│   │   ├── activity_log/          # audit-trail logger
-│   │   ├── auth/                  # AuthService (Supabase Auth wrapper)
-│   │   ├── catalog/               # narrow cross-feature interfaces
-│   │   ├── config/                # Env (credentials via --dart-define), deep links
-│   │   ├── constants/
-│   │   ├── database/              # Drift database, tables/, schema migrations
-│   │   ├── di/                    # get_it composition root
-│   │   ├── navigation/
-│   │   ├── notifications/         # scheduler, cubit, OS-settings bridge
-│   │   ├── number_update/
-│   │   ├── settings/  support/
-│   │   ├── sync/                  # SyncEngine, SyncBloc, ConnectivityService
-│   │   ├── theme/                 # colors, spacing, radii, text styles, theme cubit
-│   │   ├── update/                # in-app updater
-│   │   ├── utils/
-│   │   └── widgets/               # shared UI: stat card, filter pill, top bar, ...
-│   └── features/
-│       ├── activity_log/   admin/      auth/         companies/   customers/
-│       ├── home/           more/       new_sale/     notifications/
-│       ├── number_update/  numbers/    profile/      profits/     reports/
-│       ├── settings/       shipments_operations/     support_feedback/
-│       └── <feature>/
-│           ├── data/            # repositories, exports
-│           ├── domain/entities/
-│           └── presentation/    # cubit/, pages/, widgets/
-├── supabase/
-│   ├── migrations/            # 0001 … 0017: schema, RLS, storage buckets, realtime
-│   └── functions/
-│       └── admin-manage-user/ # Edge Function (Deno / TypeScript)
+├── android/ · ios/ · macos/ · web/        # Platform runners
 ├── assets/
-│   ├── translations/          # en.json, ar.json
-│   ├── fonts/                 # IBM Plex Sans Arabic
-│   └── icons/  images/
-├── test/                      # unit and cubit tests
-├── design/
-│   ├── APP_CONTEXT.md         # full product specification
-│   └── DESIGN_SYSTEM.md       # colors, typography, spacing, shared widgets
-├── android/  ios/  linux/  macos/  windows/  web/   # platform runners
-├── CLAUDE.md                  # engineering rules for the project
-└── PROGRESS.md                # detailed change log and decisions
+│   ├── fonts/                             # IBM Plex Sans Arabic
+│   ├── icons/ · images/
+│   └── translations/                      # ar.json, en.json
+├── supabase/
+│   └── migrations/                        # SQL schema, RLS, storage, realtime
+├── test/                                  # Unit & widget tests
+├── lib/
+│   ├── main.dart                          # Bootstrap, routing, session restore
+│   ├── core/
+│   │   ├── activity_log/                  # Activity logger
+│   │   ├── auth/                          # AuthService (Supabase Auth, Google)
+│   │   ├── catalog/                       # Cross-feature catalog interfaces
+│   │   ├── config/                        # Env, deep links
+│   │   ├── constants/
+│   │   ├── database/                      # Drift database + tables
+│   │   ├── di/                            # get_it service locator
+│   │   ├── navigation/                    # Route names, logout, launchers
+│   │   ├── notifications/                 # Scheduler, cubit, types
+│   │   ├── number_update/
+│   │   ├── settings/ · support/
+│   │   ├── sync/                          # SyncEngine, SyncBloc, connectivity
+│   │   ├── theme/                         # Colors, text styles, ThemeCubit
+│   │   ├── update/                        # In-app APK update flow
+│   │   ├── utils/                         # Formatters, export, helpers
+│   │   └── widgets/                       # Shared UI components
+│   └── features/
+│       ├── activity_log/   ├── admin/          ├── auth/
+│       ├── companies/      ├── customers/      ├── home/
+│       ├── more/           ├── new_sale/       ├── notifications/
+│       ├── numbers/        ├── number_update/  ├── profile/
+│       ├── profits/        ├── reports/        ├── settings/
+│       ├── shipments_operations/               └── support_feedback/
+└── pubspec.yaml
 ```
 
 ---
 
-## 7. How to Run the Project
+## 🚀 Getting Started
 
 ### Prerequisites
+- Flutter SDK (stable) with Dart `^3.11`
+- Android Studio / VS Code and an Android device or emulator
+- A Supabase project (optional — the app also runs fully offline)
 
-- [Flutter SDK](https://docs.flutter.dev/get-started/install) with Dart `^3.11`
-- Android Studio or VS Code with the Flutter extension, and an Android device or emulator
-- A free [Supabase](https://supabase.com/) project (needed for login and sync)
-- [Supabase CLI](https://supabase.com/docs/guides/cli) *(optional, for migrations and the Edge Function)*
-
-### 1. Clone and install
+### Setup
 
 ```bash
-git clone https://github.com/a7med2002/sim_sales_manager.git
-cd sim_sales_manager
+# 1. Clone
+git clone https://github.com/a7med2002/<your-repo>.git
+cd <your-repo>
+
+# 2. Install dependencies
 flutter pub get
+
+# 3. Generate Drift code
+dart run build_runner build --delete-conflicting-outputs
+
+# 4. Run
+flutter run
 ```
 
-The generated Drift code (`app_database.g.dart`) is committed. Regenerate it only if you change a table:
+### Pointing the app at your own Supabase project
 
-```bash
-dart run build_runner build
-```
-
-### 2. Set up Supabase
-
-1. Create a new Supabase project.
-2. Apply every file in [`supabase/migrations`](supabase/migrations) **in numeric order** (`0001` to `0019`), either in the dashboard's **SQL Editor** or with `supabase db push`. This creates the tables, RLS policies, and the `support-attachments`, `company-logos` and `app-releases` storage buckets.
-3. Deploy the admin Edge Function:
-   ```bash
-   supabase functions deploy admin-manage-user
-   ```
-4. Create your first user under **Authentication → Users**, then promote it to admin:
-   ```sql
-   update public.profiles set role = 'admin' where id = '<your-user-uuid>';
-   ```
-   Public seller registration is available in the app. Admins can also create seller accounts from **Admin → Users**.
-
-### 3. Configure credentials
-
-Credentials are read in [`lib/core/config/env.dart`](lib/core/config/env.dart). Pass your own project's values with `--dart-define` — use the **publishable (anon) key**, never the service-role key:
+Credentials are read from `lib/core/config/env.dart` and can be overridden at build time:
 
 ```bash
 flutter run \
-  --dart-define=SUPABASE_URL=https://<your-project-ref>.supabase.co \
-  --dart-define=SUPABASE_ANON_KEY=<your-publishable-anon-key>
+  --dart-define=SUPABASE_URL=https://<project>.supabase.co \
+  --dart-define=SUPABASE_ANON_KEY=<publishable-key> \
+  --dart-define=GOOGLE_WEB_CLIENT_ID=<google-web-client-id>
 ```
 
-> If you fork this repository, also replace the `defaultValue`s in `env.dart` so a plain `flutter run` points at *your* project.
+Apply the SQL files in `supabase/migrations/` to your project to create the schema, RLS policies, storage buckets, and realtime configuration.
 
-### 4. Build a release APK
+> 🔒 Only the **publishable** key belongs in the client. Access control is enforced by Postgres RLS — never ship a service-role key.
+
+### Build a release APK
 
 ```bash
-flutter build apk --release --target-platform android-arm64
+flutter build apk --release
 ```
 
-The output is `build/app/outputs/flutter-apk/app-release.apk`.
-
-> Release builds use R8 code shrinking. The rules in `android/app/proguard-rules.pro` are **required** — without them scheduled notifications fail on release builds.
-
-### 5. Run the checks
+### Run tests
 
 ```bash
-flutter analyze
 flutter test
 ```
 
-### Publishing an update (optional)
+---
 
-Upload the APK to the `app-releases` storage bucket and insert a row into `app_releases` (`version_code`, `version_name`, `apk_path`, `release_notes`, `mandatory`). Installed apps offer the update on their next launch.
+## 🖼 Screenshots
+
+| 1 | 2 |
+|:---:|:---:|
+| <img src="assets/screenshots/11.png" alt="Screenshot 1" width="240" /> | <img src="assets/screenshots/22.png" alt="Screenshot 2" width="240" /> |
+
+| 3 | 4 |
+|:---:|:---:|
+| <img src="assets/screenshots/33.png" alt="Screenshot 3" width="240" /> | <img src="assets/screenshots/44.png" alt="Screenshot 4" width="240" /> |
+
+| 5 | 6 |
+|:---:|:---:|
+| <img src="assets/screenshots/55.png" alt="Screenshot 5" width="240" /> | <img src="assets/screenshots/66.png" alt="Screenshot 6" width="240" /> |
+
+| 7 | 8 |
+|:---:|:---:|
+| <img src="assets/screenshots/77.png" alt="Screenshot 7" width="240" /> | <img src="assets/screenshots/88.png" alt="Screenshot 8" width="240" /> |
+
+| 9 | 10 |
+|:---:|:---:|
+| <img src="assets/screenshots/99.png" alt="Screenshot 9" width="240" /> | <img src="assets/screenshots/1010.png" alt="Screenshot 10" width="240" /> |
 
 ---
 
-## 8. Future Improvements
+## 📥 Download APK
 
-Ideas that would take the project further:
+<div align="center">
 
-- **iOS support** — the scaffolding exists, but Android is the primary, most thoroughly tested target.
-- **Continuous integration** — a GitHub Actions workflow running `flutter analyze` and `flutter test` on every pull request.
-- **Broader test coverage** — integration tests for the sync engine against a local Supabase instance, golden tests for the shared widgets, and a rewrite of the paused widget-test suite.
-- **Smarter conflict resolution** — per-field merging and cross-device delete propagation instead of last-write-wins.
-- **Push notifications for admins** — server-driven push (FCM) so new support requests reach an admin even when the app is closed.
-- **Upgrade `flutter_local_notifications`** — newer major versions bundle the R8 rules automatically, which would let the manual ProGuard workaround be retired.
-- **More supplier integrations** for Number Update, and a plugin-style provider interface to make adding one trivial.
-- **Multi-currency** support beyond a single configurable symbol.
-- **Accessibility pass** — screen-reader labels, larger-text support, and contrast audits for both themes.
-- **Optional store distribution** (for example Google Play) alongside the direct-APK update flow.
+[![Download APK](https://img.shields.io/badge/Download-APK%20v1.1.0-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/a7med2002/sim_sales_manager/releases/latest)
+
+</div>
+
+- **Latest version:** `v1.1.0` (build `11`)
+- **Requirements:** Android device; allow *Install unknown apps* for your browser/file manager.
+- Already installed? The app notifies you in-app when a newer version is available.
 
 ---
 
-## 9. Screenshots
+## 🌐 Social Links
 
-Screenshots from a real device are coming soon.
+<div align="center">
 
-<!--
-  To add screenshots: put the PNG files in docs/screenshots/ (a folder outside
-  the Flutter assets, so they never end up inside the APK), then uncomment
-  and adjust this table. Use %20 in place of spaces in file names.
+[![GitHub](https://img.shields.io/badge/GitHub-a7med2002-181717?logo=github&logoColor=white)](https://github.com/<username>)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-ahmedmeqdad0-0A66C2?logo=linkedin&logoColor=white)](https://www.linkedin.com/in/ahmedmeqdad0)
+[![Instagram](https://img.shields.io/badge/Instagram-ahmedmeqdad0-E4405F?logo=instagram&logoColor=white)](https://instagram.com/ahmedmeqdad0)
+[![Telegram](https://img.shields.io/badge/Telegram-A7med_Meqdad-26A5E4?logo=telegram&logoColor=white)](https://t.me/A7med_Meqdad)
+[![Email](https://img.shields.io/badge/Email-ahmd2002mqdad@gmail.com-D14836?logo=gmail&logoColor=white)](mailto:ahmd2002mqdad@gmail.com)
 
-<table>
-  <tr>
-    <td align="center"><img src="docs/screenshots/login.png" width="200" alt="Login"/><br/><sub><b>Login</b></sub></td>
-    <td align="center"><img src="docs/screenshots/home.png" width="200" alt="Home dashboard"/><br/><sub><b>Home dashboard</b></sub></td>
-    <td align="center"><img src="docs/screenshots/new-sale.png" width="200" alt="New sale"/><br/><sub><b>New Sale flow</b></sub></td>
-    <td align="center"><img src="docs/screenshots/customer-details.png" width="200" alt="Customer details"/><br/><sub><b>Customer details</b></sub></td>
-  </tr>
-</table>
--->
-
-In the meantime, the visual language (colors, typography, spacing, shared widgets) is documented in [`design/DESIGN_SYSTEM.md`](design/DESIGN_SYSTEM.md), and every screen is described in [`design/APP_CONTEXT.md`](design/APP_CONTEXT.md).
+</div>
 
 ---
 
-## 10. Social Links
+## 👨‍💻 Author
 
-Built and maintained by **Ahmed**. Feedback, ideas and pull requests are always welcome.
-
-[![GitHub](https://img.shields.io/badge/GitHub-a7med2002-181717?logo=github&logoColor=white)](https://github.com/a7med2002)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0A66C2?logo=linkedin&logoColor=white)](https://www.linkedin.com/in/ahmedmeqdad0)
-[![X](https://img.shields.io/badge/X-Follow-000000?logo=x&logoColor=white)](https://x.com/ahmedmeqdad0)
-[![Instagram](https://img.shields.io/badge/Instagram-Follow-E4405F?logo=instagram&logoColor=white)](https://www.instagram.com/ahmedmeqdad0/)
-[![Email](https://img.shields.io/badge/Email-Contact-EA4335?logo=gmail&logoColor=white)](mailto:ahmd2002mqdad@gmail.com)
-
-<!-- TODO: replace the LinkedIn, X and Email placeholders above with your real links. -->
-
-If you find the project useful, a star on the repository is much appreciated.
+**Ahmed Miqdad** — Flutter developer, Gaza, Palestine.
 
 ---
 
-### License
+<div align="center">
 
-No open-source license has been chosen yet, so all rights are reserved by default. Add a `LICENSE` file to change that.
+⭐ If you find this project useful, consider giving it a star.
+
+</div>
