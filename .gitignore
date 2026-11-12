@@ -31,6 +31,11 @@ run_dev.sh
 run_dev.ps1
 .vscode/launch.json
 
+# Local environment files; keep only the non-secret template in version control
+.env
+.env.*
+!.env.example
+
 # Private AI assistant notes and internal design documentation
 /CLAUDE.md
 /PROGRESS.md
