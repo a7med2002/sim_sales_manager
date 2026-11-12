@@ -201,59 +201,6 @@ sim_sales_manager/
 
 ---
 
-## 🚀 Getting Started
-
-### Prerequisites
-- Flutter SDK (stable) with Dart `^3.11`
-- Android Studio / VS Code and an Android device or emulator
-- A Supabase project (optional — the app also runs fully offline)
-
-### Setup
-
-```bash
-# 1. Clone
-git clone https://github.com/a7med2002/<your-repo>.git
-cd <your-repo>
-
-# 2. Install dependencies
-flutter pub get
-
-# 3. Generate Drift code
-dart run build_runner build --delete-conflicting-outputs
-
-# 4. Run
-flutter run
-```
-
-### Pointing the app at your own Supabase project
-
-Credentials are read from `lib/core/config/env.dart` and can be overridden at build time:
-
-```bash
-flutter run \
-  --dart-define=SUPABASE_URL=https://<project>.supabase.co \
-  --dart-define=SUPABASE_ANON_KEY=<publishable-key> \
-  --dart-define=GOOGLE_WEB_CLIENT_ID=<google-web-client-id>
-```
-
-Apply the SQL files in `supabase/migrations/` to your project to create the schema, RLS policies, storage buckets, and realtime configuration.
-
-> 🔒 Only the **publishable** key belongs in the client. Access control is enforced by Postgres RLS — never ship a service-role key.
-
-### Build a release APK
-
-```bash
-flutter build apk --release
-```
-
-### Run tests
-
-```bash
-flutter test
-```
-
----
-
 ## 🖼 Screenshots
 
 | 1 | 2 |
