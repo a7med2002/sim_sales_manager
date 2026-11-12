@@ -255,7 +255,7 @@ sim_sales_manager/
 
 ## 👨‍💻 Author
 
-**Ahmed Miqdad** — Flutter developer, Gaza, Palestine.
+**Eng.Ahmed Meqdad** — Flutter developer, Gaza, Palestine.
 
 ---
 
